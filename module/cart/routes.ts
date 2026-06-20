@@ -32,25 +32,17 @@ export const getUserCart = api(
   const result = await db
    .select()
    .from(cart)
-   .leftJoin(cartItem, eq(cart.id, cartItem.cartId))
+   .innerJoin(cartItem, eq(cart.id, cartItem.cartId))
    .where(eq(cart.userId, authdata?.userID as string));
-
-  if (!result.length) {
-   return {
-    status: "ok",
-    message: "no cart found",
-    data: { cart: null, items: [] },
-   } as unknown as Response<TCartAndItem>;
-  }
 
   return {
    status: "ok",
    message: "fetched user cart successfully",
    data: {
     cart: result[0].cart,
-    items: result.filter((r) => r.cart_items).map((r) => r.cart_items),
+    cart_items: result.filter((r) => r.cart_items).map((r) => r.cart_items),
    },
-  } as unknown as Response<TCartAndItem>;
+  } as Response<TCartAndItem>;
  },
 );
 

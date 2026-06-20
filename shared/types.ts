@@ -70,7 +70,7 @@ export interface TOrder {
  paymentStatus?: string;
 }
 
-export interface TOrderItems {
+export interface TOrderItem {
  id: string;
  orderId: string;
  productId: string;
@@ -81,5 +81,5 @@ export interface TOrderItems {
 
 export type TOrderAndItem = {
  order: TOrder;
- order_items: TOrderItems[];
+ order_items: TOrderItem[];
 };

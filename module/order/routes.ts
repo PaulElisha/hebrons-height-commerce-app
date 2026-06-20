@@ -8,7 +8,7 @@ import { cart, cartItem } from "../../schema/cart";
 import { getAuth } from "../../shared/get-auth";
 import { AuthData, Response, TOrder } from "../../shared/types";
 import { order, orderItem } from "../../schema/order";
-import * as CartService from "../cart/routes";
+import * as CartAPI from "../cart/routes";
 import { TCartAndItem, TCartItem } from "../../shared/types";
 import { TOrderAndItem } from "../../shared/types";
 
@@ -16,12 +16,16 @@ interface CreateOrderDto {
  deliveryAddress: Record<string, any>;
 }
 
-interface GetOrderDetails {
+interface GetOrderDetailsDto {
  orderId: string;
 }
 
 interface OrderSearchByStatusQuery {
  status?: Query<string>;
+}
+
+interface DeleteOrderDto {
+ orderId: string;
 }
 
 export const placeOrder = api(
@@ -34,7 +38,7 @@ export const placeOrder = api(
  async (req: CreateOrderDto): Promise<Response<TOrder>> => {
   const [authdata, error] = getAuth<AuthData>();
 
-  const data: Response<TCartAndItem> = await CartService.getUserCart();
+  const data: Response<TCartAndItem> = await CartAPI.getUserCart();
 
   const [newOrder] = await db
    .insert(order)
@@ -44,21 +48,23 @@ export const placeOrder = api(
     subtotal: data.data?.cart?.subtotal as number,
     deliveryAddress: {
      label: "home",
-     address: "",
-     city: "",
-     state: "",
-     country: "",
+     address: req.deliveryAddress.address,
+     city: req.deliveryAddress.city,
+     state: req.deliveryAddress.state,
+     country: req.deliveryAddress.country,
     } as any,
    })
    .returning();
 
-  const itemsToInsert = (data.data?.cart_items || []).map((v: TCartItem) => ({
-   orderId: newOrder?.id,
-   productId: v.productId,
-   quantity: v.quantity,
-   unitPrice: v.price,
-   lineTotal: v.quantity * v.price,
-  }));
+  const itemsToInsert = ((data.data as any)?.cart_items || []).map(
+   (v: TCartItem) => ({
+    orderId: newOrder?.id,
+    productId: v.productId,
+    quantity: v.quantity,
+    unitPrice: v.price,
+    lineTotal: v.quantity * v.price,
+   }),
+  );
 
   if (itemsToInsert.length > 0) {
    await db.insert(orderItem).values(itemsToInsert);
@@ -79,12 +85,13 @@ export const getUserOrdersByStatus = api(
   path: "/api/order/status",
   method: "GET",
  },
- async (params: OrderSearchByStatusQuery): Promise<Response<TOrder>> => {
+ async (params: OrderSearchByStatusQuery): Promise<Response<TOrderAndItem>> => {
   const [authdata, error] = getAuth<AuthData>();
 
-  const orderInStatus = await db
+  const result = await db
    .select()
    .from(order)
+   .innerJoin(orderItem, eq(order.id, orderItem.orderId))
    .where(
     and(
      eq(order.userId, authdata?.userID as string),
@@ -95,9 +102,10 @@ export const getUserOrdersByStatus = api(
 
   return {
    status: "ok",
-   message: "fetched orders by status",
+   message: "fetched order by status successfully",
    data: {
-    orders: orderInStatus.map((o) => o),
+    order: result[0].orders,
+    order_items: result.filter((i) => i.orderItem).map((o) => o.orderItem),
    },
   } as Response<any>;
  },
@@ -110,25 +118,26 @@ export const getOrderDetails = api(
   path: "/api/order/:orderId",
   method: "GET",
  },
- async (req: GetOrderDetails): Promise<Response<TOrderAndItem>> => {
+ async (req: GetOrderDetailsDto): Promise<Response<TOrderAndItem>> => {
   const [authdata, error] = getAuth<AuthData>();
 
   const result = await db
    .select()
    .from(order)
-   .innerJoin(orderItem, eq(orderItem.orderId, order.id))
+   .innerJoin(orderItem, eq(order.id, orderItem.orderId))
    .where(
     and(
      eq(order.id, req.orderId),
      eq(order.userId, authdata?.userID as string),
     ),
    );
+
   return {
    status: "ok",
    message: "fetched order data successfully",
    data: {
     order: result[0].orders,
-    order_items: result?.map((o) => o.orderItem),
+    order_items: result.filter((i) => i.orderItem).map((o) => o.orderItem),
    },
   } as Response<any>;
  },
@@ -167,5 +176,17 @@ export const clearPendingOrders = api(
  },
  async () => {
   await db.delete(order).where(eq(order.orderStatus, "pending"));
+ },
+);
+
+export const deleteOrder = api(
+ {
+  expose: true,
+  auth: true,
+  path: "/api/order/:orderId",
+  method: "DELETE",
+ },
+ async (req: DeleteOrderDto) => {
+  await db.delete(orderItem).where(eq(orderItem.orderId, req.orderId));
  },
 );
