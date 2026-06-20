@@ -2,30 +2,52 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     /* Basic Options */
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
+    "outDir": "dist",
+    "baseUrl": ".",
+    "rootDir": ".",
     "target": "ES2022",
     "module": "ES2022",
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "paths": {
-      "~encore/*": ["./encore.gen/*"]
+      "~encore/*": [
+        "./encore.gen/*"
+      ]
     },
-
     /* Workspace Settings */
     "composite": true,
-
     /* Strict Type-Checking Options */
     "strict": true,
-
     /* Module Resolution Options */
+    "noEmit": true,
+    "emitDeclarationOnly": true,
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     "sourceMap": true,
-
     "declaration": true,
-
+    "declarationMap": true,
     /* Advanced Options */
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
-  }
+  },
+  "include": [
+    "drizzle.config.ts",
+    "schema/**/*.ts",
+    "module/**/*.ts",
+    "shared/*.ts",
+    "migrations",
+    "encore.gen",
+    "shared/email/email.ts",
+    "env.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
