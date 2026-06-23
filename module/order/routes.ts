@@ -1,19 +1,21 @@
 /** @format */
 
 import { api, Query } from "encore.dev/api";
-import { eq, and, or, SQL, desc, isNotNull, ne } from "drizzle-orm";
+import { eq, and, or, SQL, desc, isNotNull, ne, lt, sql } from "drizzle-orm";
 
 import { db } from "../../module/auth/db";
 import { cart, cartItem } from "../../schema/cart";
 import { getAuth } from "../../shared/get-auth";
-import { AuthData, Response, TOrder } from "../../shared/types";
-import { order, orderItem } from "../../schema/order";
+import { AuthData, Response, TOrder, TOrderItem } from "../../shared/types";
+import { order, orderItem, paymentStatuses } from "../../schema/order";
 import * as CartAPI from "../cart/routes";
 import { TCartAndItem, TCartItem } from "../../shared/types";
 import { TOrderAndItem } from "../../shared/types";
+import * as helper from "../../shared/helper";
+import { index } from "drizzle-orm/gel-core";
 
 interface CreateOrderDto {
- deliveryAddress: Record<string, any>;
+ deliveryAddress: Record<string, string>;
 }
 
 interface GetOrderDetailsDto {
@@ -26,6 +28,11 @@ interface OrderSearchByStatusQuery {
 
 interface DeleteOrderDto {
  orderId: string;
+}
+
+interface OrderSearchQueryPagination {
+ pageSize?: Query<number>;
+ pageNumber?: Query<number>;
 }
 
 export const placeOrder = api(
@@ -52,17 +59,24 @@ export const placeOrder = api(
      city: req.deliveryAddress.city,
      state: req.deliveryAddress.state,
      country: req.deliveryAddress.country,
+     line1: req.deliveryAddress.line1,
+     line2: req.deliveryAddress.line2,
     } as any,
    })
    .returning();
 
-  const itemsToInsert = ((data.data as any)?.cart_items || []).map(
-   (v: TCartItem) => ({
-    orderId: newOrder?.id,
-    productId: v.productId,
-    quantity: v.quantity,
-    unitPrice: v.price,
-    lineTotal: v.quantity * v.price,
+  const itemsToInsert = await Promise.all(
+   ((data.data as any)?.cart_items || []).map(async (v: TCartItem) => {
+    const merchantId = await helper.getMerchantIdFromProductId(v.productId);
+
+    return {
+     orderId: newOrder?.id,
+     productId: v.productId,
+     merchantId,
+     quantity: v.quantity,
+     unitPrice: v.price,
+     lineTotal: v.quantity * v.price,
+    };
    }),
   );
 
@@ -150,7 +164,46 @@ export const getMerchantOrders = api(
   path: "/api/order/merchant",
   method: "GET",
  },
- async () => {},
+ async (
+  params: OrderSearchQueryPagination,
+ ): Promise<Response<TOrderAndItem>> => {
+  const [authdata, error] = getAuth<AuthData>();
+
+  const merchantId = await helper.getMerchantIdFromUser(
+   authdata?.userID as string,
+  );
+
+  const limit = Math.min(Math.max(params.pageSize ?? 10, 1), 50);
+  const pageNumber = Math.max(params.pageNumber ?? 1, 1);
+  const offset = (pageNumber - 1) * limit;
+
+  let fetchedOrders = await db
+   .select()
+   .from(order)
+   .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+   .where(eq(orderItem.merchantId, merchantId))
+   .limit(limit)
+   .offset(offset)
+   .orderBy(desc(order.createdAt));
+
+  const merchantOrders =
+   fetchedOrders.map(({ orders: o, orderItem: item }) => ({
+    ...item,
+    order: o
+     ? {
+        deliveryAddress: o.deliveryAddress,
+        orderStatus: o.orderStatus,
+        paymentStatus: o.paymentStatus,
+       }
+     : null,
+   })) || [];
+
+  return {
+   status: "ok",
+   message: "fetched merchant orders",
+   data: { merchantOrders },
+  } as Response<any>;
+ },
 );
 
 // export const confirmOrder = api(
@@ -175,11 +228,19 @@ export const clearPendingOrders = api(
   method: "DELETE",
  },
  async () => {
-  await db.delete(order).where(eq(order.orderStatus, "pending"));
+  await db
+   .delete(order)
+   .where(
+    and(
+     lt(order.createdAt, sql`now() - interval '1 month'`),
+     eq(order.orderStatus, "pending"),
+     eq(orderItem.orderId, order.id),
+    ),
+   );
  },
 );
 
-export const deleteOrder = api(
+export const cancelOrder = api(
  {
   expose: true,
   auth: true,
@@ -187,6 +248,11 @@ export const deleteOrder = api(
   method: "DELETE",
  },
  async (req: DeleteOrderDto) => {
-  await db.delete(orderItem).where(eq(orderItem.orderId, req.orderId));
+  await db
+   .update(order)
+   .set({
+    orderStatus: "cancelled",
+   })
+   .where(and(eq(order.id, req.orderId), ne(order.paymentStatus, "paid")));
  },
 );

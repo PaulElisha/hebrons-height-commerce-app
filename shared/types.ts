@@ -16,7 +16,7 @@ export interface Response<T> {
  data?: T;
 }
 
-export type Result<T, U extends APIError> = [T | null, null | U];
+export type Result<T, U> = [T | null, null | U];
 
 export type MailerCallback<T, U> = (
  transporter: T,
@@ -65,6 +65,8 @@ export interface TOrder {
   city: string;
   state: string;
   country: string;
+  line1: string;
+  line2: string;
  };
  orderStatus?: string;
  paymentStatus?: string;

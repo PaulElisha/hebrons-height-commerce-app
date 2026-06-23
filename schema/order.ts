@@ -9,6 +9,7 @@ import {
  text,
  check,
  varchar,
+ index,
 } from "drizzle-orm/pg-core";
 
 import { product } from "./product";
@@ -92,17 +93,24 @@ export const order = pgTable(
  ],
 );
 
-export const orderItem = pgTable("orderItem", {
- id: text("id")
-  .primaryKey()
-  .$defaultFn(() => crypto.randomUUID()),
- orderId: text("order_id")
-  .notNull()
-  .references(() => order.id, { onDelete: "cascade" }),
- productId: text("product_id")
-  .notNull()
-  .references(() => product.id),
- quantity: integer("quantity").notNull(),
- unitPrice: integer("unit_price").notNull(),
- lineTotal: integer("line_total"),
-});
+export const orderItem = pgTable(
+ "orderItem",
+ {
+  id: text("id")
+   .primaryKey()
+   .$defaultFn(() => crypto.randomUUID()),
+  orderId: text("order_id")
+   .notNull()
+   .references(() => order.id, { onDelete: "cascade" }),
+  merchantId: text("merchant_id")
+   .notNull()
+   .references(() => merchant.id),
+  productId: text("product_id")
+   .notNull()
+   .references(() => product.id),
+  quantity: integer("quantity").notNull(),
+  unitPrice: integer("unit_price").notNull(),
+  lineTotal: integer("line_total"),
+ },
+ (t) => [index("cartMealUnq").on(t.orderId, t.merchantId)],
+);

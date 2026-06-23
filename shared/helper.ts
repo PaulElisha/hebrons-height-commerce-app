@@ -55,14 +55,25 @@ export const checkItemExists =
   return existingItem[0];
  };
 
-export const getTotalInAllCarts = async (
+export const getProductAllocatedQuantity = async (
  tx: Transaction,
  productId: string,
-): Promise<number> => {
- const [{ quantity }] = await tx
-  .select({ quantity: sum(cartItem.quantity) })
+): Promise<any> => {
+ const [allocatedQuantity] = await tx
+  .select({ totalQuantity: sum(cartItem.quantity) })
   .from(cartItem)
   .where(eq(cartItem.productId, productId))
   .limit(1);
- return Number(quantity);
+ return allocatedQuantity;
 };
+
+export async function getMerchantIdFromProductId(productId: string) {
+ const [merchantId] = await db
+  .select({
+   merchantId: merchant.id,
+  })
+  .from(product)
+  .where(eq(product.id, productId));
+
+ return String(merchantId);
+}
