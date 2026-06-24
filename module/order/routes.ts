@@ -2,6 +2,7 @@
 
 import { api, Query } from "encore.dev/api";
 import { eq, and, or, SQL, desc, isNotNull, ne, lt, sql } from "drizzle-orm";
+import FA from "fasy";
 
 import { db } from "../../module/auth/db";
 import { cart, cartItem } from "../../schema/cart";
@@ -65,20 +66,18 @@ export const placeOrder = api(
    })
    .returning();
 
-  const itemsToInsert = await Promise.all(
-   ((data.data as any)?.cart_items || []).map(async (v: TCartItem) => {
-    const merchantId = await helper.getMerchantIdFromProductId(v.productId);
+  const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {
+   const merchantId = await helper.getMerchantIdFromProductId(v.productId);
 
-    return {
-     orderId: newOrder?.id,
-     productId: v.productId,
-     merchantId,
-     quantity: v.quantity,
-     unitPrice: v.price,
-     lineTotal: v.quantity * v.price,
-    };
-   }),
-  );
+   return {
+    orderId: newOrder?.id,
+    productId: v.productId,
+    merchantId,
+    quantity: v.quantity,
+    unitPrice: v.price,
+    lineTotal: v.quantity * v.price,
+   };
+  }, data?.data?.cart_items || []);
 
   if (itemsToInsert.length > 0) {
    await db.insert(orderItem).values(itemsToInsert);

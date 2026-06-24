@@ -45,7 +45,7 @@ export const getCartAndItems =
   } as TCartAndItem;
  };
 
-export const checkItemExists =
+export const checkItemExistsInCart =
  (tx: Transaction) => async (cartId: string, productId: string) => {
   const existingItem = await tx
    .select()
@@ -67,13 +67,14 @@ export const getProductAllocatedQuantity = async (
  return allocatedQuantity;
 };
 
-export async function getMerchantIdFromProductId(productId: string) {
- const [merchantId] = await db
-  .select({
-   merchantId: merchant.id,
-  })
+export async function getMerchantIdFromProductId(
+ productId: string,
+): Promise<String> {
+ const [productMerchant] = await db
+  .select()
   .from(product)
+  .innerJoin(merchant, eq(product.merchantId, merchant.id))
   .where(eq(product.id, productId));
 
- return String(merchantId);
+ return String(productMerchant?.merchant?.id);
 }

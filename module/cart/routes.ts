@@ -23,7 +23,6 @@ interface CartParams {
 export interface Intent {
  userId: string;
  productId: string;
- actions: typeof CartActions;
  intent: string;
 }
 
@@ -68,7 +67,6 @@ export const addToCart = api(
    userId: authdata?.userID as string,
    productId: req?.productId as string,
    intent: "add",
-   actions: CartActions,
   });
 
   return {
@@ -93,7 +91,6 @@ export const removeFromCart = api(
    userId: authdata?.userID as string,
    productId: req?.productId,
    intent: "remove",
-   actions: CartActions,
   });
 
   return {
@@ -118,7 +115,6 @@ export const incrementCartItem = api(
    userId: authdata?.userID as string,
    productId: req?.productId,
    intent: "increment",
-   actions: CartActions,
   });
 
   return {
@@ -142,7 +138,6 @@ export const decrementCartItem = api(
    userId: authdata?.userID as string,
    productId: req?.productId,
    intent: "decrement",
-   actions: CartActions,
   });
 
   return {

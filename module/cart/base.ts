@@ -9,6 +9,7 @@ import * as helper from "../../shared/helper.ts";
 import { product } from "../../schema/product.ts";
 import { Intent } from "./routes.ts";
 import { APIError } from "encore.dev/api";
+import CartActions from "./dispatcher.ts";
 
 const mutex = new Mutex();
 
@@ -30,7 +31,7 @@ const calculateTotalAmount =
  };
 
 export const modifyCart = async (userIntent: Intent) => {
- const { userId, productId, intent, actions } = userIntent;
+ const { userId, productId, intent } = userIntent;
  return await mutex.runExclusive(async () => {
   return await db.transaction(async (tx: Transaction) => {
    let [userCart] = await tx
@@ -43,18 +44,36 @@ export const modifyCart = async (userIntent: Intent) => {
     [userCart] = await tx.insert(cart).values({ userId }).returning();
    }
 
-   const callback = actions[intent];
+   const callback = CartActions[intent];
 
    if (typeof intent === "string" && intent == "add") {
+    const existingItem = await helper.checkItemExistsInCart(tx)(
+     userCart.id,
+     productId,
+    );
+
+    if (existingItem)
+     return {
+      cart: userCart,
+      cart_items: [existingItem],
+     };
+
     const [price, e] = await checkInventoryThreshold(tx, productId);
 
     if (e) throw e;
 
     await callback(tx)(userCart.id, productId, Number(price));
    } else if (typeof intent === "string" && intent == "increment") {
-    const [price, e] = await checkInventoryThreshold(tx, productId);
+    const existingItem = await helper.checkItemExistsInCart(tx)(
+     userCart.id,
+     productId,
+    );
 
-    if (e) throw e;
+    if (existingItem) {
+     const [price, e] = await checkInventoryThreshold(tx, productId);
+
+     if (e) throw e;
+    }
 
     await callback(tx)(userCart.id, productId);
    } else {

@@ -14,9 +14,6 @@ export const CartActions: Record<
  add:
   (tx: Transaction) =>
   async (cartId: string, productId: string, price: number) => {
-   const existing = await helper.checkItemExists(tx)(cartId, productId);
-   if (existing) return;
-
    const [inserted] = await tx
     .insert(cartItem)
     .values({
@@ -39,25 +36,27 @@ export const CartActions: Record<
    .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
    .returning();
  },
- decrement: (tx: Transaction) => async (cartId: string, productId: string) => {
-  const item = await helper.checkItemExists(tx)(cartId, productId);
+ decrement:
+  (tx: Transaction) =>
+  async (cartId: string, productId: string, quantity: number) => {
+   const item = await helper.checkItemExistsInCart(tx)(cartId, productId);
 
-  if (!item || item.quantity <= 1) {
+   if (!item || item.quantity <= 1) {
+    return await tx
+     .delete(cartItem)
+     .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
+     .returning();
+   }
+
    return await tx
-    .delete(cartItem)
+    .update(cartItem)
+    .set({
+     quantity: sql`${cartItem.quantity} - 1`,
+     totalItemPrice: sql`(${cartItem.quantity} - 1) * ${cartItem.price}`,
+    })
     .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
     .returning();
-  }
-
-  return await tx
-   .update(cartItem)
-   .set({
-    quantity: sql`${cartItem.quantity} - 1`,
-    totalItemPrice: sql`(${cartItem.quantity} - 1) * ${cartItem.price}`,
-   })
-   .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
-   .returning();
- },
+  },
  remove: (tx: Transaction) => async (cartId: string, productId: string) => {
   return await tx
    .delete(cartItem)

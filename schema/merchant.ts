@@ -21,7 +21,7 @@ export const merchant = pgTable(
   userId: text("user_id")
    .notNull()
    .unique()
-   .references(() => user.id),
+   .references(() => user.id, { onDelete: "cascade" }),
   businessName: text("business_name").notNull(),
   businessLogo: text("business_logo").notNull(),
   businessDescription: text("business_description").notNull(),

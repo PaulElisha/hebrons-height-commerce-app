@@ -101,7 +101,7 @@ export const orderItem = pgTable(
    .$defaultFn(() => crypto.randomUUID()),
   orderId: text("order_id")
    .notNull()
-   .references(() => order.id, { onDelete: "cascade" }),
+   .references(() => order.id),
   merchantId: text("merchant_id")
    .notNull()
    .references(() => merchant.id),
