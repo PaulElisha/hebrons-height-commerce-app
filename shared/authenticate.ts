@@ -1,17 +1,24 @@
 /** @format */
 
-import { middleware } from "encore.dev/api";
+import { APIError, middleware } from "encore.dev/api";
 
 import { getAuth } from "./get-auth.ts";
 import { AuthData } from "./types.ts";
 
-export const auth = middleware(
- { target: { auth: true } },
- async (req, next) => {
-  const [authdata, error] = getAuth<AuthData>();
+export function requiredRoles(targetTag: string, ...roles: Array<string>) {
+ return middleware(
+  {
+   target: { auth: true, tags: [targetTag] },
+  },
+  async (req, next) => {
+   const [authdata, error] = getAuth<AuthData>();
 
-  if (error) throw error;
+   if (error) throw error;
 
-  return await next(req);
- },
-);
+   if (!roles.includes(authdata?.role as string))
+    throw APIError.permissionDenied("Permission denied!");
+
+   return await next(req);
+  },
+ );
+}

@@ -1,10 +1,10 @@
 /** @format */
-import { eq, and, sum } from "drizzle-orm";
+import { and, eq, sum } from "drizzle-orm";
 
 import { db } from "../module/auth/db";
-import { product } from "../schema/product";
-import { merchant } from "../schema/merchant";
 import { cart, cartItem } from "../schema/cart";
+import { merchant } from "../schema/merchant";
+import { product } from "../schema/product";
 import { TCartAndItem, Transaction } from "./types";
 
 export async function fetchMerchantProductsFromDb(merchantId: string) {

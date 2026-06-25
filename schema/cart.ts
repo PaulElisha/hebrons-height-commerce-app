@@ -1,9 +1,9 @@
 /** @format */
 
-import { pgTable, text, integer, timestamp, index } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+
 import { user } from "./auth";
 import { product } from "./product";
-import { merchant } from "./merchant";
 
 export const cart = pgTable("cart", {
  id: text("id")

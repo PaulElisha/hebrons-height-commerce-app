@@ -1,8 +1,9 @@
 /** @format */
 import nodemailer, { type Transporter } from "nodemailer";
-import { TUser } from "../module/auth/routes.ts";
-import { MailerCallback, MailData } from "./types.ts";
+
 import { Env } from "../env.ts";
+import { TUser } from "../module/auth/routes.ts";
+import { MailData, MailerCallback } from "./types.ts";
 
 class Service<T extends Transporter> {
  protected transporter: T;

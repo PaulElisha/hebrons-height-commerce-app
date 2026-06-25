@@ -1,11 +1,10 @@
 /** @format */
 
-import { and, eq, isNotNull, sql, sum } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
-import { product } from "../../schema/product.ts";
 import { cartItem } from "../../schema/cart.ts";
-import type { Transaction } from "../../shared/types.ts";
 import * as helper from "../../shared/helper.ts";
+import type { Transaction } from "../../shared/types.ts";
 
 export const CartActions: Record<
  string,

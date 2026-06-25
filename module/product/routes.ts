@@ -1,24 +1,14 @@
 /** @format */
 
-import {
- and,
- count,
- desc,
- eq,
- ilike,
- isNotNull,
- ne,
- or,
- SQL,
-} from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
 import { api, Query } from "encore.dev/api";
 
 import { db } from "../../module/auth/db.ts";
 import { merchant } from "../../schema/merchant.ts";
 import { product } from "../../schema/product";
 import { getAuth } from "../../shared/get-auth.ts";
-import { AuthData, Response } from "../../shared/types.ts";
 import * as helper from "../../shared/helper.ts";
+import { AuthData, Response } from "../../shared/types.ts";
 
 interface CreateProductDto {
  name: string;
@@ -94,6 +84,7 @@ export const getMerchantProducts = api(
   auth: true,
   path: "/api/product/merchant",
   method: "GET",
+  tags: ["role:merchant"],
  },
  async (): Promise<Response<any>> => {
   const [authdata, error] = getAuth<AuthData>();
@@ -117,6 +108,7 @@ export const getSingleProduct = api(
   auth: true,
   path: "/api/product/:productId",
   method: "GET",
+  tags: ["public:view"],
  },
  async (req: GetASingleProductDto) => {
   const [productDetails] = await db
@@ -176,6 +168,7 @@ export const getProductsForMerchants = api(
   auth: true,
   path: "/api/product/merchant/:merchantId",
   method: "GET",
+  tags: ["public:view"],
  },
  async (req: GetMerchantProductDto): Promise<Response<any>> => {
   const result = await helper.fetchMerchantProductsFromDb(req.merchantId);
@@ -194,6 +187,7 @@ export const getLatestProducts = api(
   auth: false,
   path: "/api/product/latest",
   method: "GET",
+  tags: ["public:view"],
  },
  async (params: ProductSearchQueryPagination): Promise<Response<any>> => {
   const limit = Math.min(Math.max(params.pageSize ?? 10, 1), 50);
@@ -238,6 +232,7 @@ export const getProducts = api(
   auth: false,
   path: "/api/product",
   method: "GET",
+  tags: ["public:view"],
  },
  async (params: ProductSearchQueryParams): Promise<Response<any>> => {
   const limit = Math.min(Math.max(params?.pageSize ?? 10, 1), 50);
@@ -299,6 +294,7 @@ export const createProduct = api(
   auth: true,
   path: "/api/product",
   method: "POST",
+  tags: ["role:merchant"],
  },
  async (req: CreateProductDto): Promise<Response<TProduct>> => {
   const [authdata, error] = getAuth<AuthData>();
@@ -337,6 +333,7 @@ export const updateProduct = api(
   auth: true,
   path: "/api/product/:productId",
   method: "PUT",
+  tags: ["role:merchant"],
  },
  async (req: UpdateProductDto): Promise<Response<TProduct>> => {
   const [authdata, error] = getAuth<AuthData>();
@@ -382,6 +379,7 @@ export const deleteProduct = api(
   auth: true,
   path: "/api/product/:productId",
   method: "DELETE",
+  tags: ["role:merchant"],
  },
  async (req: DeleteProductDto): Promise<Response<any>> => {
   const [authdata, err] = getAuth<AuthData>();

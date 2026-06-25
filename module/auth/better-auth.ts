@@ -5,17 +5,15 @@ import { hash, type Options, verify } from "@node-rs/argon2";
 import { betterAuth } from "better-auth";
 import { secret } from "encore.dev/config";
 
-import { Mailer, Mail } from "../../shared/send-email.ts";
+import { Env } from "../../env.ts";
 import * as schema from "../../schema/auth.ts";
+import { template } from "../../shared/create-template.ts";
+import { Mail, Mailer } from "../../shared/send-email.ts";
 import { db } from "./db.ts";
 import { TUser } from "./routes.ts";
-import { template } from "../../shared/create-template.ts";
-import { Env } from "../../env.ts";
-
-const authSecret = secret("AuthSecret");
 
 export default betterAuth({
- secret: authSecret(),
+ secret: Env.AUTH_SECRET,
  basePath: "/auth",
  baseURL: Env.BASE_URL,
  database: drizzleAdapter(db, {

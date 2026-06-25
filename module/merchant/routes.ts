@@ -4,11 +4,11 @@ import { and, eq, isNotNull } from "drizzle-orm";
 import { api } from "encore.dev/api";
 
 import { db } from "../../module/auth/db.ts";
+import { TUser } from "../../module/auth/routes.ts";
 import { user } from "../../schema/auth.ts";
 import { merchant } from "../../schema/merchant.ts";
 import { getAuth } from "../../shared/get-auth.ts";
 import { AuthData, Response } from "../../shared/types.ts";
-import { TUser } from "../../module/auth/routes.ts";
 
 interface CreateMerchantDto {
  businessName: string;
@@ -46,6 +46,7 @@ export const getMerchantProfile = api(
   auth: true,
   path: "/api/merchant",
   method: "GET",
+  tags: ["role:merchant"],
  },
  async (): Promise<Response<UserAndMerchant>> => {
   const [authdata, error] = getAuth<AuthData>();
@@ -76,6 +77,7 @@ export const createMerchantProfile = api(
   auth: true,
   path: "/api/merchant",
   method: "POST",
+  tags: ["role:merchant"],
  },
  async (req: CreateMerchantDto): Promise<Response<TMerchant>> => {
   const [authdata, error] = getAuth<AuthData>()!;
@@ -107,6 +109,7 @@ export const updateMerchantProfile = api(
   auth: true,
   path: "/api/merchant/:merchantId",
   method: "PUT",
+  tags: ["role:merchant"],
  },
  async (req: UpdateMerchantDto): Promise<Response<TMerchant>> => {
   const [authdata, error] = getAuth<AuthData>();
@@ -151,6 +154,7 @@ export const deleteMerchantProfile = api(
   auth: true,
   path: "/api/merchant/:merchantId",
   method: "DELETE",
+  tags: ["role:admin"],
  },
  async (req: { merchantId: string }): Promise<Response<any>> => {
   const [authdata, error] = getAuth<AuthData>();

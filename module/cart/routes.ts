@@ -1,20 +1,13 @@
 /** @format */
 
-import { api } from "encore.dev/api";
 import { eq } from "drizzle-orm";
+import { api } from "encore.dev/api";
 
 import { db } from "../../module/auth/db.ts";
-import { modifyCart } from "./base.ts";
-import { CartActions } from "./dispatcher.ts";
-import type {
- AuthData,
- Response,
- TCartAndItem,
- TCartItem,
- Transaction,
-} from "../../shared/types.ts";
-import { getAuth } from "../../shared/get-auth.ts";
 import { cart, cartItem } from "../../schema/cart.ts";
+import { getAuth } from "../../shared/get-auth.ts";
+import type { AuthData, Response, TCartAndItem } from "../../shared/types.ts";
+import { modifyCart } from "./base.ts";
 
 interface CartParams {
  productId: string;
@@ -32,6 +25,7 @@ export const getUserCart = api(
   auth: true,
   path: "/api/cart",
   method: "GET",
+  tags: ["role:user"],
  },
  async (): Promise<Response<TCartAndItem>> => {
   const [authdata] = getAuth<AuthData>();
@@ -59,6 +53,7 @@ export const addToCart = api(
   auth: true,
   path: "/api/cart/:productId",
   method: "PUT",
+  tags: ["role:user"],
  },
  async (req: CartParams): Promise<Response<TCartAndItem>> => {
   const [authdata] = getAuth<AuthData>();
@@ -83,6 +78,7 @@ export const removeFromCart = api(
   auth: true,
   path: "/api/cart/:productId",
   method: "DELETE",
+  tags: ["role:user"],
  },
  async (req: CartParams): Promise<Response<TCartAndItem>> => {
   const [authdata] = getAuth<AuthData>();
@@ -107,6 +103,7 @@ export const incrementCartItem = api(
   auth: true,
   path: "/api/cart/:productId/increment",
   method: "PUT",
+  tags: ["role:user"],
  },
  async (req: CartParams): Promise<Response<TCartAndItem>> => {
   const [authdata] = getAuth<AuthData>();
@@ -131,6 +128,7 @@ export const decrementCartItem = api(
   auth: true,
   path: "/api/cart/:productId/decrement",
   method: "PUT",
+  tags: ["role:user"],
  },
  async (req: CartParams): Promise<Response<TCartAndItem>> => {
   const [authdata] = getAuth<AuthData>();

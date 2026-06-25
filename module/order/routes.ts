@@ -1,19 +1,22 @@
 /** @format */
 
+import { and, desc, eq, lt, ne, sql } from "drizzle-orm";
 import { api, Query } from "encore.dev/api";
-import { eq, and, or, SQL, desc, isNotNull, ne, lt, sql } from "drizzle-orm";
 import FA from "fasy";
 
 import { db } from "../../module/auth/db";
-import { cart, cartItem } from "../../schema/cart";
+import { order, orderItem } from "../../schema/order";
 import { getAuth } from "../../shared/get-auth";
-import { AuthData, Response, TOrder, TOrderItem } from "../../shared/types";
-import { order, orderItem, paymentStatuses } from "../../schema/order";
-import * as CartAPI from "../cart/routes";
-import { TCartAndItem, TCartItem } from "../../shared/types";
-import { TOrderAndItem } from "../../shared/types";
 import * as helper from "../../shared/helper";
-import { index } from "drizzle-orm/gel-core";
+import {
+ AuthData,
+ Response,
+ TCartAndItem,
+ TCartItem,
+ TOrder,
+ TOrderAndItem,
+} from "../../shared/types";
+import * as CartAPI from "../cart/routes";
 
 interface CreateOrderDto {
  deliveryAddress: Record<string, string>;
@@ -231,7 +234,7 @@ export const clearPendingOrders = api(
    .delete(order)
    .where(
     and(
-     lt(order.createdAt, sql`now() - interval '1 month'`),
+     lt(order.createdAt, sql`now() - interval '1 day'`),
      eq(order.orderStatus, "pending"),
      eq(orderItem.orderId, order.id),
     ),

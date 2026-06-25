@@ -4,7 +4,6 @@ import { toNodeHandler } from "better-auth/node";
 import { api } from "encore.dev/api";
 
 import betterAuth from "./better-auth.ts";
-import { UserRole } from "../../schema/auth.ts";
 
 export interface TUser {
  name: string;

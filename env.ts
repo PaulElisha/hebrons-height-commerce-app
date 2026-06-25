@@ -26,6 +26,11 @@ const EnvSchema = z.object({
   .default("production"),
  APP_STAGE: z.enum(["dev", "test", "prod"]).default("dev"),
 
+ AUTH_SECRET: z.string(),
+
+ DB_URL: z.string(),
+ DB_PASS: z.string(),
+
  SALT: z.coerce.number().min(10),
 
  CORS_ORIGIN: z.string(),

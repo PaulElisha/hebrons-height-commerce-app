@@ -1,7 +1,7 @@
 /** @format */
-import { type APIError } from "encore.dev/api";
-import { db } from "../module/auth/db.ts";
 import Mail from "nodemailer/lib/mailer";
+
+import { db } from "../module/auth/db.ts";
 
 export interface AuthData {
  userID: string;

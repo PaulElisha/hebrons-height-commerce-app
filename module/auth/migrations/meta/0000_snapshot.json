@@ -1,5 +1,5 @@
 {
-  "id": "763639aa-e3f3-407c-abb9-7c6eadaa70f5",
+  "id": "ac812f1b-0321-41ed-aae5-74dfafe5d67d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -354,7 +354,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -528,6 +528,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "merchant_id": {
+          "name": "merchant_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "product_id": {
           "name": "product_id",
           "type": "text",
@@ -561,6 +567,19 @@
           "tableTo": "orders",
           "columnsFrom": [
             "order_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "orderItem_merchant_id_merchant_id_fk": {
+          "name": "orderItem_merchant_id_merchant_id_fk",
+          "tableFrom": "orderItem",
+          "tableTo": "merchant",
+          "columnsFrom": [
+            "merchant_id"
           ],
           "columnsTo": [
             "id"

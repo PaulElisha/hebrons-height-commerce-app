@@ -2,20 +2,19 @@
 
 import { sql } from "drizzle-orm";
 import {
+ check,
+ index,
  integer,
  jsonb,
  pgTable,
- timestamp,
  text,
- check,
- varchar,
- index,
+ timestamp,
 } from "drizzle-orm/pg-core";
 
-import { product } from "./product";
-import { merchant } from "./merchant";
 import { user } from "./auth";
 import { cart } from "./cart";
+import { merchant } from "./merchant";
+import { product } from "./product";
 
 export const orderStatuses: readonly [
  string,
@@ -93,24 +92,20 @@ export const order = pgTable(
  ],
 );
 
-export const orderItem = pgTable(
- "orderItem",
- {
-  id: text("id")
-   .primaryKey()
-   .$defaultFn(() => crypto.randomUUID()),
-  orderId: text("order_id")
-   .notNull()
-   .references(() => order.id),
-  merchantId: text("merchant_id")
-   .notNull()
-   .references(() => merchant.id),
-  productId: text("product_id")
-   .notNull()
-   .references(() => product.id),
-  quantity: integer("quantity").notNull(),
-  unitPrice: integer("unit_price").notNull(),
-  lineTotal: integer("line_total"),
- },
- (t) => [index("cartMealUnq").on(t.orderId, t.merchantId)],
-);
+export const orderItem = pgTable("orderItem", {
+ id: text("id")
+  .primaryKey()
+  .$defaultFn(() => crypto.randomUUID()),
+ orderId: text("order_id")
+  .notNull()
+  .references(() => order.id),
+ merchantId: text("merchant_id")
+  .notNull()
+  .references(() => merchant.id),
+ productId: text("product_id")
+  .notNull()
+  .references(() => product.id),
+ quantity: integer("quantity").notNull(),
+ unitPrice: integer("unit_price").notNull(),
+ lineTotal: integer("line_total"),
+});
