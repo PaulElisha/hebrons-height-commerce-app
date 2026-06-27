@@ -1,0 +1,52 @@
+{
+  "name": "hhg-commerce-app",
+  "version": "1.0.0",
+  "description": "A TypeScript project",
+  "main": "dist/app.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "tsx --watch app.ts",
+    "git": "git add . && git commit -m \"${npm_config_m:-auto commit $(date)}\" && git push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "keywords": [],
+  "author": "paul elisha",
+  "license": "MIT",
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.5",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/express-rate-limit": "^5.1.3",
+    "@types/helmet": "^0.0.48",
+    "@types/nodemailer": "^8.0.1",
+    "@types/pg": "^8.20.0",
+    "bcrypt": "^6.0.0",
+    "custom-env": "^2.0.6",
+    "drizzle-kit": "^0.31.10",
+    "ts-node": "^10.0.0",
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.6.22",
+    "@epic-web/remember": "^1.1.0",
+    "better-auth": "^1.6.22",
+    "cors": "^2.8.6",
+    "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "fasy": "^9.0.2",
+    "helmet": "^8.2.0",
+    "jose": "^6.2.3",
+    "nodemailer": "^9.0.1",
+    "pg": "^8.22.0",
+    "zod": "^4.4.3"
+  }
+}

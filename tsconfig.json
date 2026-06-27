@@ -1,0 +1,74 @@
+{
+  "extends": "@tsconfig/node22/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Nodenext",
+    "moduleResolution": "Nodenext",
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
+    "paths": {
+      "@*": [
+        ".*"
+      ],
+      "@shared/*": [
+        "./src/shared/*"
+      ],
+      "@app/*": [
+        "./src/config/app/*"
+      ],
+      "@db/*": [
+        "./src/config/db/*"
+      ],
+      "@error/*": [
+        "./src/shared/error/*"
+      ],
+      "@module/*": [
+        "./src/module/*"
+      ],
+      "@middleware/*": [
+        "./src/shared/middleware/*"
+      ],
+      "@enum/*": [
+        "./src/shared/enum/*"
+      ],
+      "@util/*": [
+        "./src/shared/util/*"
+      ],
+      "@schema/*": [
+        "./src/schema/*"
+      ],
+      "@template/*": [
+        "./src/shared/template/*"
+      ],
+    },
+    "outDir": "./dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "strict": true,
+    "noEmit": true,
+    "composite": true,
+    "declaration": true,
+    "sourceMap": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src/**/*",
+    "env.ts",
+    "app.ts",
+    "drizzle.config.ts",
+    "fasy.d.ts",
+    "custom-env.d.ts",
+    "src/schema/auth.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

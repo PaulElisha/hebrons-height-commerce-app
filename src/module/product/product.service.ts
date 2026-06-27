@@ -1,0 +1,208 @@
+/** @format */
+import db from "@db/db.ts";
+import { merchant } from "@schema/merchant.ts";
+import { product } from "@schema/product.ts";
+import * as helper from "@shared/helper.ts";
+import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
+
+class ProductService {
+ getMerchantProducts = async (userId: string) => {
+  const merchantId = await helper.getMerchantIdFromUser(userId);
+  const data = await helper.fetchMerchantProductsFromDb(merchantId);
+  return data;
+ };
+
+ getSingleProduct = async (productId: string) => {
+  const [productDetails] = await db
+   .select()
+   .from(product)
+   .where(eq(product.id, productId))
+   .limit(1);
+
+  return productDetails;
+ };
+
+ getProductForMerchant = async (merchantId: string) => {
+  const data = await helper.fetchMerchantProductsFromDb(merchantId);
+
+  return data;
+ };
+
+ getLatestProducts = async (pagination: {
+  pageSize?: number;
+  pageNumber?: number;
+ }) => {
+  const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
+  const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
+  const offset = (pageNumber - 1) * limit;
+
+  const latestProducts = await db
+   .select()
+   .from(product)
+   .leftJoin(merchant, eq(product.merchantId, merchant.id))
+   .where(eq(product.status, "available"))
+   .limit(limit)
+   .offset(offset)
+   .orderBy(desc(product.createdAt));
+
+  const flattenedProducts =
+   latestProducts?.map(({ product: p, merchant: m }) => ({
+    ...p,
+    merchant: m
+     ? {
+        id: m?.id,
+        businessName: m?.businessName,
+        businessLogo: m?.businessLogo,
+        status: m?.approvalStatus,
+       }
+     : null,
+   })) || [];
+
+  return flattenedProducts;
+ };
+
+ getProducts = async (
+  filter: {
+   search?: string;
+   category?: string;
+  },
+  pagination: {
+   pageSize?: number;
+   pageNumber?: number;
+  },
+ ) => {
+  const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
+  const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
+  const offset = (pageNumber - 1) * limit;
+
+  const filters: SQL[] = [eq(product?.status, "available")];
+
+  if (filter?.search) {
+   filters?.push(
+    or(
+     ilike(product?.name, `%${filter?.search}%`),
+     ilike(product?.description, `%${filter?.search}%`),
+    )!,
+   );
+  }
+
+  if (filter?.category) {
+   filters?.push(eq(product?.category, filter?.category));
+  }
+
+  const result = await db
+   .select()
+   .from(product)
+   .leftJoin(merchant, eq(product.merchantId, merchant.id))
+   .where(and(...filters))
+   .limit(limit)
+   .offset(offset)
+   .orderBy(desc(product.createdAt));
+
+  const [totalCountResult] = await db
+   .select({ totalCount: count() })
+   .from(product)
+   .where(and(...filters, isNotNull(product.id)));
+
+  const totalProducts = Number(totalCountResult?.totalCount);
+  const totalPages = Math.ceil(totalProducts / limit);
+
+  return {
+   data: {
+    products: result?.map((p) => p.product),
+    pagination: {
+     limit,
+     pageNumber,
+     totalProducts,
+     totalPages,
+     offset,
+    },
+   },
+  };
+ };
+
+ createProduct = async (
+  userId: string,
+  body: {
+   name: string;
+   description: string;
+   image: string;
+   price: number;
+   quantity: number;
+   category: string;
+   subCategory: string;
+   additionalData: Record<string, string>;
+  },
+ ) => {
+  const targetMerchantId = await helper.getMerchantIdFromUser(userId);
+
+  const [newProduct] = await db
+   .insert(product)
+   .values({
+    merchantId: targetMerchantId,
+    name: body.name,
+    description: body.description,
+    image: body.image,
+    price: body.price,
+    quantity: body.quantity,
+    category: body.category,
+    subCategory: body.subCategory,
+    additionalData: body.additionalData,
+   })
+   .onConflictDoNothing()
+   .returning();
+
+  return newProduct;
+ };
+
+ updateProduct = async (
+  userId: string,
+  productId: string,
+  body: {
+   name: string;
+   description: string;
+   image: string;
+   price: number;
+   quantity: number;
+   category: string;
+   subCategory: string;
+   additionalData: string;
+  },
+ ) => {
+  const targetMerchantId = await helper.getMerchantIdFromUser(userId);
+
+  const updateData: { [k: string]: any } = {};
+
+  updateData.name = body.name && body.name;
+  updateData.description = body.description ?? body.description;
+  updateData.image = body.image && body.image;
+  updateData.price = body.price && body.price;
+  updateData.quantity = body.quantity && body.quantity;
+  updateData.category = body.category && body.category;
+  updateData.subCategory = body.subCategory && body.subCategory;
+  updateData.additionalData = body.additionalData && body.additionalData;
+  updateData.updatedAt = new Date();
+
+  const [updatedProduct] = await db
+   .update(product)
+   .set(updateData)
+   .where(
+    and(eq(product.id, productId), eq(product.merchantId, targetMerchantId)),
+   )
+   .returning();
+
+  return updatedProduct;
+ };
+
+ deleteProduct = async (userId: string, productId: string) => {
+  const targetMerchantId = await helper.getMerchantIdFromUser(userId);
+
+  await db
+   .delete(product)
+   .where(
+    and(eq(product.merchantId, targetMerchantId), eq(product.id, productId)),
+   );
+ };
+}
+
+export default new ProductService();
