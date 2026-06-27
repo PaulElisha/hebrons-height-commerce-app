@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "encore-local": {
+            "args": [
+                "mcp",
+                "run",
+                "--app=hgg-backend-exs2"
+            ],
+            "command": "encore"
+        }
+    }
+}
