@@ -3,7 +3,7 @@
 import OrderController from "@module/order/order.controller.ts";
 import { Router } from "express";
 
-class CartRouter {
+class OrderRouter {
  router: Router;
  constructor() {
   this.router = Router();
@@ -19,5 +19,5 @@ class CartRouter {
  }
 }
 
-const cartRouter = new CartRouter().router;
-export default cartRouter;
+const orderRouter = new OrderRouter().router;
+export default orderRouter;

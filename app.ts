@@ -8,6 +8,7 @@ import errorHandler from "@middleware/error-handler.ts";
 import cartRouter from "@module/cart/cart.route.ts";
 import merchantRouter from "@module/merchant/merchant.route.ts";
 import productRouter from "@module/product/product.route.ts";
+import orderRouter from "@module/order/order.route.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import express, { Express } from "express";
 
@@ -40,6 +41,7 @@ class App {
   this.app.use("/api/merchant", merchantRouter);
   this.app.use("/api/product", productRouter);
   this.app.use("/api/cart", cartRouter);
+  this.app.use("/api/order", orderRouter);
 
   this.app.use(errorHandler);
  }
@@ -49,7 +51,6 @@ class App {
    console.log(`Server is running on ${Env.HOST}:${Env.PORT}`);
   });
  };
- // this.app.use("/api/order");
 }
 
 const appInstance = new App();
