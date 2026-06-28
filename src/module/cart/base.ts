@@ -12,8 +12,13 @@ import * as helper from "@shared/helper.ts";
 import { Result, type Transaction } from "@shared/types.ts";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 
-import { Intent } from "./cart.service.ts";
 import CartActions from "./dispatcher.ts";
+
+interface Intent {
+ userId: string;
+ productId: string;
+ intent: string;
+}
 
 class CartBase {
  calculateTotalAmount =

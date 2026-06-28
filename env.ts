@@ -26,6 +26,7 @@ const EnvSchema = z.object({
   .default("production"),
  APP_STAGE: z.enum(["dev", "test", "prod"]).default("dev"),
 
+ DB_PASS: z.string(),
  DB_URL: z.string(),
  BASE_URL: z.string(),
 

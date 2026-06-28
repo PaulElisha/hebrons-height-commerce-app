@@ -3,7 +3,31 @@ import db from "@db/db.ts";
 import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
 import * as helper from "@shared/helper.ts";
+import { Pagination } from "@shared/types.ts";
 import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
+// import { TProduct } from "./product.controller.ts";
+
+interface CreateProductDto {
+ name: string;
+ description: string;
+ image: string;
+ price: number;
+ quantity: number;
+ category: string;
+ subCategory: string;
+ additionalData: Record<string, string>;
+}
+
+interface UpdateProductDto {
+ name: string;
+ description: string;
+ image: string;
+ price: number;
+ quantity: number;
+ category: string;
+ subCategory: string;
+ additionalData: string;
+}
 
 class ProductService {
  getMerchantProducts = async (userId: string) => {
@@ -28,10 +52,7 @@ class ProductService {
   return data;
  };
 
- getLatestProducts = async (pagination: {
-  pageSize?: number;
-  pageNumber?: number;
- }) => {
+ getLatestProducts = async (pagination: Pagination) => {
   const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
   const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
   const offset = (pageNumber - 1) * limit;
@@ -66,10 +87,7 @@ class ProductService {
    search?: string;
    category?: string;
   },
-  pagination: {
-   pageSize?: number;
-   pageNumber?: number;
-  },
+  pagination: Pagination,
  ) => {
   const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
   const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
@@ -121,19 +139,7 @@ class ProductService {
   };
  };
 
- createProduct = async (
-  userId: string,
-  body: {
-   name: string;
-   description: string;
-   image: string;
-   price: number;
-   quantity: number;
-   category: string;
-   subCategory: string;
-   additionalData: Record<string, string>;
-  },
- ) => {
+ createProduct = async (userId: string, body: CreateProductDto) => {
   const targetMerchantId = await helper.getMerchantIdFromUser(userId);
 
   const [newProduct] = await db
@@ -158,16 +164,7 @@ class ProductService {
  updateProduct = async (
   userId: string,
   productId: string,
-  body: {
-   name: string;
-   description: string;
-   image: string;
-   price: number;
-   quantity: number;
-   category: string;
-   subCategory: string;
-   additionalData: string;
-  },
+  body: UpdateProductDto,
  ) => {
   const targetMerchantId = await helper.getMerchantIdFromUser(userId);
 

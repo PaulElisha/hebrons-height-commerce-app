@@ -4,18 +4,17 @@ import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import { NextFunction, Request, Response } from "express";
 
-import {
- createMerchantProfile,
- deleteMerchantProfile,
- getMerchantProfile,
- updateMerchantProfile,
-} from "./merchant.service.ts";
+import MerchantService from "./merchant.service.ts";
+
+export interface MerchantParams {
+ merchantId?: string;
+}
 
 class MerchantController {
  getMerchantProfile = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
    const userId = req.user.id;
-   const data = await getMerchantProfile(userId);
+   const data = await MerchantService.getMerchantProfile(userId);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -30,7 +29,7 @@ class MerchantController {
    const userId = req.user.id;
    const body = req.body;
 
-   const data = await createMerchantProfile(userId, body);
+   const data = await MerchantService.createMerchantProfile(userId, body);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -42,15 +41,19 @@ class MerchantController {
 
  updateMerchantProfile = asyncHandler(
   async (
-   req: Request<{ merchantId: string }>,
+   req: Request<MerchantParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = req.params.merchantId;
+   const merchantId = req.params.merchantId as string;
    const body = req.body;
 
-   const data = await updateMerchantProfile(userId, merchantId, body);
+   const data = await MerchantService.updateMerchantProfile(
+    userId,
+    merchantId,
+    body,
+   );
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -62,14 +65,14 @@ class MerchantController {
 
  deleteMerchantProfile = asyncHandler(
   async (
-   req: Request<{ merchantId: string }>,
+   req: Request<MerchantParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = req.params.merchantId;
+   const merchantId = req.params.merchantId as string;
 
-   await deleteMerchantProfile(userId, merchantId);
+   await MerchantService.deleteMerchantProfile(userId, merchantId);
 
    return res.status(HttpStatus.NO_CONTENT).json({
     status: "ok",

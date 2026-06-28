@@ -8,13 +8,6 @@ export type HttpStatusCodeType = (typeof HttpStatus)[keyof typeof HttpStatus];
 
 export type ErrorCodeType = (typeof ErrorCode)[keyof typeof ErrorCode];
 
-export interface AuthData {
- userID: string;
- email: string;
- name: string;
- role: string;
-}
-
 export interface APIResponse<T> {
  status: "ok";
  message?: string;
@@ -35,6 +28,11 @@ export interface MailData<U> {
 }
 
 export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export interface Pagination {
+ pageSize?: number;
+ pageNumber?: number;
+}
 
 export interface TCart {
  id: string;

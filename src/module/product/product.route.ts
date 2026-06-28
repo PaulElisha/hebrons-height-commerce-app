@@ -3,6 +3,7 @@
 import { Router } from "express";
 
 import ProductController from "./product.controller.ts";
+import authenticate from "@shared/middleware/authenticate.ts";
 
 class ProductRouter {
  router: Router;
@@ -12,14 +13,30 @@ class ProductRouter {
  }
 
  initializeRoutes() {
-  this.router.get("/merchant", ProductController.getMerchantProduct);
-  this.router.get("/:productId", ProductController.getSingleProduct);
-  this.router.get("/:merchantId", ProductController.getProductForMerchant);
   this.router.get("/latest", ProductController.getLatestProducts);
   this.router.get("/", ProductController.getProducts);
-  this.router.post("/", ProductController.createProduct);
-  this.router.put("/update", ProductController.updateProduct);
-  this.router.delete("/", ProductController.deleteProduct);
+  this.router.get(
+   "/merchant",
+   authenticate,
+   ProductController.getMerchantProduct,
+  );
+  this.router.get(
+   "/:productId",
+   authenticate,
+   ProductController.getSingleProduct,
+  );
+  this.router.get(
+   "/:merchantId/merchant",
+   authenticate,
+   ProductController.getProductForMerchant,
+  );
+  this.router.post("/", authenticate, ProductController.createProduct);
+  this.router.put("/:productId", authenticate, ProductController.updateProduct);
+  this.router.delete(
+   "/:productId",
+   authenticate,
+   ProductController.deleteProduct,
+  );
  }
 }
 

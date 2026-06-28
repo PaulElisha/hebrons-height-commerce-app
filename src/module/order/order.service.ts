@@ -4,25 +4,23 @@ import db from "@db/db.ts";
 import CartService from "@module/cart/cart.service.ts";
 import { order, orderItem } from "@schema/order.ts";
 import * as helper from "@shared/helper.ts";
-import { TCartItem } from "@shared/types.ts";
+import { Pagination, TCartItem } from "@shared/types.ts";
 import { and, desc, eq, lt, ne, sql } from "drizzle-orm";
 import FA from "fasy";
 
+interface CreateOrderDto {
+ deliveryAddress: Record<string, string>;
+}
+
 class OrderService {
- placeOrder = async (
-  userId: string,
-  cartId: string,
-  body: {
-   deliveryAddress: Record<string, string>;
-  },
- ) => {
+ placeOrder = async (userId: string, cartId: string, body: CreateOrderDto) => {
   const data = await CartService.getUserCart(userId);
   const [newOrder] = await db
    .insert(order)
    .values({
     userId,
     cartId,
-    subtotal: data.data?.cart?.subtotal as number,
+    subtotal: data?.usercart?.subtotal as number,
     deliveryAddress: {
      label: "home",
      address: body.deliveryAddress.address,
@@ -46,7 +44,7 @@ class OrderService {
     unitPrice: v.price,
     lineTotal: v.quantity * v.price,
    };
-  }, data?.data?.cart_items || []);
+  }, data?.cart_items || []);
 
   if (itemsToInsert.length > 0) {
    await db.insert(orderItem).values(itemsToInsert);
@@ -84,13 +82,7 @@ class OrderService {
   };
  };
 
- getMerchantOrders = async (
-  userId: string,
-  pagination: {
-   pageSize?: number;
-   pageNumber?: number;
-  },
- ) => {
+ getMerchantOrders = async (userId: string, pagination: Pagination) => {
   const merchantId = await helper.getMerchantIdFromUser(userId);
 
   const limit = Math.min(Math.max(pagination.pageSize ?? 10, 1), 50);
@@ -134,12 +126,16 @@ class OrderService {
  };
 
  cancelOrder = async (orderId: string) => {
-  await db
+  const cancelledOrder = await db
    .update(order)
    .set({
     orderStatus: "cancelled",
+    paymentStatus: "cancelled",
    })
-   .where(and(eq(order.id, orderId), ne(order.paymentStatus, "paid")));
+   .where(and(eq(order.id, orderId), ne(order.paymentStatus, "paid")))
+   .returning();
+
+  return cancelledOrder;
  };
 }
 

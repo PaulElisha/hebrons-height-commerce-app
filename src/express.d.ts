@@ -1,11 +1,14 @@
 /** @format */
 
-import { JwtPayload } from "@util/jwt.js";
+import { auth } from "@auth/auth.ts";
+
+type Session = typeof auth.$Infer.Session;
 
 declare global {
  namespace Express {
   interface Request {
-   user: JwtPayload;
+   user: Session["user"];
+   session: Session["session"];
   }
  }
 }

@@ -5,80 +5,82 @@ import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
 import { and, eq, isNotNull } from "drizzle-orm";
 
-export const getMerchantProfile = async (userId: string) => {
- const [merchantProfile] = await db
-  .select()
-  .from(merchant)
-  .innerJoin(user, eq(merchant?.userId, userId))
-  .where(and(eq(merchant?.userId, userId), isNotNull(merchant?.id)))
-  .limit(1);
+interface CreateMerchantDto {
+ businessName: string;
+ businessLogo: string;
+ businessDescription: string;
+ address: string;
+}
 
- return merchantProfile;
-};
+interface UpdateMerchantDto {
+ businessName?: string;
+ businessLogo?: string;
+ businessDescription?: string;
+ address?: string;
+}
 
-export const createMerchantProfile = async (
- userId: string,
- body: {
-  businessName: string;
-  businessLogo: string;
-  businessDescription: string;
-  address: string;
- },
-) => {
- const [newMerchant] = await db
-  .insert(merchant)
-  .values({
-   userId,
-   businessName: body.businessName,
-   businessLogo: body.businessLogo,
-   businessDescription: body.businessDescription,
-   address: body.address,
-  })
-  .onConflictDoNothing()
-  .returning();
+class MerchantService {
+ getMerchantProfile = async (userId: string) => {
+  const [merchantProfile] = await db
+   .select()
+   .from(merchant)
+   .innerJoin(user, eq(merchant?.userId, userId))
+   .where(and(eq(merchant?.userId, userId), isNotNull(merchant?.id)))
+   .limit(1);
 
- return newMerchant;
-};
+  return merchantProfile;
+ };
 
-export const updateMerchantProfile = async (
- userId: string,
- merchantId: string,
- body: {
-  businessName: string;
-  businessLogo: string;
-  businessDescription: string;
-  address: string;
- },
-) => {
- const updateData: { [k: string]: any } = {};
+ createMerchantProfile = async (userId: string, body: CreateMerchantDto) => {
+  const [newMerchant] = await db
+   .insert(merchant)
+   .values({
+    userId: userId,
+    businessName: body.businessName,
+    businessLogo: body.businessLogo,
+    businessDescription: body.businessDescription,
+    address: body.address,
+   })
+   .onConflictDoNothing()
+   .returning();
 
- updateData.businessName = body.businessName && body.businessName;
- updateData.businessDescription =
-  body.businessDescription && body.businessDescription;
- updateData.businessLogo = body.businessLogo && body.businessLogo;
- updateData.address = body.address && body.address;
- updateData.updatedAt = new Date();
+  return newMerchant;
+ };
 
- const [updatedMerchant] = await db
-  .update(merchant)
-  .set(updateData)
-  .where(
-   and(
-    eq(merchant.userId, userId),
-    eq(merchant.id, merchantId),
-    isNotNull(merchant.id),
-   ),
-  )
-  .returning();
+ updateMerchantProfile = async (
+  userId: string,
+  merchantId: string,
+  body: UpdateMerchantDto,
+ ) => {
+  const updateData: { [k: string]: any } = {};
 
- return updatedMerchant;
-};
+  updateData.businessName = body.businessName && body.businessName;
+  updateData.businessDescription =
+   body.businessDescription && body.businessDescription;
+  updateData.businessLogo = body.businessLogo && body.businessLogo;
+  updateData.address = body.address && body.address;
+  updateData.updatedAt = new Date();
 
-export const deleteMerchantProfile = async (
- userId: string,
- merchantId: string,
-) => {
- await db
-  .delete(merchant)
-  .where(and(eq(merchant.userId, userId), eq(merchant.id, merchantId)));
-};
+  const [updatedMerchant] = await db
+   .update(merchant)
+   .set(updateData)
+   .where(
+    and(
+     eq(merchant.userId, userId),
+     eq(merchant.id, merchantId),
+     isNotNull(merchant.id),
+    ),
+   )
+   .returning();
+
+  return updatedMerchant;
+ };
+
+ deleteMerchantProfile = async (userId: string, merchantId: string) => {
+  await db
+   .delete(merchant)
+   .where(and(eq(merchant.userId, userId), eq(merchant.id, merchantId)));
+ };
+}
+
+export default new MerchantService();

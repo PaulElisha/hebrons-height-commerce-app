@@ -3,12 +3,23 @@
 import { Router } from "express";
 
 import MerchantController from "./merchant.controller.ts";
+import authenticate from "@middleware/authenticate.ts";
 
-const merchantRouter = Router();
+class MerchantRouter {
+ router: Router;
+ constructor() {
+  this.router = Router();
+  this.router.use(authenticate);
+  this.initializeRoutes();
+ }
 
-merchantRouter.get("/profile", MerchantController.getMerchantProfile);
-merchantRouter.post("/", MerchantController.createMerchantProfile);
-merchantRouter.put("/:merchantId", MerchantController.updateMerchantProfile);
-merchantRouter.delete("/:merchantId", MerchantController.deleteMerchantProfile);
+ initializeRoutes() {
+  this.router.get("/profile", MerchantController.getMerchantProfile);
+  this.router.post("/", MerchantController.createMerchantProfile);
+  this.router.put("/:merchantId", MerchantController.updateMerchantProfile);
+  this.router.delete("/:merchantId", MerchantController.deleteMerchantProfile);
+ }
+}
 
+const merchantRouter = new MerchantRouter().router;
 export default merchantRouter;

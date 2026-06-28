@@ -6,11 +6,9 @@ import { eq } from "drizzle-orm";
 
 import CartBase from "./base.ts";
 
-export interface Intent {
- userId: string;
- productId: string;
- intent: string;
-}
+// interface CartParams {
+//  productId: string;
+// }
 
 class CartService {
  addToCart = async (userId: string, productId: string) => {
@@ -61,10 +59,8 @@ class CartService {
    .where(eq(cart.userId, userId));
 
   return {
-   data: {
-    cart: result[0].cart,
-    cart_items: result.filter((r) => r.cart_items).map((r) => r.cart_items),
-   },
+   usercart: result[0].cart,
+   cart_items: result.filter((r) => r.cart_items).map((r) => r.cart_items),
   };
  };
 }

@@ -11,7 +11,7 @@ export type AsyncHandler<
  req: Request<P, ResBody, ReqBody, ReqQuery>,
  res: Response,
  next: NextFunction,
-) => Promise<void>;
+) => Promise<any>;
 
 const asyncHandler =
  <P = any, ResBody = any, ReqBody = any, ReqQuery = any>(

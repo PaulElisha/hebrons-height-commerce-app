@@ -2,9 +2,15 @@
 
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 
 import ProductService from "./product.service.ts";
+import { Pagination } from "@shared/types.ts";
+import { MerchantParams } from "@module/merchant/merchant.controller.ts";
+
+export interface ProductParams {
+ productId?: string;
+}
 
 class ProductController {
  getMerchantProduct = asyncHandler(
@@ -22,11 +28,11 @@ class ProductController {
 
  getSingleProduct = asyncHandler(
   async (
-   req: Request<{ productId: string }>,
+   req: Request<ProductParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
-   const productId = req.params.productId;
+   const productId = req.params.productId as string;
    const data = await ProductService.getSingleProduct(productId);
 
    return res.status(HttpStatus.OK).json({
@@ -38,12 +44,8 @@ class ProductController {
  );
 
  getProductForMerchant = asyncHandler(
-  async (
-   req: Request<{ merchantId: string }>,
-   res: Response,
-   next: NextFunction,
-  ) => {
-   const merchantId = req.params.merchantId;
+  async (req: Request<MerchantParams>, res: Response, next: NextFunction) => {
+   const merchantId = req.params.merchantId as string;
 
    const data = await ProductService.getProductForMerchant(merchantId);
 
@@ -57,7 +59,7 @@ class ProductController {
 
  getLatestProducts = asyncHandler(
   async (
-   req: Request<{ pageSize: string; pageNumber: string }>,
+   req: Request<{}, {}, {}, Pagination>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
@@ -80,7 +82,19 @@ class ProductController {
  );
 
  getProducts = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  async (
+   req: Request<
+    {},
+    {},
+    {},
+    Pagination & {
+     search?: string;
+     category?: string;
+    }
+   >,
+   res: Response,
+   next: NextFunction,
+  ): Promise<any> => {
    const pageSizeValue = Number(req.query.pageSize);
    const pageNumberValue = Number(req.query.pageNumber);
 
@@ -90,8 +104,8 @@ class ProductController {
    };
 
    const filters = {
-    search: req.query.search as string,
-    category: req.query.category as string,
+    search: req.query.search,
+    category: req.query.category,
    };
 
    const data = await ProductService.getProducts(filters, pagination);
@@ -121,12 +135,12 @@ class ProductController {
 
  updateProduct = asyncHandler(
   async (
-   req: Request<{ productId: string }>,
+   req: Request<ProductParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = req.params.productId as string;
    const body = req.body;
 
    const data = await ProductService.updateProduct(userId, productId, body);
@@ -141,12 +155,12 @@ class ProductController {
 
  deleteProduct = asyncHandler(
   async (
-   req: Request<{ productId: string }>,
+   req: Request<ProductParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = req.params.productId as string;
 
    await ProductService.deleteProduct(userId, productId);
    return res.status(HttpStatus.NO_CONTENT).json({

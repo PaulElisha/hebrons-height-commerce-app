@@ -1,40 +1,44 @@
 /** @format */
 
-import Env from "@/env.ts";
-import cors from "@app/cors.ts";
-import helmet from "@app/helmet.ts";
-import limiter from "@app/limiter.ts";
-import errorHandler from "@middleware/error-handler.ts";
-import cartRouter from "@module/cart/cart.route.ts";
-import merchantRouter from "@module/merchant/merchant.route.ts";
-import productRouter from "@module/product/product.route.ts";
-import orderRouter from "@module/order/order.route.ts";
-import HttpStatus from "@shared/enum/http.ts";
+import Env from "./env";
+import cors from "./src/config/app/cors";
+import helmet from "./src/config/app/helmet";
+import limiter from "./src/config/app/limiter";
+import errorHandler from "./src/shared/middleware/error-handler";
+import cartRouter from "./src/module/cart/cart.route";
+import merchantRouter from "./src/module/merchant/merchant.route";
+import productRouter from "./src/module/product/product.route";
+import orderRouter from "./src/module/order/order.route";
+import HttpStatus from "./src/shared/enum/http";
 import express, { Express } from "express";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./src/config/auth/auth";
 
 class App {
  app: Express;
  constructor() {
   this.app = express();
+  this.app.disable("x-powered-by");
+  this.app.set("trust proxy", 1);
+  this.initializeMiddleware();
  }
 
  initializeMiddleware() {
-  this.app.disable("x-powered-by");
-  this.app.set("trust proxy", 1);
-
   this.app.use(cors);
   this.app.use(limiter);
   this.app.use(helmet);
+  this.initializeAuthRoute();
   this.app.use(express.json());
   this.app.use(express.urlencoded({ extended: true }));
+  this.initializeRoutes();
  }
 
- // this.app.get("/", (req: Request, res: Response) => {
- //  return res.status(HttpStatus.OK).json("Welcome to the HHG commerce this.app");
- // });
+ initializeAuthRoute() {
+  this.app.all("/api/auth/*splat", toNodeHandler(auth));
+ }
 
  initializeRoutes() {
-  this.app.get("/", (_req, res) => {
+  this.app.get("/health", (_req, res) => {
    res.status(HttpStatus.OK).send("Welcome to Hebrons Height Commerce APP");
   });
 
@@ -48,7 +52,7 @@ class App {
 
  startServer = async () => {
   this.app.listen(Env.PORT, () => {
-   console.log(`Server is running on ${Env.HOST}:${Env.PORT}`);
+   console.log(`Server is running on ${Env.BASE_URL}`);
   });
  };
 }

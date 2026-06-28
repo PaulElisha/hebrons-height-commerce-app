@@ -2,22 +2,23 @@
 import HttpStatus from "@enum/http.ts";
 import asyncHandler from "@middleware/async-handler.ts";
 import CartService from "@module/cart/cart.service.ts";
+import { ProductParams } from "@module/product/product.controller.ts";
 import { APIResponse, TCartAndItem } from "@shared/types.ts";
 import type { NextFunction, Request, Response } from "express";
 
-interface CartParams {
- productId: string;
+export interface CartParams {
+ cartId?: string;
 }
 
 class CartController {
  addToCart = asyncHandler(
   async (
-   req: Request<CartParams>,
+   req: Request<ProductParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = req.params.productId as string;
 
    const data = await CartService.addToCart(userId, productId);
 
@@ -31,12 +32,12 @@ class CartController {
 
  removeFromCart = asyncHandler(
   async (
-   req: Request<CartParams>,
+   req: Request<ProductParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = req.params.productId as string;
 
    const data = await CartService.removeFromCart(userId, productId);
 
@@ -50,12 +51,12 @@ class CartController {
 
  incrementCartItem = asyncHandler(
   async (
-   req: Request<CartParams>,
+   req: Request<ProductParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = req.params.productId as string;
 
    const data = await CartService.incrementItem(userId, productId);
 
@@ -69,12 +70,12 @@ class CartController {
 
  decrementCartItem = asyncHandler(
   async (
-   req: Request<CartParams>,
+   req: Request<ProductParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = req.params.productId as string;
 
    const data = await CartService.decrementItem(userId, productId);
 
@@ -90,13 +91,13 @@ class CartController {
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
    const userId = req.user.id;
 
-   const data = CartService.getUserCart(userId);
+   const data = await CartService.getUserCart(userId);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "user cart fetched successfully",
     data,
-   }) as Response<TCartAndItem>;
+   });
   },
  );
 }

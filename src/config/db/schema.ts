@@ -6,7 +6,7 @@ import { merchant } from "@schema/merchant.ts";
 import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
 
-export {
+export default {
  user,
  verification,
  account,

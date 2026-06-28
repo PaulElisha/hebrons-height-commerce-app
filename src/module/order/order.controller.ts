@@ -5,16 +5,22 @@ import asyncHandler from "@shared/middleware/async-handler.ts";
 import { NextFunction, Request, Response } from "express";
 
 import OrderService from "./order.service.ts";
+import { CartParams } from "@module/cart/cart.controller.ts";
+import { Pagination } from "@shared/types.ts";
+
+interface OrderParams {
+ orderId?: string;
+}
 
 class OrderController {
  placeOrder = asyncHandler(
   async (
-   req: Request<{ cartId: string }>,
+   req: Request<CartParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const cartId = req.params.cartId;
+   const cartId = req.params.cartId as string;
    const body = req.body;
 
    const data = await OrderService.placeOrder(userId, cartId, body);
@@ -48,12 +54,12 @@ class OrderController {
 
  getOrderDetails = asyncHandler(
   async (
-   req: Request<{ orderId: string }>,
+   req: Request<OrderParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const orderId = req.params.orderId;
+   const orderId = req.params.orderId as string;
 
    const data = await OrderService.getOrderDetails(userId, orderId);
 
@@ -66,7 +72,11 @@ class OrderController {
  );
 
  getMerchantOrders = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+   req: Request<any, any, any, Pagination>,
+   res: Response,
+   next: NextFunction,
+  ) => {
    const userId = req.user.id;
 
    const pageSizeValue = Number(req.query.pageSize);
@@ -83,16 +93,17 @@ class OrderController {
 
  cancelOrder = asyncHandler(
   async (
-   req: Request<{ orderId: string }>,
+   req: Request<OrderParams>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
-   const orderId = req.params.orderId;
-   await OrderService.cancelOrder(orderId);
+   const orderId = req.params.orderId as string;
+   const data = await OrderService.cancelOrder(orderId);
 
-   return res.status(HttpStatus.NO_CONTENT).json({
+   return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "order cancelled",
+    data,
    });
   },
  );

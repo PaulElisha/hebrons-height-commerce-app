@@ -1,9 +1,6 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "Nodenext",
-    "moduleResolution": "Nodenext",
     "lib": [
       "ES2020",
       "DOM"
@@ -17,6 +14,9 @@
       ],
       "@app/*": [
         "./src/config/app/*"
+      ],
+      "@auth/*": [
+        "./src/config/auth/*"
       ],
       "@db/*": [
         "./src/config/db/*"
@@ -48,6 +48,9 @@
     "baseUrl": ".",
     "strict": true,
     "noEmit": true,
+    "target": "ES2022",
+    "module": "Nodenext",
+    "moduleResolution": "Nodenext",
     "composite": true,
     "declaration": true,
     "sourceMap": true,
@@ -61,11 +64,11 @@
   "include": [
     "src/**/*",
     "env.ts",
-    "app.ts",
+    // "src/app.ts",
     "drizzle.config.ts",
     "fasy.d.ts",
     "custom-env.d.ts",
-    "src/schema/auth.ts"
+    // "src/schema/auth.ts"
   ],
   "exclude": [
     "node_modules",

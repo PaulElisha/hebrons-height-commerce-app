@@ -3,11 +3,13 @@
 import { Router } from "express";
 
 import CartController from "./cart.controller.ts";
+import authenticate from "@middleware/authenticate.ts";
 
 class CartRouter {
  router: Router;
  constructor() {
   this.router = Router();
+  this.router.use(authenticate);
   this.initializeRoutes();
  }
 
