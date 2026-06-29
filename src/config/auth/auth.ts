@@ -6,7 +6,7 @@ import db from "@db/db.ts";
 import * as schema from "@schema/auth.ts";
 import { hashPassword, verifyPassword } from "@shared/util/password.ts";
 import { betterAuth } from "better-auth";
-import { jwt, openAPI } from "better-auth/plugins";
+import { openAPI } from "better-auth/plugins";
 
 export const auth = betterAuth({
  secret: Env.AUTH_SECRET,

@@ -1,6 +1,7 @@
 /** @format */
 
-import express, { Router, Request, Response } from "express";
+import express, { Request, Response, Router } from "express";
+
 import { stripeWebhookHandler } from "./stripe.webhook.ts";
 
 const webhookRoutes = Router().post(

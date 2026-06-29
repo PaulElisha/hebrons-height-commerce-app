@@ -213,15 +213,24 @@ const spec = {
        "pending",
        "confirmed",
        "processing",
+       "fulfilled",
        "paid",
        "out_for_delivery",
        "delivered",
        "cancelled",
+       "failed",
       ],
      },
      paymentStatus: {
       type: "string",
-      enum: ["pending", "paid", "failed", "cancelled", "refunded"],
+      enum: [
+       "pending",
+       "processing",
+       "paid",
+       "failed",
+       "cancelled",
+       "refunded",
+      ],
      },
      createdAt: { type: "string", format: "date-time" },
      updatedAt: { type: "string", format: "date-time" },
@@ -263,6 +272,58 @@ const spec = {
        line1: { type: "string" },
        line2: { type: "string" },
       },
+     },
+    },
+   },
+   Payment: {
+    type: "object",
+    properties: {
+     id: { type: "string" },
+     orderId: { type: "string" },
+     userId: { type: "string" },
+     amount: { type: "integer", nullable: true },
+     currency: { type: "string", nullable: true },
+     payment_status: {
+      type: "string",
+      enum: ["pending", "paid", "failed", "cancelled", "refunded"],
+      default: "pending",
+     },
+     attempts: { type: "integer", nullable: true },
+     mode: { type: "string", nullable: true },
+     rail: { type: "string" },
+     channels: {
+      type: "array",
+      items: { type: "string" },
+      nullable: true,
+     },
+     payment_reference: { type: "string" },
+     payment_provider: { type: "string", nullable: true },
+     access_code: { type: "string", nullable: true },
+     authorization_url: { type: "string", nullable: true },
+     transaction_id: { type: "string", nullable: true },
+     paidAt: { type: "string", format: "date-time" },
+     createdAt: { type: "string", format: "date-time" },
+     updatedAt: { type: "string", format: "date-time" },
+    },
+   },
+   CheckoutData: {
+    type: "object",
+    required: ["email", "amount", "currency", "rail"],
+    properties: {
+     email: { type: "string", format: "email" },
+     amount: { type: "integer" },
+     currency: { type: "string" },
+     rail: {
+      type: "string",
+      enum: ["initializePaystackCheckout", "initializeStripeCheckout"],
+     },
+     channels: {
+      type: "array",
+      items: { type: "string" },
+     },
+     mode: {
+      type: "string",
+      enum: ["payment", "subscription", "setup"],
      },
     },
    },
@@ -314,7 +375,6 @@ const spec = {
       },
      },
      "401": { description: "Unauthorized" },
-     "403": { description: "Forbidden - not a merchant" },
     },
    },
   },
@@ -537,7 +597,7 @@ const spec = {
    },
    post: {
     tags: ["Product"],
-    summary: "Create a new product (merchant only)",
+    summary: "Create a new product",
     security: [{ bearerAuth: [] }],
     requestBody: {
      required: true,
@@ -634,7 +694,7 @@ const spec = {
    },
    put: {
     tags: ["Product"],
-    summary: "Update a product (merchant only)",
+    summary: "Update a product",
     security: [{ bearerAuth: [] }],
     parameters: [
      {
@@ -672,7 +732,7 @@ const spec = {
    },
    delete: {
     tags: ["Product"],
-    summary: "Delete a product (merchant only)",
+    summary: "Delete a product",
     security: [{ bearerAuth: [] }],
     parameters: [
      {
@@ -730,11 +790,20 @@ const spec = {
     },
    },
   },
-  "/api/cart/user": {
+  "/api/cart/{cartId}": {
    get: {
     tags: ["Cart"],
-    summary: "Get authenticated user's cart with items",
+    summary: "Get user's cart with items by cart ID",
     security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "cartId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Cart ID",
+     },
+    ],
     responses: {
      "200": {
       description: "User cart fetched successfully",
@@ -1078,6 +1147,94 @@ const spec = {
        },
       },
      },
+    },
+   },
+  },
+  "/api/payment/initialize/{orderId}": {
+   post: {
+    tags: ["Payment"],
+    summary: "Initialize payment for an order",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "orderId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Order ID to initialize payment for",
+     },
+    ],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: { $ref: "#/components/schemas/CheckoutData" },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description: "Payment initialized",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "payment initialized" },
+          data: {
+           type: "object",
+           properties: {
+            payment: { $ref: "#/components/schemas/Payment" },
+            checkoutUrl: {
+             type: "object",
+             properties: {
+              url: { type: "string" },
+             },
+             nullable: true,
+            },
+           },
+          },
+         },
+        },
+       },
+      },
+     },
+     "400": { description: "Invalid order or payment already exists" },
+     "409": { description: "Payment already created for this order" },
+    },
+   },
+  },
+  "/api/webhook/stripe": {
+   post: {
+    tags: ["Webhook"],
+    summary: "Stripe webhook handler (checkout.session.completed/expired)",
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        description: "Raw Stripe event object",
+       },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description: "Webhook processed successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          received: { type: "boolean", example: true },
+         },
+        },
+       },
+      },
+     },
+     "400": { description: "Webhook signature verification failed" },
     },
    },
   },

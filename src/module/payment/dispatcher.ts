@@ -1,22 +1,15 @@
 /** @format */
 
-import { eq, and, or } from "drizzle-orm";
-import db from "@db/db.ts";
-import { payment } from "@schema/payment.ts";
-import { order } from "@schema/order.ts";
-import OrderService from "@module/order/order.service.ts";
-import { TOrderItems } from "@shared/types.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
-import HttpStatus from "@shared/enum/http.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
 import stripeClient from "@app/stripe.ts";
-import Stripe from "stripe";
-import ProductService from "@module/product/product.service.ts";
-import { CheckoutData } from "./payment.service.ts";
-import FA from "fasy";
+import db from "@db/db.ts";
+import OrderService from "@module/order/order.service.ts";
+import { order } from "@schema/order.ts";
+import { TOrderItems } from "@shared/types.ts";
+import { eq } from "drizzle-orm";
 import Env from "env.ts";
-import CartService from "@module/cart/cart.service.ts";
-import InternalServerError from "@shared/error/internal-server.ts";
+import FA from "fasy";
+
+import { CheckoutData } from "./payment.service.ts";
 
 export const FetchRail: Record<string, (...any: any[]) => any> = {
  initializePaystackCheckout: () => {},

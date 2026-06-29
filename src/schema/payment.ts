@@ -1,19 +1,18 @@
 /** @format */
 
-import { order } from "./order.ts";
-import { user } from "./auth.ts";
+import { sql } from "drizzle-orm";
 import {
  check,
  integer,
  jsonb,
  pgTable,
- serial,
  text,
  timestamp,
- uuid,
  varchar,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+
+import { user } from "./auth.ts";
+import { order } from "./order.ts";
 
 export const paymentStatuses: readonly [
  string,

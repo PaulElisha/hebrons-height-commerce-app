@@ -1,11 +1,12 @@
 /** @format */
 
-import asyncHandler from "@shared/middleware/async-handler.ts";
-import { NextFunction, Request, Response } from "express";
-import PaymentService from "./payment.service.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import { OrderParams } from "@module/order/order.controller.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import asyncHandler from "@shared/middleware/async-handler.ts";
 import { APIResponse } from "@shared/types.ts";
+import { NextFunction, Request, Response } from "express";
+
+import PaymentService from "./payment.service.ts";
 
 class PaymentController {
  initialize = asyncHandler(

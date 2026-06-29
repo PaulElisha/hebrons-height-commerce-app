@@ -1,12 +1,12 @@
 /** @format */
 
+import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { NextFunction, Request, RequestHandler, Response } from "express";
+import { Pagination } from "@shared/types.ts";
+import { NextFunction, Request, Response } from "express";
 
 import ProductService from "./product.service.ts";
-import { Pagination } from "@shared/types.ts";
-import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 
 export interface ProductParams {
  productId?: string;

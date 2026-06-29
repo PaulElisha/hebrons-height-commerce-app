@@ -1,21 +1,22 @@
 /** @format */
 
-import Env from "./env.ts";
 import cors from "@app/cors.ts";
 import helmet from "@app/helmet.ts";
 import limiter from "@app/limiter.ts";
+import { auth } from "@auth/auth.ts";
+import HttpStatus from "@enum/http.ts";
 import errorHandler from "@middleware/error-handler.ts";
 import cartRouter from "@module/cart/cart.route.ts";
 import merchantRouter from "@module/merchant/merchant.route.ts";
-import productRouter from "@module/product/product.route.ts";
 import orderRouter from "@module/order/order.route.ts";
 import paymentRouter from "@module/payment/payment.routes.ts";
+import productRouter from "@module/product/product.route.ts";
 import webhookRouter from "@module/webhook/stripe/stripe.route.ts";
-import HttpStatus from "@enum/http.ts";
-import express, { Express } from "express";
-import { toNodeHandler } from "better-auth/node";
-import { auth } from "@auth/auth.ts";
 import { setupSwagger } from "@swagger/swagger-ui.ts";
+import { toNodeHandler } from "better-auth/node";
+import express, { Express } from "express";
+
+import Env from "./env.ts";
 
 class App {
  app: Express;

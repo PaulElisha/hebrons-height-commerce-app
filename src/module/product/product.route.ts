@@ -1,10 +1,10 @@
 /** @format */
 
+import roleGuard from "@middleware/role-guard.ts";
+import authenticate from "@shared/middleware/authenticate.ts";
 import { Router } from "express";
 
 import ProductController from "./product.controller.ts";
-import authenticate from "@shared/middleware/authenticate.ts";
-import roleGuard from "@middleware/role-guard.ts";
 
 class ProductRouter {
  router: Router;
@@ -19,7 +19,7 @@ class ProductRouter {
   this.router.get(
    "/merchant",
    authenticate,
-   // roleGuard("merchant"),
+   roleGuard("merchant"),
    ProductController.getMerchantProduct,
   );
   this.router.get(
@@ -37,19 +37,19 @@ class ProductRouter {
   this.router.post(
    "/",
    authenticate,
-   // roleGuard("merchant"),
+   roleGuard("merchant"),
    ProductController.createProduct,
   );
   this.router.put(
    "/:productId",
    authenticate,
-   // roleGuard("merchant"),
+   roleGuard("merchant"),
    ProductController.updateProduct,
   );
   this.router.delete(
    "/:productId",
    authenticate,
-   // roleGuard("merchant"),
+   roleGuard("merchant"),
    ProductController.deleteProduct,
   );
  }

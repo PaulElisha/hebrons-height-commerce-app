@@ -1,10 +1,10 @@
 /** @format */
 
+import authenticate from "@middleware/authenticate.ts";
+import roleGuard from "@middleware/role-guard.ts";
 import { Router } from "express";
 
 import CartController from "./cart.controller.ts";
-import authenticate from "@middleware/authenticate.ts";
-import roleGuard from "@middleware/role-guard.ts";
 
 class CartRouter {
  router: Router;

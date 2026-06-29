@@ -1,17 +1,17 @@
 /** @format */
 
+import authenticate from "@middleware/authenticate.ts";
+import roleGuard from "@middleware/role-guard.ts";
 import { Router } from "express";
 
 import MerchantController from "./merchant.controller.ts";
-import authenticate from "@middleware/authenticate.ts";
-import roleGuard from "@middleware/role-guard.ts";
 
 class MerchantRouter {
  router: Router;
  constructor() {
   this.router = Router();
   this.router.use(authenticate);
-  // this.router.use(roleGuard("merchant"));
+  this.router.use(roleGuard("merchant"));
   this.initializeRoutes();
  }
 

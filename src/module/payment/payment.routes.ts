@@ -1,8 +1,9 @@
 /** @format */
 
-import { Router } from "express";
-import PaymentController from "./payment.controller.ts";
 import authenticate from "@shared/middleware/authenticate.ts";
+import { Router } from "express";
+
+import PaymentController from "./payment.controller.ts";
 
 class PaymentRoutes {
  router: Router;

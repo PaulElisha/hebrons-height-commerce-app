@@ -1,5 +1,8 @@
-import swaggerUi from "swagger-ui-express";
+/** @format */
+
 import type { Express } from "express";
+import swaggerUi from "swagger-ui-express";
+
 import spec from "./swagger.ts";
 
 export const setupSwagger = (app: Express) => {

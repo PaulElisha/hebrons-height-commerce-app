@@ -1,10 +1,9 @@
 /** @format */
 
-import OrderController from "@module/order/order.controller.ts";
 import authenticate from "@middleware/authenticate.ts";
-import { Router } from "express";
-import { auth } from "@auth/auth.ts";
 import roleGuard from "@middleware/role-guard.ts";
+import OrderController from "@module/order/order.controller.ts";
+import { Router } from "express";
 
 class OrderRouter {
  router: Router;

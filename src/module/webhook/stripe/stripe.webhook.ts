@@ -1,14 +1,13 @@
 /** @format */
 
-import { Request, Response } from "express";
-import Stripe from "stripe";
-
 import stripeClient from "@app/stripe.ts";
-import Env from "env.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import db from "@db/db.ts";
 import { order } from "@schema/order.ts";
+import HttpStatus from "@shared/enum/http.ts";
 import { eq } from "drizzle-orm";
+import Env from "env.ts";
+import { Request, Response } from "express";
+import Stripe from "stripe";
 
 export const stripeWebhookHandler = async (req: Request, res: Response) => {
  const sig = req.headers["stripe-signature"]!;
