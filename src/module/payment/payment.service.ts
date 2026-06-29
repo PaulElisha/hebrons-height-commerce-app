@@ -4,7 +4,7 @@ import db from "@db/db.ts";
 import { payment } from "@schema/payment.ts";
 import { order } from "@schema/order.ts";
 import OrderService from "@module/order/order.service.ts";
-import { TOrderItems } from "@module/order/order.controller.ts";
+import { TOrderItems } from "@shared/types.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import ErrorCode from "@shared/enum/error-code.ts";

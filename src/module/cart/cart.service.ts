@@ -5,8 +5,7 @@ import { cart, cartItem } from "@schema/cart.ts";
 import { eq, and } from "drizzle-orm";
 
 import CartBase from "./base.ts";
-import { APIResponse } from "@shared/types.ts";
-import { TCartAndItem } from "./cart.controller.ts";
+import { APIResponse, TCartAndItem } from "@shared/types.ts";
 
 // interface CartParams {
 //  productId: string;

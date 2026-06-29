@@ -33,3 +33,53 @@ export interface Pagination {
  pageSize?: number;
  pageNumber?: number;
 }
+
+export interface TCart {
+ id: string;
+ userId: string;
+ subtotal: number | null;
+}
+
+export interface TCartItem {
+ id: string;
+ productId: string;
+ price: number;
+ quantity: number;
+ totalItemPrice: number | null;
+}
+
+export type TCartAndItem = {
+ cart: TCart;
+ cart_items: TCartItem[];
+};
+
+export interface TOrder {
+ id: string;
+ userId: string;
+ cartId: string;
+ subtotal: number;
+ serviceCharge: number | null;
+ deliveryFee: number | null;
+ taxAmount: number | null;
+ discountAmount: number | null;
+ deliveryAddress: Record<string, string>;
+ orderStatus: string;
+ paymentStatus: string;
+ createdAt: Date;
+ updatedAt: Date;
+}
+
+export interface TOrderItems {
+ id: string;
+ orderId: string;
+ merchantId: string;
+ productId: string;
+ quantity: number;
+ unitPrice: number;
+ lineTotal: number | null;
+}
+
+export type TOrderAndItems = {
+ order: TOrder;
+ order_items: TOrderItems[];
+};

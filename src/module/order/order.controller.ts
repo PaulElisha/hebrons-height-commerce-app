@@ -6,42 +6,11 @@ import { NextFunction, Request, Response } from "express";
 
 import OrderService from "./order.service.ts";
 import { CartParams } from "@module/cart/cart.controller.ts";
-import { APIResponse, Pagination } from "@shared/types.ts";
+import { APIResponse, Pagination, TOrder, TOrderAndItems, TOrderItems } from "@shared/types.ts";
 
 export interface OrderParams {
  orderId?: string;
 }
-
-export interface TOrder {
- id: string;
- userId: string;
- cartId: string;
- subtotal: number;
- serviceCharge: number | null;
- deliveryFee: number | null;
- taxAmount: number | null;
- discountAmount: number | null;
- deliveryAddress: Record<string, string>;
- orderStatus: string;
- paymentStatus: string;
- createdAt: Date;
- updatedAt: Date;
-}
-
-export interface TOrderItems {
- id: string;
- orderId: string;
- merchantId: string;
- productId: string;
- quantity: number;
- unitPrice: number;
- lineTotal: number | null;
-}
-
-export type TOrderAndItems = {
- order: TOrder;
- order_items: TOrderItems[];
-};
 
 class OrderController {
  placeOrder = asyncHandler(

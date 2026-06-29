@@ -3,31 +3,12 @@ import HttpStatus from "@enum/http.ts";
 import asyncHandler from "@middleware/async-handler.ts";
 import CartService from "@module/cart/cart.service.ts";
 import { ProductParams } from "@module/product/product.controller.ts";
-import { APIResponse } from "@shared/types.ts";
+import { APIResponse, TCartAndItem } from "@shared/types.ts";
 import type { NextFunction, Request, Response } from "express";
 
 export interface CartParams {
  cartId?: string;
 }
-
-export interface TCart {
- id: string;
- userId: string;
- subtotal: number;
-}
-
-export interface TCartItem {
- id: string;
- productId: string;
- price: number;
- quantity: number;
- totalItemPrice: number;
-}
-
-export type TCartAndItem = {
- cart: TCart;
- cart_items: TCartItem[];
-};
 
 class CartController {
  addToCart = asyncHandler(
