@@ -17,11 +17,6 @@ import CartService from "@module/cart/cart.service.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
 import { FetchRail } from "./dispatcher.ts";
 
-// type initializePaystackCheckout = string;
-// type initializeStripeCheckout = string;
-
-// type RailType = initializePaystackCheckout | initializeStripeCheckout;
-
 export interface CheckoutData {
  email: string;
  amount: number;
@@ -80,7 +75,7 @@ class PaymentService {
   return paymentCreated;
  };
 
- fetchPaymentRailForOrder = async (
+ fetchPaymentForOrderByRail = async (
   userId: string,
   orderId: string,
   checkoutData: CheckoutData,
@@ -111,8 +106,6 @@ class PaymentService {
 
   return url;
  };
-
- // initializeStripe =
 }
 
 export default new PaymentService();

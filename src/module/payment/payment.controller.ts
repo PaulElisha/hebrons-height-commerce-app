@@ -20,7 +20,7 @@ class PaymentController {
 
    const data = await PaymentService.initialize(userId, orderId, body);
 
-   const checkoutUrl = await PaymentService.fetchPaymentRailForOrder(
+   const checkoutUrl = await PaymentService.fetchPaymentForOrderByRail(
     userId,
     orderId,
     body,
