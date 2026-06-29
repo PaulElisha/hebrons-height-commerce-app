@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/app.js",
+    "start": "node start.cjs",
     "dev": "tsx --watch app.ts",
 
     "git": "git add . && git commit -m \"${npm_config_m:-auto commit}\" && git push",
