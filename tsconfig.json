@@ -18,6 +18,9 @@
       "@auth/*": [
         "./src/config/auth/*"
       ],
+      "@swagger/*": [
+        "./src/config/swagger/*"
+      ],
       "@db/*": [
         "./src/config/db/*"
       ],
@@ -64,6 +67,7 @@
   "include": [
     "src/**/*",
     "env.ts",
+    "app.ts",
     "drizzle.config.ts",
     "fasy.d.ts",
     "custom-env.d.ts",

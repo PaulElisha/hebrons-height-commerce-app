@@ -1,21 +1,21 @@
 /** @format */
 
-import Env from "./env";
-import cors from "./src/config/app/cors";
-import helmet from "./src/config/app/helmet";
-import limiter from "./src/config/app/limiter";
-import errorHandler from "./src/shared/middleware/error-handler";
-import cartRouter from "./src/module/cart/cart.route";
-import merchantRouter from "./src/module/merchant/merchant.route";
-import productRouter from "./src/module/product/product.route";
-import orderRouter from "./src/module/order/order.route";
-import paymentRouter from "./src/module/payment/payment.routes";
-import webhookRouter from "./src/module/webhook/stripe/stripe.route";
-import HttpStatus from "./src/shared/enum/http";
+import Env from "./env.ts";
+import cors from "@app/cors.ts";
+import helmet from "@app/helmet.ts";
+import limiter from "@app/limiter.ts";
+import errorHandler from "@middleware/error-handler.ts";
+import cartRouter from "@module/cart/cart.route.ts";
+import merchantRouter from "@module/merchant/merchant.route.ts";
+import productRouter from "@module/product/product.route.ts";
+import orderRouter from "@module/order/order.route.ts";
+import paymentRouter from "@module/payment/payment.routes.ts";
+import webhookRouter from "@module/webhook/stripe/stripe.route.ts";
+import HttpStatus from "@enum/http.ts";
 import express, { Express } from "express";
 import { toNodeHandler } from "better-auth/node";
-import { auth } from "./src/config/auth/auth";
-import { setupSwagger } from "./src/config/swagger/swagger-ui";
+import { auth } from "@auth/auth.ts";
+import { setupSwagger } from "@swagger/swagger-ui.ts";
 
 class App {
  app: Express;

@@ -5,10 +5,9 @@
   "main": "dist/app.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "node start.cjs",
+    "build": "esbuild app.ts --bundle --platform=node --target=node18 --format=esm --packages=external --outfile=dist/app.js",
+    "start": "node dist/app.js",
     "dev": "tsx --watch app.ts",
-
     "git": "git add . && git commit -m \"${npm_config_m:-auto commit}\" && git push",
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npx drizzle-kit migrate",
