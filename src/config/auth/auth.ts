@@ -25,6 +25,7 @@ export const auth = betterAuth({
    },
   },
  },
+ trustedHeaders: ["x-forwarded-proto", "x-forwarded-host"],
  trustedOrigins: [Env.CORS_ORIGIN],
  emailAndPassword: {
   enabled: true,
@@ -37,6 +38,8 @@ export const auth = betterAuth({
   },
  },
  advanced: {
+  useSecureCookies: true,
+
   cookies: {
    session_token: {
     name: "auth_session_token",
