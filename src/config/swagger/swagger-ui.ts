@@ -4,7 +4,6 @@ import type { Express } from "express";
 import swaggerUi from "swagger-ui-express";
 
 import spec from "./swagger.ts";
-import Env from "@/env.ts";
 
 export const setupSwagger = (app: Express) => {
  const options: Record<string, unknown> = {
@@ -17,7 +16,7 @@ export const setupSwagger = (app: Express) => {
    },
    {
     name: "Auth (Better Auth)",
-    url: `${Env.BASE_URL}/api/auth/reference/openapi.json`,
+    url: "/api/auth/reference/openapi.json",
    },
   ],
  };
@@ -25,7 +24,7 @@ export const setupSwagger = (app: Express) => {
  app.use(
   "/api/docs",
   swaggerUi.serve,
-  swaggerUi.setup(undefined as any, options as any),
+  swaggerUi.setup(null as any, options as any),
  );
 
  app.get("/api/docs.json", (_req, res) => {
