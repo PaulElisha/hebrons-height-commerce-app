@@ -4,15 +4,28 @@ import type { Express } from "express";
 import swaggerUi from "swagger-ui-express";
 
 import spec from "./swagger.ts";
+import Env from "@/env.ts";
 
 export const setupSwagger = (app: Express) => {
+ const options: Record<string, unknown> = {
+  explorer: true,
+  customSiteTitle: "HHG Commerce API Docs",
+  urls: [
+   {
+    name: "App API",
+    url: "/api/docs.json",
+   },
+   {
+    name: "Auth (Better Auth)",
+    url: `${Env.BASE_URL}/api/auth/reference/openapi.json`,
+   },
+  ],
+ };
+
  app.use(
   "/api/docs",
   swaggerUi.serve,
-  swaggerUi.setup(spec, {
-   explorer: true,
-   customSiteTitle: "HHG Commerce API Docs",
-  }),
+  swaggerUi.setup(undefined as any, options as any),
  );
 
  app.get("/api/docs.json", (_req, res) => {
