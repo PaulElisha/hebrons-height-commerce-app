@@ -4,23 +4,32 @@ import db from "@db/db.ts";
 import CartService from "@module/cart/cart.service.ts";
 import { order, orderItem } from "@schema/order.ts";
 import * as helper from "@shared/helper.ts";
-import { Pagination, TCartItem } from "@shared/types.ts";
+import { Pagination } from "@shared/types.ts";
+import { TCartItem } from "@module/cart/cart.controller.ts";
 import { and, desc, eq, lt, ne, sql } from "drizzle-orm";
 import FA from "fasy";
+import { TOrder, TOrderAndItems } from "./order.controller.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import NotFoundException from "@shared/error/not-found.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
 
 interface CreateOrderDto {
  deliveryAddress: Record<string, string>;
 }
 
 class OrderService {
- placeOrder = async (userId: string, cartId: string, body: CreateOrderDto) => {
-  const data = await CartService.getUserCart(userId);
+ placeOrder = async (
+  userId: string,
+  cartId: string,
+  body: CreateOrderDto,
+ ): Promise<string> => {
+  const data = await CartService.getUserCart(userId, cartId);
   const [newOrder] = await db
    .insert(order)
    .values({
     userId,
     cartId,
-    subtotal: data?.usercart?.subtotal as number,
+    subtotal: data?.cart?.subtotal as number,
     deliveryAddress: {
      label: "home",
      address: body.deliveryAddress.address,
@@ -53,7 +62,10 @@ class OrderService {
   return newOrder.id;
  };
 
- getUserOrderByStatus = async (userId: string, status: string) => {
+ getUserOrderByStatus = async (
+  userId: string,
+  status: string,
+ ): Promise<TOrderAndItems> => {
   const result = await db
    .select()
    .from(order)
@@ -69,7 +81,10 @@ class OrderService {
   };
  };
 
- getOrderDetails = async (userId: string, orderId: string) => {
+ getOrderDetails = async (
+  userId: string,
+  orderId: string,
+ ): Promise<TOrderAndItems> => {
   const result = await db
    .select()
    .from(order)
@@ -82,14 +97,17 @@ class OrderService {
   };
  };
 
- getMerchantOrders = async (userId: string, pagination: Pagination) => {
+ getMerchantOrders = async (
+  userId: string,
+  pagination: Pagination,
+ ): Promise<TOrderAndItems> => {
   const merchantId = await helper.getMerchantIdFromUser(userId);
 
   const limit = Math.min(Math.max(pagination.pageSize ?? 10, 1), 50);
   const pageNumber = Math.max(pagination.pageNumber ?? 1, 1);
   const offset = (pageNumber - 1) * limit;
 
-  let fetchedOrders = await db
+  const fetchedOrders = await db
    .select()
    .from(order)
    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
@@ -100,17 +118,16 @@ class OrderService {
 
   const merchantOrders =
    fetchedOrders.map(({ orders: o, orderItem: item }) => ({
-    ...item,
-    order: o
-     ? {
-        deliveryAddress: o.deliveryAddress,
-        orderStatus: o.orderStatus,
-        paymentStatus: o.paymentStatus,
-       }
-     : null,
+    orderItem: item,
+    order: o,
    })) || [];
 
-  return merchantOrders;
+  return {
+   order: merchantOrders[0].order,
+   order_items: merchantOrders
+    .filter((i) => i.orderItem)
+    .map((o) => o.orderItem),
+  };
  };
 
  clearPendingOrders = async () => {
@@ -125,8 +142,8 @@ class OrderService {
    );
  };
 
- cancelOrder = async (orderId: string) => {
-  const cancelledOrder = await db
+ cancelOrder = async (orderId: string): Promise<TOrder> => {
+  const [cancelledOrder] = await db
    .update(order)
    .set({
     orderStatus: "cancelled",

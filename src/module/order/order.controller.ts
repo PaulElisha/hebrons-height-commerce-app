@@ -6,17 +6,48 @@ import { NextFunction, Request, Response } from "express";
 
 import OrderService from "./order.service.ts";
 import { CartParams } from "@module/cart/cart.controller.ts";
-import { Pagination } from "@shared/types.ts";
+import { APIResponse, Pagination } from "@shared/types.ts";
 
-interface OrderParams {
+export interface OrderParams {
  orderId?: string;
 }
+
+export interface TOrder {
+ id: string;
+ userId: string;
+ cartId: string;
+ subtotal: number;
+ serviceCharge: number | null;
+ deliveryFee: number | null;
+ taxAmount: number | null;
+ discountAmount: number | null;
+ deliveryAddress: Record<string, string>;
+ orderStatus: string;
+ paymentStatus: string;
+ createdAt: Date;
+ updatedAt: Date;
+}
+
+export interface TOrderItems {
+ id: string;
+ orderId: string;
+ merchantId: string;
+ productId: string;
+ quantity: number;
+ unitPrice: number;
+ lineTotal: number | null;
+}
+
+export type TOrderAndItems = {
+ order: TOrder;
+ order_items: TOrderItems[];
+};
 
 class OrderController {
  placeOrder = asyncHandler(
   async (
    req: Request<CartParams>,
-   res: Response,
+   res: Response<APIResponse<string>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -36,7 +67,7 @@ class OrderController {
  getUserOrderByStatus = asyncHandler(
   async (
    req: Request<{}, {}, {}, { status: string }>,
-   res: Response,
+   res: Response<APIResponse<TOrderAndItems>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -55,7 +86,7 @@ class OrderController {
  getOrderDetails = asyncHandler(
   async (
    req: Request<OrderParams>,
-   res: Response,
+   res: Response<APIResponse<TOrderAndItems>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -74,7 +105,7 @@ class OrderController {
  getMerchantOrders = asyncHandler(
   async (
    req: Request<any, any, any, Pagination>,
-   res: Response,
+   res: Response<APIResponse<TOrderAndItems>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -94,7 +125,7 @@ class OrderController {
  cancelOrder = asyncHandler(
   async (
    req: Request<OrderParams>,
-   res: Response,
+   res: Response<APIResponse<TOrder>>,
    next: NextFunction,
   ): Promise<any> => {
    const orderId = req.params.orderId as string;

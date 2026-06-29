@@ -4,12 +4,14 @@ import OrderController from "@module/order/order.controller.ts";
 import authenticate from "@middleware/authenticate.ts";
 import { Router } from "express";
 import { auth } from "@auth/auth.ts";
+import roleGuard from "@middleware/role-guard.ts";
 
 class OrderRouter {
  router: Router;
  constructor() {
   this.router = Router();
   this.router.use(authenticate);
+  this.router.use(roleGuard("user"));
   this.initializeRoutes();
  }
 

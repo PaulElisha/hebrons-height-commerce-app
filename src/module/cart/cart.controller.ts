@@ -3,20 +3,39 @@ import HttpStatus from "@enum/http.ts";
 import asyncHandler from "@middleware/async-handler.ts";
 import CartService from "@module/cart/cart.service.ts";
 import { ProductParams } from "@module/product/product.controller.ts";
-import { APIResponse, TCartAndItem } from "@shared/types.ts";
+import { APIResponse } from "@shared/types.ts";
 import type { NextFunction, Request, Response } from "express";
 
 export interface CartParams {
  cartId?: string;
 }
 
+export interface TCart {
+ id: string;
+ userId: string;
+ subtotal: number;
+}
+
+export interface TCartItem {
+ id: string;
+ productId: string;
+ price: number;
+ quantity: number;
+ totalItemPrice: number;
+}
+
+export type TCartAndItem = {
+ cart: TCart;
+ cart_items: TCartItem[];
+};
+
 class CartController {
  addToCart = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response,
+   res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ): Promise<Response> => {
    const userId = req.user.id;
    const productId = req.params.productId as string;
 
@@ -26,16 +45,16 @@ class CartController {
     status: "ok",
     message: "product added to cart",
     data,
-   } as APIResponse<TCartAndItem>);
+   });
   },
  );
 
  removeFromCart = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response,
+   res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ): Promise<Response> => {
    const userId = req.user.id;
    const productId = req.params.productId as string;
 
@@ -52,9 +71,9 @@ class CartController {
  incrementCartItem = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response,
+   res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ): Promise<Response> => {
    const userId = req.user.id;
    const productId = req.params.productId as string;
 
@@ -64,16 +83,16 @@ class CartController {
     status: "ok",
     message: "product quantity incremented",
     data,
-   }) as Response<TCartAndItem>;
+   } as APIResponse<TCartAndItem>);
   },
  );
 
  decrementCartItem = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response,
+   res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ): Promise<Response> => {
    const userId = req.user.id;
    const productId = req.params.productId as string;
 
@@ -83,21 +102,26 @@ class CartController {
     status: "ok",
     message: "product quantity decremented",
     data,
-   }) as Response<TCartAndItem>;
+   } as APIResponse<TCartAndItem>);
   },
  );
 
  getUserCart = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  async (
+   req: Request<CartParams>,
+   res: Response<APIResponse<TCartAndItem>>,
+   next: NextFunction,
+  ): Promise<Response> => {
    const userId = req.user.id;
+   const cartId = req.params.cartId as string;
 
-   const data = await CartService.getUserCart(userId);
+   const data = await CartService.getUserCart(userId, cartId);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "user cart fetched successfully",
     data,
-   });
+   } as APIResponse<TCartAndItem>);
   },
  );
 }

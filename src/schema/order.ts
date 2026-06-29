@@ -25,9 +25,9 @@ export const orderStatuses: readonly [
  string,
 ] = [
  "pending",
- "confirmed",
  "processing",
- "paid",
+ "fulfilled",
+ "failed",
  "out_for_delivery",
  "delivered",
  "cancelled",
@@ -40,7 +40,15 @@ export const paymentStatuses: readonly [
  string,
  string,
  string,
-] = ["pending", "paid", "failed", "cancelled", "refunded"] as const;
+ string,
+] = [
+ "pending",
+ "processing",
+ "paid",
+ "failed",
+ "cancelled",
+ "refunded",
+] as const;
 export type PaymentStatus = (typeof paymentStatuses)[number];
 
 export const order = pgTable(

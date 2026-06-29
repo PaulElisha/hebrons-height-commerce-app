@@ -95,8 +95,8 @@ CREATE TABLE "orders" (
 	"payment_status" text DEFAULT 'pending' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "order_status_check" CHECK ("orders"."order_status" IN ('pending', 'confirmed', 'processing', 'paid', 'out_for_delivery', 'delivered', 'cancelled')),
-	CONSTRAINT "payment_status_check" CHECK ("orders"."payment_status" IN ('pending', 'paid', 'failed', 'refunded'))
+	CONSTRAINT "order_status_check" CHECK ("orders"."order_status" IN ('pending', 'processing', 'fulfilled', 'failed', 'out_for_delivery', 'delivered', 'cancelled')),
+	CONSTRAINT "payment_status_check" CHECK ("orders"."payment_status" IN ('pending', 'processing', 'paid', 'failed', 'cancelled', 'refunded'))
 );
 --> statement-breakpoint
 CREATE TABLE "orderItem" (
@@ -127,6 +127,29 @@ CREATE TABLE "product" (
 	CONSTRAINT "product_status_check" CHECK ("product"."product_status" IN ('available', 'sold_out'))
 );
 --> statement-breakpoint
+CREATE TABLE "payment" (
+	"id" text PRIMARY KEY NOT NULL,
+	"order_id" text NOT NULL,
+	"user_id" text NOT NULL,
+	"amount" integer,
+	"currency" varchar(255),
+	"payment_status" text DEFAULT 'pending' NOT NULL,
+	"attempts" integer,
+	"mode" text,
+	"rail" text NOT NULL,
+	"channels" jsonb,
+	"payment_reference" text,
+	"payment_provider" text,
+	"access_code" varchar(255),
+	"authorization_url" text,
+	"transaction_id" text,
+	"paidAt" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "payment_order_id_unique" UNIQUE("order_id"),
+	CONSTRAINT "payment_status_check" CHECK ("payment"."payment_status" IN ('pending', 'paid', 'failed', 'cancelled', 'refunded'))
+);
+--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cart" ADD CONSTRAINT "cart_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -139,4 +162,6 @@ ALTER TABLE "orderItem" ADD CONSTRAINT "orderItem_order_id_orders_id_fk" FOREIGN
 ALTER TABLE "orderItem" ADD CONSTRAINT "orderItem_merchant_id_merchant_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchant"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "orderItem" ADD CONSTRAINT "orderItem_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product" ADD CONSTRAINT "product_merchant_id_merchant_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchant"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "payment" ADD CONSTRAINT "payment_order_id_orders_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "payment" ADD CONSTRAINT "payment_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "cartMealUnq" ON "cart_items" USING btree ("cart_id","product_id");

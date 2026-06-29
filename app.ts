@@ -9,10 +9,13 @@ import cartRouter from "./src/module/cart/cart.route";
 import merchantRouter from "./src/module/merchant/merchant.route";
 import productRouter from "./src/module/product/product.route";
 import orderRouter from "./src/module/order/order.route";
+import paymentRouter from "./src/module/payment/payment.routes";
+import webhookRouter from "./src/module/webhook/stripe/stripe.route";
 import HttpStatus from "./src/shared/enum/http";
 import express, { Express } from "express";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./src/config/auth/auth";
+import { setupSwagger } from "./src/config/swagger/swagger-ui";
 
 class App {
  app: Express;
@@ -20,21 +23,27 @@ class App {
   this.app = express();
   this.app.disable("x-powered-by");
   this.app.set("trust proxy", 1);
-  this.initializeMiddleware();
- }
-
- initializeMiddleware() {
-  this.app.use(cors);
-  this.app.use(limiter);
-  this.app.use(helmet);
-  this.initializeAuthRoute();
-  this.app.use(express.json());
-  this.app.use(express.urlencoded({ extended: true }));
+  this.initializeWebhooks();
+  this.initializeMiddlewares();
   this.initializeRoutes();
  }
 
- initializeAuthRoute() {
+ initializeMiddlewares() {
+  this.app.use(cors);
+  this.app.use(limiter);
+  this.app.use(helmet);
+  setupSwagger(this.app);
+  this.initializeAuthRoutes();
+  this.app.use(express.json());
+  this.app.use(express.urlencoded({ extended: true }));
+ }
+
+ initializeAuthRoutes() {
   this.app.all("/api/auth/*splat", toNodeHandler(auth));
+ }
+
+ initializeWebhooks() {
+  this.app.use("/api/webhook", webhookRouter);
  }
 
  initializeRoutes() {
@@ -46,6 +55,7 @@ class App {
   this.app.use("/api/product", productRouter);
   this.app.use("/api/cart", cartRouter);
   this.app.use("/api/order", orderRouter);
+  this.app.use("/api/payment", paymentRouter);
 
   this.app.use(errorHandler);
  }

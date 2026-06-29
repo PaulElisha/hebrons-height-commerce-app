@@ -2,16 +2,21 @@
 
 import db from "@db/db.ts";
 import { cart, cartItem } from "@schema/cart.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 import CartBase from "./base.ts";
+import { APIResponse } from "@shared/types.ts";
+import { TCartAndItem } from "./cart.controller.ts";
 
 // interface CartParams {
 //  productId: string;
 // }
 
 class CartService {
- addToCart = async (userId: string, productId: string) => {
+ addToCart = async (
+  userId: string,
+  productId: string,
+ ): Promise<TCartAndItem> => {
   const data = await CartBase.modifyCart({
    userId,
    productId,
@@ -21,7 +26,10 @@ class CartService {
   return data;
  };
 
- removeFromCart = async (userId: string, productId: string) => {
+ removeFromCart = async (
+  userId: string,
+  productId: string,
+ ): Promise<TCartAndItem> => {
   const data = await CartBase.modifyCart({
    userId,
    productId,
@@ -31,7 +39,10 @@ class CartService {
   return data;
  };
 
- incrementItem = async (userId: string, productId: string) => {
+ incrementItem = async (
+  userId: string,
+  productId: string,
+ ): Promise<TCartAndItem> => {
   const data = await CartBase.modifyCart({
    userId,
    productId,
@@ -41,7 +52,10 @@ class CartService {
   return data;
  };
 
- decrementItem = async (userId: string, productId: string) => {
+ decrementItem = async (
+  userId: string,
+  productId: string,
+ ): Promise<TCartAndItem> => {
   const data = await CartBase.modifyCart({
    userId,
    productId,
@@ -51,16 +65,28 @@ class CartService {
   return data;
  };
 
- getUserCart = async (userId: string) => {
+ getUserCart = async (
+  userId: string,
+  cartId: string,
+ ): Promise<TCartAndItem> => {
   const result = await db
    .select()
    .from(cart)
    .leftJoin(cartItem, eq(cart.id, cartItem.cartId))
-   .where(eq(cart.userId, userId));
+   .where(and(eq(cart.userId, userId), eq(cart.id, cartId)))
+   .limit(1);
 
   return {
-   usercart: result[0].cart,
-   cart_items: result.filter((r) => r.cart_items).map((r) => r.cart_items),
+   cart: {
+    ...result[0].cart,
+    subtotal: result[0].cart.subtotal as number,
+   },
+   cart_items: result
+    .filter((r) => r.cart_items)
+    .map((r) => ({
+     ...r.cart_items!,
+     totalItemPrice: r.cart_items!.totalItemPrice as number,
+    })),
   };
  };
 }

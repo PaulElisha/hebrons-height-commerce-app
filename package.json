@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "dev": "tsx --watch app.ts",
-    "git": "git add . && git commit -m \"${npm_config_m:-auto commit $(date)}\" && git push",
+    "git": "git add . && git commit -m \"${npm_config_m:-auto commit}\" && git push",
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npx drizzle-kit migrate",
     "db:push": "npx drizzle-kit push",
@@ -25,6 +25,8 @@
     "@types/helmet": "^0.0.48",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "custom-env": "^2.0.6",
     "drizzle-kit": "^0.31.10",
     "ts-node": "^10.0.0",
@@ -35,6 +37,7 @@
     "@better-auth/drizzle-adapter": "^1.6.22",
     "@epic-web/remember": "^1.1.0",
     "@node-rs/argon2": "^2.0.2",
+    "@stripe/cli": "^1.43.2",
     "better-auth": "^1.6.22",
     "cors": "^2.8.6",
     "drizzle-orm": "^0.45.2",
@@ -46,6 +49,9 @@
     "jose": "^6.2.3",
     "nodemailer": "^9.0.1",
     "pg": "^8.22.0",
+    "stripe": "^22.3.0",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^4.4.3"
   }
 }

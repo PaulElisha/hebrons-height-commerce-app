@@ -64,11 +64,9 @@
   "include": [
     "src/**/*",
     "env.ts",
-    // "src/app.ts",
     "drizzle.config.ts",
     "fasy.d.ts",
     "custom-env.d.ts",
-    // "src/schema/auth.ts"
   ],
   "exclude": [
     "node_modules",

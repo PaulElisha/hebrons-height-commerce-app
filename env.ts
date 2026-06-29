@@ -53,6 +53,9 @@ const EnvSchema = z.object({
 
  PAYSTACK_SECRET_KEY: z.string(),
 
+ STRIPE_SECRET_KEY: z.string(),
+ STRIPE_WEBHOOK_SECRET: z.string(),
+
  SCALER: z.coerce.number().default(100),
 });
 

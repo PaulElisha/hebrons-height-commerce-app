@@ -5,6 +5,7 @@ import { cart, cartItem } from "@schema/cart.ts";
 import { merchant } from "@schema/merchant.ts";
 import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
+import { payment } from "@schema/payment.ts";
 
 export default {
  user,
@@ -17,4 +18,5 @@ export default {
  cartItem,
  order,
  orderItem,
+ payment,
 };
