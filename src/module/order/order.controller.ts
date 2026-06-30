@@ -78,8 +78,15 @@ class OrderController {
 
  getMerchantOrders = asyncHandler(
   async (
-   req: Request<any, any, any, Pagination>,
-   res: Response<APIResponse<TOrderAndItems>>,
+   req: Request<
+    any,
+    any,
+    any,
+    Pagination & {
+     status?: string;
+    }
+   >,
+   res: Response<APIResponse<TOrderAndItems & any>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -92,7 +99,21 @@ class OrderController {
     pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
    };
 
-   const data = await OrderService.getMerchantOrders(userId, pagination);
+   const filters = {
+    status: req.query.status,
+   };
+
+   const data = await OrderService.getMerchantOrders(
+    userId,
+    filters,
+    pagination,
+   );
+
+   return res.status(HttpStatus.OK).json({
+    status: "ok",
+    message: "merchant orders fetched successfully",
+    data,
+   });
   },
  );
 

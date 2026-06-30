@@ -9,27 +9,34 @@ import { eq } from "drizzle-orm";
 import Env from "env.ts";
 import FA from "fasy";
 
-import { CheckoutData } from "./payment.service.ts";
+import { PaymentData } from "./payment.service.ts";
+import { product } from "@schema/product.ts";
 
 export const FetchRail: Record<string, (...any: any[]) => any> = {
  initializePaystackCheckout: () => {},
  initializeStripeCheckout: async (
   userId: string,
   orderId: string,
-  checkoutData: CheckoutData,
+  data: PaymentData,
  ) => {
   const orderData = await OrderService.getOrderDetails(userId, orderId);
 
   return await stripeClient.checkout.sessions
    .create({
-    mode: checkoutData.mode,
-    customer_email: checkoutData.email,
+    mode: data.mode,
+    customer_email: data.email,
     line_items: await FA.concurrent.map(
      async (i: TOrderItems) => ({
       price_data: {
-       currency: checkoutData.currency,
+       currency: data.currency,
        product_data: {
-        name: `Product ${i.productId}`,
+        name: await db
+         .select({ name: product.name })
+         .from(product)
+         .where(eq(product.id, i.productId))
+         .then((res) => {
+          return res[0].name;
+         }),
        },
        unit_amount: Math.round(i.unitPrice * Env.SCALER),
       },
@@ -40,7 +47,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
     metadata: {
      orderId: orderData.order.id,
     },
-    success_url: `${Env.BASE_URL}/success?orderId=${orderData.order.id}`,
+    success_url: `${Env.BASE_URL}/success/${orderData.order.id}`,
     cancel_url: `${Env.BASE_URL}/failed/${orderData.order.id}?error=true`,
    })
    .then(async (session) => {

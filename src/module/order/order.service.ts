@@ -10,7 +10,7 @@ import {
  TOrder,
  TOrderAndItems,
 } from "@shared/types.ts";
-import { and, desc, eq, lt, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, lt, ne, SQL, sql } from "drizzle-orm";
 import FA from "fasy";
 
 interface CreateOrderDto {
@@ -99,22 +99,39 @@ class OrderService {
 
  getMerchantOrders = async (
   userId: string,
+  filter: {
+   status?: string;
+  },
   pagination: Pagination,
- ): Promise<TOrderAndItems> => {
+ ): Promise<any> => {
   const merchantId = await helper.getMerchantIdFromUser(userId);
 
   const limit = Math.min(Math.max(pagination.pageSize ?? 10, 1), 50);
   const pageNumber = Math.max(pagination.pageNumber ?? 1, 1);
   const offset = (pageNumber - 1) * limit;
 
+  const filters: SQL[] = [eq(orderItem.merchantId, merchantId)];
+
+  if (filter?.status) {
+   filters?.push(eq(order?.orderStatus, filter?.status)!);
+  }
+
   const fetchedOrders = await db
    .select()
    .from(order)
    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
-   .where(eq(orderItem.merchantId, merchantId))
+   .where(and(...filters))
    .limit(limit)
    .offset(offset)
    .orderBy(desc(order.createdAt));
+
+  const [totalCountResult] = await db
+   .select({ totalCount: count() })
+   .from(order)
+   .where(and(...filters, isNotNull(order.id)));
+
+  const totalOrders = Number(totalCountResult?.totalCount);
+  const totalPages = Math.ceil(totalOrders / limit);
 
   const merchantOrders =
    fetchedOrders.map(({ orders: o, orderItem: item }) => ({
@@ -127,6 +144,13 @@ class OrderService {
    order_items: merchantOrders
     .filter((i) => i.orderItem)
     .map((o) => o.orderItem),
+   pagination: {
+    limit,
+    pageNumber,
+    totalOrders,
+    totalPages,
+    offset,
+   },
   };
  };
 

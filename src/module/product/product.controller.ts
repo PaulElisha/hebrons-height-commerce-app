@@ -84,9 +84,9 @@ class ProductController {
  getProducts = asyncHandler(
   async (
    req: Request<
-    {},
-    {},
-    {},
+    any,
+    any,
+    any,
     Pagination & {
      search?: string;
      category?: string;

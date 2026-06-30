@@ -6,35 +6,41 @@ import asyncHandler from "@shared/middleware/async-handler.ts";
 import { APIResponse } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 
-import PaymentService from "./payment.service.ts";
+import PaymentService, {
+ CheckoutData,
+ PaymentData,
+} from "./payment.service.ts";
+import InternalServerError from "@shared/error/internal-server.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
 
 class PaymentController {
  initialize = asyncHandler(
   async (
-   req: Request<OrderParams>,
+   req: Request<OrderParams, {}, CheckoutData>,
    res: Response<APIResponse<any>>,
    next: NextFunction,
-  ): Promise<Response> => {
+  ): Promise<any> => {
    const userId = req.user.id;
    const orderId = req.params.orderId as string;
    const body = req.body;
 
    const data = await PaymentService.initialize(userId, orderId, body);
 
+   if (!data) {
+    throw new InternalServerError(
+     "Failed to initialize payment",
+     HttpStatus.INTERNAL_SERVER_ERROR,
+     ErrorCode.INTERNAL_SERVER_ERROR,
+    );
+   }
+
    const checkoutUrl = await PaymentService.fetchPaymentForOrderByRail(
     userId,
     orderId,
-    body,
+    data as PaymentData,
    );
 
-   return res.status(HttpStatus.OK).json({
-    status: "ok",
-    message: "payment initialized",
-    data: {
-     payment: data,
-     checkoutUrl,
-    },
-   } as APIResponse<any>);
+   res.redirect(checkoutUrl);
   },
  );
 }

@@ -20,11 +20,20 @@ export interface CheckoutData {
  mode?: Stripe.Checkout.SessionCreateParams.Mode;
 }
 
+export interface PaymentData {
+ email: string;
+ amount: number;
+ currency: string;
+ rail: string;
+ channels?: Array<string>;
+ mode?: Stripe.Checkout.SessionCreateParams.Mode;
+}
+
 class PaymentService {
  initialize = async (
   userId: string,
   orderId: string,
-  paymentData: CheckoutData,
+  checkoutData: CheckoutData,
  ) => {
   const data = await OrderService.getOrderDetails(userId, orderId);
 
@@ -56,13 +65,14 @@ class PaymentService {
    .insert(payment)
    .values({
     orderId: orderId,
+    email: checkoutData.email,
     userId: userId,
-    mode: paymentData.mode,
-    rail: paymentData.rail,
-    amount: paymentData.amount,
-    currency: paymentData.currency,
+    mode: checkoutData.mode,
+    rail: checkoutData.rail,
+    amount: checkoutData.amount,
+    currency: checkoutData.currency,
     attempts: 2,
-    channels: paymentData.channels,
+    channels: checkoutData.channels,
    })
    .returning();
 
@@ -72,16 +82,16 @@ class PaymentService {
  fetchPaymentForOrderByRail = async (
   userId: string,
   orderId: string,
-  checkoutData: CheckoutData,
+  paymentData: PaymentData,
  ) => {
-  const [paymentData] = await db
+  const [paymentExists] = await db
    .select()
    .from(payment)
    .where(and(eq(payment.orderId, orderId)));
 
-  const rail = checkoutData.rail;
+  const rail = paymentData.rail;
 
-  if (!paymentData || paymentData.rail !== rail) {
+  if (!paymentExists || paymentData.rail !== rail) {
    throw new InternalServerError(
     "Invalid payment rail",
     HttpStatus.NOT_FOUND,
@@ -93,9 +103,9 @@ class PaymentService {
   let url;
 
   if (typeof rail === "string" && rail == "initializePaystackCheckout") {
-   await callback(userId, orderId, checkoutData);
+   await callback(userId, orderId, paymentData);
   } else if (typeof rail === "string" && rail == "initializeStripeCheckout") {
-   url = await callback(userId, orderId, checkoutData);
+   url = await callback(userId, orderId, paymentData);
   }
 
   return url;
