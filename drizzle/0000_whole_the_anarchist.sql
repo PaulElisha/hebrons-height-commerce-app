@@ -130,6 +130,7 @@ CREATE TABLE "product" (
 CREATE TABLE "payment" (
 	"id" text PRIMARY KEY NOT NULL,
 	"order_id" text NOT NULL,
+	"email" text NOT NULL,
 	"user_id" text NOT NULL,
 	"amount" integer,
 	"currency" varchar(255),

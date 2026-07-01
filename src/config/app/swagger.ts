@@ -207,20 +207,18 @@ const spec = {
       type: "object",
       additionalProperties: { type: "string" },
      },
-     orderStatus: {
-      type: "string",
-      enum: [
-       "pending",
-       "confirmed",
-       "processing",
-       "fulfilled",
-       "paid",
-       "out_for_delivery",
-       "delivered",
-       "cancelled",
-       "failed",
-      ],
-     },
+      orderStatus: {
+       type: "string",
+       enum: [
+        "pending",
+        "processing",
+        "fulfilled",
+        "failed",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+       ],
+      },
      paymentStatus: {
       type: "string",
       enum: [
@@ -275,12 +273,13 @@ const spec = {
      },
     },
    },
-   Payment: {
-    type: "object",
-    properties: {
-     id: { type: "string" },
-     orderId: { type: "string" },
-     userId: { type: "string" },
+    Payment: {
+     type: "object",
+     properties: {
+      id: { type: "string" },
+      orderId: { type: "string" },
+      email: { type: "string", format: "email" },
+      userId: { type: "string" },
      amount: { type: "integer", nullable: true },
      currency: { type: "string", nullable: true },
      payment_status: {
@@ -962,36 +961,78 @@ const spec = {
     },
    },
   },
-  "/api/order/merchant": {
-   get: {
-    tags: ["Order"],
-    summary:
-     "Get orders for the authenticated user's merchant store (paginated)",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "pageSize",
-      in: "query",
-      required: false,
-      schema: { type: "integer", minimum: 1, maximum: 50, default: 10 },
-     },
-     {
-      name: "pageNumber",
-      in: "query",
-      required: false,
-      schema: { type: "integer", minimum: 1, default: 1 },
-     },
-    ],
-    responses: {
-     "200": {
-      description: "Fetched merchant orders",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          data: { $ref: "#/components/schemas/OrderAndItems" },
+   "/api/order/merchant": {
+    get: {
+     tags: ["Order"],
+     summary:
+      "Get orders for the authenticated user's merchant store (paginated)",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "pageSize",
+       in: "query",
+       required: false,
+       schema: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+      },
+      {
+       name: "pageNumber",
+       in: "query",
+       required: false,
+       schema: { type: "integer", minimum: 1, default: 1 },
+      },
+      {
+       name: "status",
+       in: "query",
+       required: false,
+       schema: {
+        type: "string",
+        enum: [
+         "pending",
+         "processing",
+         "fulfilled",
+         "failed",
+         "out_for_delivery",
+         "delivered",
+         "cancelled",
+        ],
+       },
+       description: "Filter by order status",
+      },
+     ],
+     responses: {
+      "200": {
+       description: "Merchant orders fetched successfully",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: {
+            type: "string",
+            example: "merchant orders fetched successfully",
+           },
+           data: {
+            type: "object",
+            properties: {
+             order: { $ref: "#/components/schemas/Order" },
+             order_items: {
+              type: "array",
+              items: { $ref: "#/components/schemas/OrderItem" },
+             },
+             pagination: {
+              type: "object",
+              properties: {
+               limit: { type: "integer" },
+               pageNumber: { type: "integer" },
+               totalOrders: { type: "integer" },
+               totalPages: { type: "integer" },
+               offset: { type: "integer" },
+              },
+             },
+            },
+           },
+          },
          },
         },
        },
@@ -999,7 +1040,6 @@ const spec = {
      },
     },
    },
-  },
   "/api/order/status": {
    get: {
     tags: ["Order"],
@@ -1010,19 +1050,19 @@ const spec = {
       name: "status",
       in: "query",
       required: true,
-      schema: {
-       type: "string",
-       enum: [
-        "pending",
-        "confirmed",
-        "processing",
-        "paid",
-        "out_for_delivery",
-        "delivered",
-        "cancelled",
-       ],
-      },
-      description: "Order status to filter by",
+       schema: {
+        type: "string",
+        enum: [
+         "pending",
+         "processing",
+         "fulfilled",
+         "failed",
+         "out_for_delivery",
+         "delivered",
+         "cancelled",
+        ],
+       },
+       description: "Order status to filter by",
      },
     ],
     responses: {
@@ -1150,62 +1190,76 @@ const spec = {
     },
    },
   },
-  "/api/payment/initialize/{orderId}": {
-   post: {
-    tags: ["Payment"],
-    summary: "Initialize payment for an order",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "orderId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Order ID to initialize payment for",
-     },
-    ],
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: { $ref: "#/components/schemas/CheckoutData" },
+   "/api/payment/initialize/{orderId}": {
+    post: {
+     tags: ["Payment"],
+     summary: "Initialize payment for an order (redirects to Stripe checkout)",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "orderId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Order ID to initialize payment for",
       },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Payment initialized",
+     ],
+     requestBody: {
+      required: true,
       content: {
        "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "payment initialized" },
-          data: {
-           type: "object",
-           properties: {
-            payment: { $ref: "#/components/schemas/Payment" },
-            checkoutUrl: {
-             type: "object",
-             properties: {
-              url: { type: "string" },
-             },
-             nullable: true,
-            },
-           },
-          },
-         },
+        schema: { $ref: "#/components/schemas/CheckoutData" },
+       },
+      },
+     },
+     responses: {
+      "302": {
+       description: "Redirect to Stripe Checkout URL",
+       headers: {
+        Location: {
+         type: "string",
+         description: "Stripe Checkout session URL",
+        },
+       },
+      },
+      "400": { description: "Invalid order or payment already exists" },
+      "409": { description: "Payment already created for this order" },
+     },
+    },
+   },
+   "/api/payment/success": {
+    get: {
+     tags: ["Payment"],
+     summary: "Payment success page",
+     responses: {
+      "200": {
+       description: "Payment successful",
+       content: {
+        "text/html": {
+         schema: { type: "string", example: "Payment successful" },
         },
        },
       },
      },
-     "400": { description: "Invalid order or payment already exists" },
-     "409": { description: "Payment already created for this order" },
     },
    },
-  },
-  "/api/webhook/stripe": {
+   "/api/payment/failed": {
+    get: {
+     tags: ["Payment"],
+     summary: "Payment failure page",
+     responses: {
+      "200": {
+       description: "Payment failed",
+       content: {
+        "text/html": {
+         schema: { type: "string", example: "Payment successful" },
+        },
+       },
+      },
+     },
+    },
+   },
+   "/api/webhook/stripe": {
    post: {
     tags: ["Webhook"],
     summary: "Stripe webhook handler (checkout.session.completed/expired)",

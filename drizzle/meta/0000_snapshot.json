@@ -1,5 +1,5 @@
 {
-  "id": "36c30e6d-a4cc-4db4-8710-e8c6682bfa0e",
+  "id": "d752d27b-c03f-4908-b624-3ada8b0f672f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -945,6 +945,12 @@
         },
         "order_id": {
           "name": "order_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
           "type": "text",
           "primaryKey": false,
           "notNull": true
