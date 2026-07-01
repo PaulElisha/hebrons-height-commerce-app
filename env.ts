@@ -1,23 +1,8 @@
 /** @format */
 
-import { env as loadEnv } from "custom-env";
 import z from "zod";
 
 process.env.APP_STAGE = process.env.APP_STAGE || "dev";
-
-if (!process.env.BASE_URL) {
- const isProduction = process.env.APP_STAGE === "prod";
- const isDevelopment = process.env.APP_STAGE === "dev";
- const isTesting = process.env.APP_STAGE === "test";
-
- if (isProduction) {
-  loadEnv("prod");
- } else if (isTesting) {
-  loadEnv("test");
- } else {
-  if (isDevelopment) loadEnv("dev");
- }
-}
 
 const EnvSchema = z.object({
  PORT: z.coerce.number(),
