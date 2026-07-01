@@ -26,7 +26,7 @@ class App {
   this.app.set("trust proxy", 1);
   this.initializeWebhooks();
   this.initializeMiddlewares();
-  this.initializeRoutes();
+  this.initializeApiRoutes();
  }
 
  initializeMiddlewares() {
@@ -47,7 +47,7 @@ class App {
   this.app.use("/api/webhook", webhookRouter);
  }
 
- initializeRoutes() {
+ initializeApiRoutes() {
   this.app.get("/health", (_req, res) => {
    res.status(HttpStatus.OK).send("Welcome to Hebrons Height Commerce APP");
   });
