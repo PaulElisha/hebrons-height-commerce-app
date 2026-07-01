@@ -1241,4 +1241,9 @@ const spec = {
  },
 };
 
+export const options: Record<string, unknown> = {
+ explorer: true,
+ customSiteTitle: "HHG Commerce API Docs",
+};
+
 export default spec;

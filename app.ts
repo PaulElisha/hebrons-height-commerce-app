@@ -12,11 +12,12 @@ import orderRouter from "@module/order/order.route.ts";
 import paymentRouter from "@module/payment/payment.routes.ts";
 import productRouter from "@module/product/product.route.ts";
 import webhookRouter from "@module/webhook/stripe/stripe.route.ts";
-import { setupSwagger } from "@swagger/swagger-ui.ts";
 import { toNodeHandler } from "better-auth/node";
 import express, { Express } from "express";
 
 import Env from "./env.ts";
+import spec, { options } from "@app/swagger.ts";
+import swaggerUi from "swagger-ui-express";
 
 class App {
  app: Express;
@@ -33,7 +34,6 @@ class App {
   this.app.use(cors);
   this.app.use(limiter);
   this.app.use(helmet);
-  setupSwagger(this.app);
   this.initializeAuthRoutes();
   this.app.use(express.json());
   this.app.use(express.urlencoded({ extended: true }));
@@ -57,6 +57,17 @@ class App {
   this.app.use("/api/cart", cartRouter);
   this.app.use("/api/order", orderRouter);
   this.app.use("/api/payment", paymentRouter);
+
+  this.app.use(
+   "/api/docs",
+   swaggerUi.serve,
+   swaggerUi.setup(spec, options as any),
+  );
+
+  this.app.get("/api/docs.json", (_req, res) => {
+   res.setHeader("Content-Type", "application/json");
+   res.send(spec);
+  });
 
   this.app.use(errorHandler);
  }
