@@ -26,7 +26,10 @@ export const auth = betterAuth({
   },
  },
  trustedHeaders: ["x-forwarded-proto", "x-forwarded-host"],
-  trustedOrigins: [Env.CORS_ORIGIN],
+ trustedOrigins: [
+  Env.CORS_ORIGIN,
+  "https://6a285a07cdd9d108e8caabd4.base44.app",
+ ],
  emailAndPassword: {
   enabled: true,
   minPasswordLength: 6,
