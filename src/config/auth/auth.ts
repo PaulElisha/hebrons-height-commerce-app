@@ -8,6 +8,10 @@ import { hashPassword, verifyPassword } from "@shared/util/password.ts";
 import { betterAuth } from "better-auth";
 import { openAPI } from "better-auth/plugins";
 
+const allowedOrigins = Env.CORS_ORIGIN.includes(",")
+ ? Env.CORS_ORIGIN.split(",")
+ : [Env.CORS_ORIGIN];
+
 export const auth = betterAuth({
  secret: Env.AUTH_SECRET,
  basePath: "/api/auth",
@@ -26,10 +30,7 @@ export const auth = betterAuth({
   },
  },
  trustedHeaders: ["x-forwarded-proto", "x-forwarded-host"],
- trustedOrigins: [
-  Env.CORS_ORIGIN,
-  "https://6a285a07cdd9d108e8caabd4.base44.app",
- ],
+ trustedOrigins: allowedOrigins,
  emailAndPassword: {
   enabled: true,
   minPasswordLength: 6,
