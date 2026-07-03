@@ -4,7 +4,7 @@ import express, { Request, Response, Router } from "express";
 
 import { stripeWebhookHandler } from "./stripe.webhook.ts";
 
-const webhookRoutes = Router().post(
+const stripeWebhookRoutes = Router().post(
  "/stripe",
  express.raw({ type: "application/json" }),
  async (req: Request, res: Response) => {
@@ -12,4 +12,4 @@ const webhookRoutes = Router().post(
  },
 );
 
-export default webhookRoutes;
+export default stripeWebhookRoutes;
