@@ -43,6 +43,10 @@ const EnvSchema = z.object({
  CORS_ORIGIN: z.string(),
  VERSION: z.string(),
 
+ CLOUDINARY_CLOUD_NAME: z.string(),
+ CLOUDINARY_KEY: z.string(),
+ CLOUDINARY_SECRET: z.string(),
+
  EMAIL_HOST: z.string(),
  EMAIL_PORT: z.coerce.number(),
 

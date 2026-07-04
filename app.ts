@@ -18,6 +18,7 @@ import express, { Express } from "express";
 import Env from "./env.ts";
 import spec, { options } from "@app/swagger.ts";
 import swaggerUi from "swagger-ui-express";
+import uploadRouter from "@module/upload/upload.route.ts";
 
 class App {
  app: Express;
@@ -35,8 +36,8 @@ class App {
   this.app.use(limiter);
   this.app.use(helmet);
   this.initializeAuthRoutes();
-  this.app.use(express.json());
-  this.app.use(express.urlencoded({ extended: true }));
+  this.app.use(express.json({ limit: "50mb" }));
+  this.app.use(express.urlencoded({ extended: true, limit: "50mb" }));
  }
 
  initializeAuthRoutes() {
@@ -57,6 +58,7 @@ class App {
   this.app.use("/api/cart", cartRouter);
   this.app.use("/api/order", orderRouter);
   this.app.use("/api/payment", paymentRouter);
+  this.app.use("/api/upload", uploadRouter);
 
   this.app.use(
    "/api/docs",

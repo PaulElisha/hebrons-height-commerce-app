@@ -26,7 +26,7 @@ class CartController {
     status: "ok",
     message: "product added to cart",
     data,
-   });
+   } as APIResponse<TCartAndItem>);
   },
  );
 

@@ -6,7 +6,7 @@ import UnauthorizedExceptionError from "@error/unauthorized.ts";
 import type { NextFunction, Request, Response } from "express";
 
 const roleGuard = (...roles: Array<string>) => {
- return async (req: Request, res: Response, next: NextFunction) => {
+ return (req: Request, res: Response, next: NextFunction) => {
   try {
    console.log("User Type: ", req.user.role);
    if (!roles.includes(req.user.role)) {

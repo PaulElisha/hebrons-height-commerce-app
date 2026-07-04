@@ -44,7 +44,7 @@ class PaymentService {
    throw new BadRequestException(
     "Invalid order",
     HttpStatus.UNPROCESSABLE_ENTITY,
-    ErrorCode.AUTH_INVALID_TOKEN,
+    ErrorCode.VALIDATION_ERROR,
    );
   }
 

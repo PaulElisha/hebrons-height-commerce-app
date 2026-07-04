@@ -2,7 +2,7 @@
 
 import roleGuard from "@middleware/role-guard.ts";
 import authenticate from "@shared/middleware/authenticate.ts";
-import { Router } from "express";
+import { Request, Router } from "express";
 
 import ProductController from "./product.controller.ts";
 
