@@ -47,8 +47,8 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
     metadata: {
      orderId: orderData.order.id,
     },
-    success_url: `${Env.BASE_URL}/success/${orderData.order.id}`,
-    cancel_url: `${Env.BASE_URL}/failed/${orderData.order.id}?error=true`,
+    success_url: `${Env.BASE_URL}/success`,
+    cancel_url: `${Env.BASE_URL}/failed`,
    })
    .then(async (session) => {
     if (session.url) {
