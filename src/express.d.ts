@@ -9,11 +9,6 @@ declare global {
   interface Request {
    user: Session["user"];
    session: Session["session"];
-
-   cloudinaryResult?: {
-    url: string;
-    publicId: string;
-   };
   }
  }
 }

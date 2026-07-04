@@ -54,7 +54,7 @@ export const payment = pgTable(
   accessCode: varchar("access_code", { length: 255 }),
   authorizationUrl: text("authorization_url"),
   transactionId: text("transaction_id"),
-  paidAt: timestamp("paidAt", { mode: "date" }).notNull().defaultNow(),
+  paidAt: timestamp("paid_at", { mode: "date" }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
  },

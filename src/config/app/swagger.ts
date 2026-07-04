@@ -158,10 +158,13 @@ const spec = {
      quantity: { type: "integer" },
      category: { type: "string" },
      subCategory: { type: "string" },
-     additionalData: { type: "string" },
+      additionalData: {
+       type: "object",
+       additionalProperties: { type: "string" },
+      },
+     },
     },
-   },
-   Cart: {
+    Cart: {
     type: "object",
     properties: {
      id: { type: "string" },
@@ -273,39 +276,39 @@ const spec = {
      },
     },
    },
-    Payment: {
+   Payment: {
      type: "object",
      properties: {
       id: { type: "string" },
       orderId: { type: "string" },
       email: { type: "string", format: "email" },
       userId: { type: "string" },
-     amount: { type: "integer", nullable: true },
-     currency: { type: "string", nullable: true },
-     payment_status: {
-      type: "string",
-      enum: ["pending", "paid", "failed", "cancelled", "refunded"],
-      default: "pending",
+      amount: { type: "integer", nullable: true },
+      currency: { type: "string", nullable: true },
+      status: {
+       type: "string",
+       enum: ["pending", "paid", "failed", "cancelled", "refunded"],
+       default: "pending",
+      },
+      attempts: { type: "integer", nullable: true },
+      mode: { type: "string", nullable: true },
+      rail: { type: "string" },
+      channels: {
+       type: "array",
+       items: { type: "string" },
+       nullable: true,
+      },
+      paymentReference: { type: "string" },
+      paymentProvider: { type: "string", nullable: true },
+      accessCode: { type: "string", nullable: true },
+      authorizationUrl: { type: "string", nullable: true },
+      transactionId: { type: "string", nullable: true },
+      paidAt: { type: "string", format: "date-time" },
+      createdAt: { type: "string", format: "date-time" },
+      updatedAt: { type: "string", format: "date-time" },
      },
-     attempts: { type: "integer", nullable: true },
-     mode: { type: "string", nullable: true },
-     rail: { type: "string" },
-     channels: {
-      type: "array",
-      items: { type: "string" },
-      nullable: true,
-     },
-     payment_reference: { type: "string" },
-     payment_provider: { type: "string", nullable: true },
-     access_code: { type: "string", nullable: true },
-     authorization_url: { type: "string", nullable: true },
-     transaction_id: { type: "string", nullable: true },
-     paidAt: { type: "string", format: "date-time" },
-     createdAt: { type: "string", format: "date-time" },
-     updatedAt: { type: "string", format: "date-time" },
     },
-   },
-   CheckoutData: {
+    CheckoutData: {
     type: "object",
     required: ["email", "amount", "currency", "rail"],
     properties: {
@@ -331,6 +334,18 @@ const spec = {
     properties: {
      pageSize: { type: "integer", minimum: 1, maximum: 50 },
      pageNumber: { type: "integer", minimum: 1 },
+    },
+   },
+   UploadResult: {
+    type: "object",
+    properties: {
+     public_id: { type: "string" },
+     url: { type: "string" },
+     folder: { type: "string" },
+     signature: { type: "string" },
+     timestamp: { type: "integer" },
+     cloudName: { type: "string" },
+     apiKey: { type: "string" },
     },
    },
   },
@@ -1040,17 +1055,17 @@ const spec = {
      },
     },
    },
-  "/api/order/status": {
-   get: {
-    tags: ["Order"],
-    summary: "Get user's orders filtered by status",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "status",
-      in: "query",
-      required: true,
-       schema: {
+   "/api/order/status": {
+    get: {
+     tags: ["Order"],
+     summary: "Get user's orders filtered by status",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "status",
+       in: "query",
+       required: false,
+        schema: {
         type: "string",
         enum: [
          "pending",
@@ -1190,75 +1205,78 @@ const spec = {
     },
    },
   },
-   "/api/payment/initialize/{orderId}": {
-    post: {
-     tags: ["Payment"],
-     summary: "Initialize payment for an order (redirects to Stripe checkout)",
-     security: [{ bearerAuth: [] }],
-     parameters: [
-      {
-       name: "orderId",
-       in: "path",
+    "/api/payment/initialize/{orderId}": {
+     post: {
+      tags: ["Payment"],
+      summary: "Initialize payment for an order (redirects to Stripe checkout)",
+      security: [{ bearerAuth: [] }],
+      parameters: [
+       {
+        name: "orderId",
+        in: "path",
+        required: true,
+        schema: { type: "string" },
+        description: "Order ID to initialize payment for",
+       },
+      ],
+      requestBody: {
        required: true,
-       schema: { type: "string" },
-       description: "Order ID to initialize payment for",
-      },
-     ],
-     requestBody: {
-      required: true,
-      content: {
-       "application/json": {
-        schema: { $ref: "#/components/schemas/CheckoutData" },
-       },
-      },
-     },
-     responses: {
-      "302": {
-       description: "Redirect to Stripe Checkout URL",
-       headers: {
-        Location: {
-         type: "string",
-         description: "Stripe Checkout session URL",
-        },
-       },
-      },
-      "400": { description: "Invalid order or payment already exists" },
-      "409": { description: "Payment already created for this order" },
-     },
-    },
-   },
-   "/api/payment/success": {
-    get: {
-     tags: ["Payment"],
-     summary: "Payment success page",
-     responses: {
-      "200": {
-       description: "Payment successful",
        content: {
-        "text/html": {
-         schema: { type: "string", example: "Payment successful" },
+        "application/json": {
+         schema: { $ref: "#/components/schemas/CheckoutData" },
+        },
+       },
+      },
+      responses: {
+       "302": {
+        description: "Redirect to Stripe Checkout URL",
+        headers: {
+         Location: {
+          type: "string",
+          description: "Stripe Checkout session URL",
+         },
+        },
+       },
+       "422": { description: "Invalid order — order or payment status is not pending" },
+       "409": { description: "Payment already created for this order" },
+       "500": { description: "Failed to initialize payment" },
+      },
+     },
+    },
+    "/api/payment/success": {
+     get: {
+      tags: ["Payment"],
+      summary: "Payment success page",
+      security: [{ bearerAuth: [] }],
+      responses: {
+       "200": {
+        description: "Payment successful",
+        content: {
+         "text/html": {
+          schema: { type: "string", example: "Payment successful" },
+         },
         },
        },
       },
      },
     },
-   },
-   "/api/payment/failed": {
-    get: {
-     tags: ["Payment"],
-     summary: "Payment failure page",
-     responses: {
-      "200": {
-       description: "Payment failed",
-       content: {
-        "text/html": {
-         schema: { type: "string", example: "Payment successful" },
+    "/api/payment/failed": {
+     get: {
+      tags: ["Payment"],
+      summary: "Payment failure page",
+      security: [{ bearerAuth: [] }],
+      responses: {
+       "200": {
+        description: "Payment failed",
+        content: {
+         "text/html": {
+          schema: { type: "string", example: "Payment failed" },
+         },
         },
        },
       },
      },
     },
-   },
    "/api/webhook/stripe": {
    post: {
     tags: ["Webhook"],
@@ -1288,12 +1306,53 @@ const spec = {
        },
       },
      },
-     "400": { description: "Webhook signature verification failed" },
+      "400": { description: "Webhook signature verification failed" },
+     },
+    },
+   },
+   "/api/upload/cloudinary-signature": {
+    post: {
+     tags: ["Upload"],
+     summary: "Generate a Cloudinary upload signature",
+     security: [{ bearerAuth: [] }],
+     requestBody: {
+      required: true,
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         required: ["folder"],
+         properties: {
+          folder: {
+           type: "string",
+           enum: ["product_images", "avatar", "product_videos"],
+          },
+         },
+        },
+       },
+      },
+     },
+     responses: {
+      "201": {
+       description: "Upload signature created",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "signature created" },
+           uploadResult: { $ref: "#/components/schemas/UploadResult" },
+          },
+         },
+        },
+       },
+      },
+     },
     },
    },
   },
- },
-};
+ };
 
 export const options: Record<string, unknown> = {
  explorer: true,
