@@ -6,7 +6,7 @@ import db from "@db/db.ts";
 import * as schema from "@schema/auth.ts";
 import { hashPassword, verifyPassword } from "@shared/util/password.ts";
 import { betterAuth } from "better-auth";
-import { openAPI } from "better-auth/plugins";
+import { bearer, openAPI } from "better-auth/plugins";
 
 const allowedOrigins = Env.CORS_ORIGIN.includes(",")
  ? Env.CORS_ORIGIN.split(",")
@@ -53,5 +53,5 @@ export const auth = betterAuth({
   disableCSRFCheck: true,
   crossSubDomainCookie: { enabled: false },
  },
- plugins: [openAPI()],
+ plugins: [openAPI(), bearer()],
 });

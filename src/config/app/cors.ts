@@ -11,4 +11,5 @@ export default cors({
  origin: allowedOrigins,
  methods: ["GET", "POST", "PUT", "DELETE"],
  credentials: true,
+ exposedHeaders: ["set-auth-token"],
 });
