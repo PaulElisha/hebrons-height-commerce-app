@@ -43,13 +43,15 @@ export const auth = betterAuth({
  },
  advanced: {
   useSecureCookies: Env.BASE_URL.startsWith("https://"),
-  disableCSRFCheck: true,
 
   cookies: {
    session_token: {
     name: "auth_session_token",
    },
   },
+
+  disableCSRFCheck: true,
+  crossSubDomainCookie: { enabled: false },
  },
  plugins: [openAPI()],
 });
