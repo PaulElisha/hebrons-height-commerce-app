@@ -12,13 +12,13 @@ import orderRouter from "@module/order/order.route.ts";
 import paymentRouter from "@module/payment/payment.routes.ts";
 import productRouter from "@module/product/product.route.ts";
 import stripeWebhookRoutes from "@module/webhook/stripe/stripe.route.ts";
+import uploadRouter from "@module/upload/upload.route.ts";
 import { toNodeHandler } from "better-auth/node";
 import express, { Express } from "express";
 
 import Env from "./env.ts";
 import spec, { options } from "@app/swagger.ts";
 import swaggerUi from "swagger-ui-express";
-import uploadRouter from "@module/upload/upload.route.ts";
 
 class App {
  app: Express;

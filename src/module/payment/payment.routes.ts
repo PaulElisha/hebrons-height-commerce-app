@@ -21,7 +21,7 @@ class PaymentRoutes {
   });
 
   this.router.get("/failed", async (req, res) => {
-   res.send("Payment successful");
+   res.send("Payment failed");
   });
  }
 }
