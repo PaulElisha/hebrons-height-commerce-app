@@ -52,6 +52,7 @@ export const auth = betterAuth({
 
   disableCSRFCheck: true,
   crossSubDomainCookie: { enabled: false },
+  trustHost: true,
  },
  plugins: [openAPI(), bearer()],
 });
