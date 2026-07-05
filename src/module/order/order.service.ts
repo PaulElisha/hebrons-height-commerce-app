@@ -58,6 +58,7 @@ class OrderService {
       line2: body.deliveryAddress.line2,
      } as any,
     })
+    .onConflictDoNothing()
     .returning();
 
    const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {

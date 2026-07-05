@@ -28,8 +28,12 @@ class MerchantController {
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
    const userId = req.user.id;
    const body = req.body;
+   const businessLogo = req.upload_image.url;
 
-   const data = await MerchantService.createMerchantProfile(userId, body);
+   const data = await MerchantService.createMerchantProfile(userId, {
+    ...body,
+    businessLogo,
+   });
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -46,13 +50,17 @@ class MerchantController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = req.params.merchantId;
+   const merchantId = req.params.merchantId as string;
    const body = req.body;
+   const businessLogo = req.upload_image.url;
 
    const data = await MerchantService.updateMerchantProfile(
     userId,
     merchantId,
-    body,
+    {
+     ...body,
+     businessLogo,
+    },
    );
 
    return res.status(HttpStatus.OK).json({
@@ -70,7 +78,7 @@ class MerchantController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = req.params.merchantId;
+   const merchantId = req.params.merchantId as string;
 
    await MerchantService.deleteMerchantProfile(userId, merchantId);
 
