@@ -10,6 +10,7 @@ import * as schema from "./schema.ts";
 const createPool = () =>
  new Pool({
   connectionString: Env.DB_URL,
+  ssl: true,
  });
 
 let client;
