@@ -21,8 +21,14 @@ export const cloudinaryUploadStream = (folder: AssetType) => {
      resource_type: "auto",
     },
     (err: any, data: any) => {
-     if (!err)
-      req.upload_image = { url: data.secure_url, publicId: data.public_id };
+     if (err) {
+      return next(err);
+     }
+
+     req.upload_image = {
+      url: data.secure_url,
+      publicId: data.public_id,
+     };
 
      next();
     },

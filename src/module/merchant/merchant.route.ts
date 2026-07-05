@@ -25,12 +25,7 @@ class MerchantRouter {
    cloudinaryUploadStream("avatar"),
    MerchantController.createMerchantProfile,
   );
-  this.router.put(
-   "/:merchantId",
-   upload.single("file"),
-   cloudinaryUploadStream("avatar"),
-   MerchantController.updateMerchantProfile,
-  );
+  this.router.put("/:merchantId", MerchantController.updateMerchantProfile);
   this.router.delete("/:merchantId", MerchantController.deleteMerchantProfile);
  }
 }

@@ -52,15 +52,11 @@ class MerchantController {
    const userId = req.user.id;
    const merchantId = req.params.merchantId as string;
    const body = req.body;
-   const businessLogo = req.upload_image.url;
 
    const data = await MerchantService.updateMerchantProfile(
     userId,
     merchantId,
-    {
-     ...body,
-     businessLogo,
-    },
+    body,
    );
 
    return res.status(HttpStatus.OK).json({

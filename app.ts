@@ -20,6 +20,7 @@ import cookieParser from "cookie-parser";
 import Env from "./env.ts";
 import spec, { options } from "@app/swagger.ts";
 import swaggerUi from "swagger-ui-express";
+import userRouter from "@module/user/user.routes.ts";
 
 class App {
  app: Express;
@@ -55,6 +56,7 @@ class App {
    res.status(HttpStatus.OK).send("Welcome to Hebrons Height Commerce APP");
   });
 
+  this.app.use("/api/user", userRouter);
   this.app.use("/api/merchant", merchantRouter);
   this.app.use("/api/product", productRouter);
   this.app.use("/api/cart", cartRouter);
