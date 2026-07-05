@@ -10,7 +10,10 @@ import * as schema from "./schema.ts";
 const createPool = () =>
  new Pool({
   connectionString: Env.DB_URL,
-  ssl: true,
+  ssl:
+   process.env.NODE_ENV === "production"
+    ? { rejectUnauthorized: false } // Allows Aiven's self-signed certs on Render
+    : false,
  });
 
 let client;
