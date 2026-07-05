@@ -33,14 +33,14 @@ const spec = {
      data: { type: "object" },
     },
    },
-   Error: {
-    type: "object",
-    properties: {
-     status: { type: "string", example: "error" },
-     message: { type: "string" },
-     code: { type: "string" },
+    Error: {
+     type: "object",
+     properties: {
+      message: { type: "string" },
+      error: { type: "string" },
+      status: { type: "string", example: "error" },
+     },
     },
-   },
    User: {
     type: "object",
     properties: {
@@ -382,13 +382,21 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "fetched merchant profile" },
-          data: { $ref: "#/components/schemas/Merchant" },
+          data: {
+           type: "object",
+           properties: {
+            merchant: { $ref: "#/components/schemas/Merchant" },
+            user: { $ref: "#/components/schemas/User" },
+           },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a merchant" },
+      "404": { description: "Merchant profile not found" },
      },
-     "401": { description: "Unauthorized" },
     },
    },
   },
@@ -405,81 +413,89 @@ const spec = {
       },
      },
     },
-    responses: {
-     "200": {
-      description: "Merchant profile created",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "merchant profile created" },
-          data: { $ref: "#/components/schemas/Merchant" },
+     responses: {
+      "200": {
+       description: "Merchant profile created",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "merchant profile created" },
+           data: { $ref: "#/components/schemas/Merchant" },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a merchant" },
      },
     },
    },
-  },
-  "/api/merchant/{merchantId}": {
-   put: {
-    tags: ["Merchant"],
-    summary: "Update merchant profile",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "merchantId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Merchant ID",
-     },
-    ],
-    requestBody: {
-     content: {
-      "application/json": {
-       schema: { $ref: "#/components/schemas/UpdateMerchantDto" },
+   "/api/merchant/{merchantId}": {
+    put: {
+     tags: ["Merchant"],
+     summary: "Update merchant profile",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "merchantId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Merchant ID",
       },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Merchant profile updated",
+     ],
+     requestBody: {
       content: {
        "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "merchant profile updated" },
-          data: { $ref: "#/components/schemas/Merchant" },
+        schema: { $ref: "#/components/schemas/UpdateMerchantDto" },
+       },
+      },
+     },
+     responses: {
+      "200": {
+       description: "Merchant profile updated",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "merchant profile updated" },
+           data: { $ref: "#/components/schemas/Merchant" },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a merchant" },
+      "404": { description: "Merchant profile not found" },
      },
     },
-   },
-   delete: {
-    tags: ["Merchant"],
-    summary: "Delete merchant profile",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "merchantId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Merchant ID",
+    delete: {
+     tags: ["Merchant"],
+     summary: "Delete merchant profile",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "merchantId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Merchant ID",
+      },
+     ],
+     responses: {
+      "204": { description: "Merchant profile deleted, no content" },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a merchant" },
+      "404": { description: "Merchant profile not found" },
      },
-    ],
-    responses: {
-     "204": { description: "Merchant profile deleted, no content" },
     },
-   },
   },
   "/api/product/latest": {
    get: {
@@ -609,59 +625,62 @@ const spec = {
      },
     },
    },
-   post: {
-    tags: ["Product"],
-    summary: "Create a new product",
-    security: [{ bearerAuth: [] }],
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: { $ref: "#/components/schemas/CreateProductDto" },
-      },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Product created successfully",
+    post: {
+     tags: ["Product"],
+     summary: "Create a new product",
+     security: [{ bearerAuth: [] }],
+     requestBody: {
+      required: true,
       content: {
        "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "product created successfully" },
-          data: { $ref: "#/components/schemas/Product" },
+        schema: { $ref: "#/components/schemas/CreateProductDto" },
+       },
+      },
+     },
+     responses: {
+      "200": {
+       description: "Product created successfully",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "product created successfully" },
+           data: { $ref: "#/components/schemas/Product" },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a merchant" },
      },
     },
    },
-  },
-  "/api/product/merchant": {
+   "/api/product/merchant": {
    get: {
     tags: ["Product"],
     summary: "Get authenticated merchant's own products",
     security: [{ bearerAuth: [] }],
-    responses: {
-     "200": {
-      description: "Fetched merchant products",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "fetched merchant products" },
-          data: {
-           type: "object",
-           properties: {
-            merchant: { $ref: "#/components/schemas/Merchant" },
-            products: {
-             type: "array",
-             items: { $ref: "#/components/schemas/Product" },
+     responses: {
+      "200": {
+       description: "Fetched merchant products",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "fetched merchant products" },
+           data: {
+            type: "object",
+            properties: {
+             merchant: { $ref: "#/components/schemas/Merchant" },
+             products: {
+              type: "array",
+              items: { $ref: "#/components/schemas/Product" },
+             },
             },
            },
           },
@@ -669,97 +688,106 @@ const spec = {
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a merchant" },
      },
     },
    },
-  },
-  "/api/product/{productId}": {
-   get: {
-    tags: ["Product"],
-    summary: "Get a single product by ID",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "productId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Product ID",
-     },
-    ],
-    responses: {
-     "200": {
-      description: "Fetched a product",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "fetched a product" },
-          data: { $ref: "#/components/schemas/Product" },
+   "/api/product/{productId}": {
+    get: {
+     tags: ["Product"],
+     summary: "Get a single product by ID",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "productId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Product ID",
+      },
+     ],
+     responses: {
+      "200": {
+       description: "Fetched a product",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "fetched a product" },
+           data: { $ref: "#/components/schemas/Product" },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
+      "404": { description: "Product not found" },
      },
-     "404": { description: "Product not found" },
     },
-   },
-   put: {
-    tags: ["Product"],
-    summary: "Update a product",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "productId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Product ID",
-     },
-    ],
-    requestBody: {
-     content: {
-      "application/json": {
-       schema: { $ref: "#/components/schemas/UpdateProductDto" },
+    put: {
+     tags: ["Product"],
+     summary: "Update a product",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "productId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Product ID",
       },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Product updated successfully",
+     ],
+     requestBody: {
       content: {
        "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "product updated successfully" },
-          data: { $ref: "#/components/schemas/Product" },
+        schema: { $ref: "#/components/schemas/UpdateProductDto" },
+       },
+      },
+     },
+     responses: {
+      "200": {
+       description: "Product updated successfully",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "product updated successfully" },
+           data: { $ref: "#/components/schemas/Product" },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a merchant" },
+      "404": { description: "Product not found" },
      },
     },
-   },
-   delete: {
-    tags: ["Product"],
-    summary: "Delete a product",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "productId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Product ID",
+    delete: {
+     tags: ["Product"],
+     summary: "Delete a product",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "productId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Product ID",
+      },
+     ],
+     responses: {
+      "204": { description: "Product deleted successfully, no content" },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a merchant" },
+      "404": { description: "Product not found" },
      },
-    ],
-    responses: {
-     "204": { description: "Product deleted successfully, no content" },
-    },
    },
   },
   "/api/product/{merchantId}/merchant": {
@@ -776,23 +804,24 @@ const spec = {
       description: "Merchant ID",
      },
     ],
-    responses: {
-     "200": {
-      description: "Fetched products for merchant",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "fetched product for merchant" },
-          data: {
-           type: "object",
-           properties: {
-            merchant: { $ref: "#/components/schemas/Merchant" },
-            products: {
-             type: "array",
-             items: { $ref: "#/components/schemas/Product" },
+     responses: {
+      "200": {
+       description: "Fetched products for merchant",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "fetched product for merchant" },
+           data: {
+            type: "object",
+            properties: {
+             merchant: { $ref: "#/components/schemas/Merchant" },
+             products: {
+              type: "array",
+              items: { $ref: "#/components/schemas/Product" },
+             },
             },
            },
           },
@@ -800,182 +829,200 @@ const spec = {
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
+      "404": { description: "Merchant not found" },
      },
     },
    },
-  },
-  "/api/cart/{cartId}": {
-   get: {
-    tags: ["Cart"],
-    summary: "Get user's cart with items by cart ID",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "cartId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Cart ID",
-     },
-    ],
-    responses: {
-     "200": {
-      description: "User cart fetched successfully",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: {
-           type: "string",
-           example: "user cart fetched successfully",
+   "/api/cart/{cartId}": {
+    get: {
+     tags: ["Cart"],
+     summary: "Get user's cart with items by cart ID",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "cartId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Cart ID",
+      },
+     ],
+     responses: {
+      "200": {
+       description: "User cart fetched successfully",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: {
+            type: "string",
+            example: "user cart fetched successfully",
+           },
+           data: { $ref: "#/components/schemas/CartAndItems" },
           },
-          data: { $ref: "#/components/schemas/CartAndItems" },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
+      "404": { description: "Cart not found" },
      },
     },
    },
-  },
-  "/api/cart/{productId}": {
-   put: {
-    tags: ["Cart"],
-    summary: "Add a product to the cart",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "productId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Product ID to add",
-     },
-    ],
-    responses: {
-     "200": {
-      description: "Product added to cart",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "product added to cart" },
-          data: { $ref: "#/components/schemas/CartAndItems" },
-         },
-        },
-       },
+   "/api/cart/{productId}": {
+    put: {
+     tags: ["Cart"],
+     summary: "Add a product to the cart",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "productId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Product ID to add",
       },
-     },
-    },
-   },
-   delete: {
-    tags: ["Cart"],
-    summary: "Remove a product from the cart",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "productId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Product ID to remove",
-     },
-    ],
-    responses: {
-     "200": {
-      description: "Product removed from cart",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "product removed from cart" },
-          data: { $ref: "#/components/schemas/CartAndItems" },
-         },
-        },
-       },
-      },
-     },
-    },
-   },
-  },
-  "/api/cart/{productId}/increment": {
-   put: {
-    tags: ["Cart"],
-    summary: "Increment cart item quantity by 1",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "productId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Product ID",
-     },
-    ],
-    responses: {
-     "200": {
-      description: "Product quantity incremented",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: {
-           type: "string",
-           example: "product quantity incremented",
+     ],
+     responses: {
+      "200": {
+       description: "Product added to cart",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "product added to cart" },
+           data: { $ref: "#/components/schemas/CartAndItems" },
           },
-          data: { $ref: "#/components/schemas/CartAndItems" },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
+      "404": { description: "Cart not found" },
+      "422": { description: "Product is out of stock or threshold exceeded" },
      },
     },
-   },
-  },
-  "/api/cart/{productId}/decrement": {
-   put: {
-    tags: ["Cart"],
-    summary: "Decrement cart item quantity by 1",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "productId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Product ID",
-     },
-    ],
-    responses: {
-     "200": {
-      description: "Product quantity decremented",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: {
-           type: "string",
-           example: "product quantity decremented",
+    delete: {
+     tags: ["Cart"],
+     summary: "Remove a product from the cart",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "productId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Product ID to remove",
+      },
+     ],
+     responses: {
+      "200": {
+       description: "Product removed from cart",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "product removed from cart" },
+           data: { $ref: "#/components/schemas/CartAndItems" },
           },
-          data: { $ref: "#/components/schemas/CartAndItems" },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
      },
     },
    },
-  },
+   "/api/cart/{productId}/increment": {
+    put: {
+     tags: ["Cart"],
+     summary: "Increment cart item quantity by 1",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "productId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Product ID",
+      },
+     ],
+     responses: {
+      "200": {
+       description: "Product quantity incremented",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: {
+            type: "string",
+            example: "product quantity incremented",
+           },
+           data: { $ref: "#/components/schemas/CartAndItems" },
+          },
+         },
+        },
+       },
+      },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
+      "404": { description: "Cart item not found" },
+      "422": { description: "Product is out of stock or threshold exceeded" },
+     },
+    },
+   },
+   "/api/cart/{productId}/decrement": {
+    put: {
+     tags: ["Cart"],
+     summary: "Decrement cart item quantity by 1",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "productId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Product ID",
+      },
+     ],
+     responses: {
+      "200": {
+       description: "Product quantity decremented",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: {
+            type: "string",
+            example: "product quantity decremented",
+           },
+           data: { $ref: "#/components/schemas/CartAndItems" },
+          },
+         },
+        },
+       },
+      },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
+      "404": { description: "Cart item not found" },
+     },
+    },
+   },
    "/api/order/merchant": {
     get: {
      tags: ["Order"],
@@ -1014,35 +1061,36 @@ const spec = {
        description: "Filter by order status",
       },
      ],
-     responses: {
-      "200": {
-       description: "Merchant orders fetched successfully",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: {
-            type: "string",
-            example: "merchant orders fetched successfully",
-           },
-           data: {
-            type: "object",
-            properties: {
-             order: { $ref: "#/components/schemas/Order" },
-             order_items: {
-              type: "array",
-              items: { $ref: "#/components/schemas/OrderItem" },
-             },
-             pagination: {
-              type: "object",
-              properties: {
-               limit: { type: "integer" },
-               pageNumber: { type: "integer" },
-               totalOrders: { type: "integer" },
-               totalPages: { type: "integer" },
-               offset: { type: "integer" },
+      responses: {
+       "200": {
+        description: "Merchant orders fetched successfully",
+        content: {
+         "application/json": {
+          schema: {
+           type: "object",
+           properties: {
+            status: { type: "string", example: "ok" },
+            message: {
+             type: "string",
+             example: "merchant orders fetched successfully",
+            },
+            data: {
+             type: "object",
+             properties: {
+              order: { $ref: "#/components/schemas/Order" },
+              order_items: {
+               type: "array",
+               items: { $ref: "#/components/schemas/OrderItem" },
+              },
+              pagination: {
+               type: "object",
+               properties: {
+                limit: { type: "integer" },
+                pageNumber: { type: "integer" },
+                totalOrders: { type: "integer" },
+                totalPages: { type: "integer" },
+                offset: { type: "integer" },
+               },
               },
              },
             },
@@ -1051,11 +1099,12 @@ const spec = {
          },
         },
        },
+       "401": { description: "Unauthorized — invalid or missing session token" },
+       "403": { description: "Forbidden — user is not a user" },
       },
      },
     },
-   },
-   "/api/order/status": {
+    "/api/order/status": {
     get: {
      tags: ["Order"],
      summary: "Get user's orders filtered by status",
@@ -1080,129 +1129,140 @@ const spec = {
        description: "Order status to filter by",
      },
     ],
-    responses: {
-     "200": {
-      description: "Fetched orders by status",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "fetched order status" },
-          data: { $ref: "#/components/schemas/OrderAndItems" },
+     responses: {
+      "200": {
+       description: "Fetched orders by status",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "fetched order status" },
+           data: { $ref: "#/components/schemas/OrderAndItems" },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
      },
     },
    },
-  },
-  "/api/order/{orderId}": {
-   get: {
-    tags: ["Order"],
-    summary: "Get order details by order ID",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "orderId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Order ID",
-     },
-    ],
-    responses: {
-     "200": {
-      description: "Fetched order details",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "fetched order details" },
-          data: { $ref: "#/components/schemas/OrderAndItems" },
+   "/api/order/{orderId}": {
+    get: {
+     tags: ["Order"],
+     summary: "Get order details by order ID",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "orderId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Order ID",
+      },
+     ],
+     responses: {
+      "200": {
+       description: "Fetched order details",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "fetched order details" },
+           data: { $ref: "#/components/schemas/OrderAndItems" },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
+      "404": { description: "Order not found" },
      },
-     "404": { description: "Order not found" },
+    },
+    put: {
+     tags: ["Order"],
+     summary: "Cancel an order (only if not yet paid)",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "orderId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Order ID to cancel",
+      },
+     ],
+     responses: {
+      "200": {
+       description: "Order cancelled",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "order cancelled" },
+           data: { $ref: "#/components/schemas/Order" },
+          },
+         },
+        },
+       },
+      },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
+      "404": { description: "Order not found" },
+      "422": { description: "Order has already been paid — cannot cancel" },
+     },
     },
    },
-   put: {
-    tags: ["Order"],
-    summary: "Cancel an order (only if not yet paid)",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "orderId",
-      in: "path",
+   "/api/order/{cartId}": {
+    post: {
+     tags: ["Order"],
+     summary: "Place an order from a cart",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "cartId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Cart ID to place order from",
+      },
+     ],
+     requestBody: {
       required: true,
-      schema: { type: "string" },
-      description: "Order ID to cancel",
-     },
-    ],
-    responses: {
-     "200": {
-      description: "Order cancelled",
       content: {
        "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "order cancelled" },
-          data: { $ref: "#/components/schemas/Order" },
+        schema: { $ref: "#/components/schemas/CreateOrderDto" },
+       },
+      },
+     },
+     responses: {
+      "200": {
+       description: "Order placed",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "order placed" },
+           data: { type: "string", description: "Newly created order ID" },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
+      "404": { description: "Cart not found" },
      },
-    },
-   },
-  },
-  "/api/order/{cartId}": {
-   post: {
-    tags: ["Order"],
-    summary: "Place an order from a cart",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "cartId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Cart ID to place order from",
-     },
-    ],
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: { $ref: "#/components/schemas/CreateOrderDto" },
-      },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Order placed",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "order placed" },
-          data: { type: "string", description: "Newly created order ID" },
-         },
-        },
-       },
-      },
-     },
-    },
    },
   },
     "/api/payment/initialize/{orderId}": {
@@ -1237,6 +1297,7 @@ const spec = {
          },
         },
        },
+       "401": { description: "Unauthorized — invalid or missing session token" },
        "422": { description: "Invalid order — order or payment status is not pending" },
        "409": { description: "Payment already created for this order" },
        "500": { description: "Failed to initialize payment" },
@@ -1257,6 +1318,7 @@ const spec = {
          },
         },
        },
+       "401": { description: "Unauthorized — invalid or missing session token" },
       },
      },
     },
@@ -1274,6 +1336,7 @@ const spec = {
          },
         },
        },
+       "401": { description: "Unauthorized — invalid or missing session token" },
       },
      },
     },
@@ -1306,11 +1369,12 @@ const spec = {
        },
       },
      },
-      "400": { description: "Webhook signature verification failed" },
+       "400": { description: "Webhook signature verification failed" },
+       "500": { description: "Webhook processing error" },
+      },
      },
     },
-   },
-   "/api/upload/cloudinary-signature": {
+    "/api/upload/cloudinary-signature": {
     post: {
      tags: ["Upload"],
      summary: "Generate a Cloudinary upload signature",
@@ -1332,23 +1396,25 @@ const spec = {
        },
       },
      },
-     responses: {
-      "201": {
-       description: "Upload signature created",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "signature created" },
-           uploadResult: { $ref: "#/components/schemas/UploadResult" },
+      responses: {
+       "201": {
+        description: "Upload signature created",
+        content: {
+         "application/json": {
+          schema: {
+           type: "object",
+           properties: {
+            status: { type: "string", example: "ok" },
+            message: { type: "string", example: "signature created" },
+            uploadResult: { $ref: "#/components/schemas/UploadResult" },
+           },
           },
          },
         },
        },
+       "401": { description: "Unauthorized — invalid or missing session token" },
+       "403": { description: "Forbidden — user role not authorized" },
       },
-     },
     },
    },
   },
