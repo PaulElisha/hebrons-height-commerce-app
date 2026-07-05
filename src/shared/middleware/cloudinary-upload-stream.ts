@@ -1,39 +1,31 @@
 /** @format */
 
-// /** @format */
+import cloudinary from "@app/cloudinary.ts";
+import { createPublicId } from "@shared/helper.ts";
+import streamifier from "streamifier";
+import { Request, Response, NextFunction } from "express";
+import { AssetType } from "./cloudinary-upload-bulk-stream.ts";
 
-// import cloudinary from "@app/cloudinary.ts";
-// import { timestamp } from "drizzle-orm/gel-core";
-// import { Request, Response, NextFunction } from "express";
+export const cloudinaryUploadStream = (folder: AssetType) => {
+ return (req: Request, res: Response, next: NextFunction) => {
+  if (!req.file) {
+   return next(new Error("No file uploaded"));
+  }
 
-// interface CloudinaryOptions {
-//  folder: string;
-//  public_id: string;
-//  signature: string;
-//  apiKey: string;
-//  timestamp: string;
-// }
-// export const cloudinaryUploadStream = (folder: string) => {
-//  return (req: Request, res: Response, next: NextFunction) => {
-//   const { public_id, signature, apiKey, timestamp } = req.body;
+  const publicId = createPublicId(folder);
+  const stream = cloudinary.uploader.upload_stream(
+   {
+    folder: folder,
+    public_id: publicId,
+    resource_type: "auto",
+   },
+   (err: any, data: any) => {
+    if (!err)
+     req.cloudinaryResult = { url: data.secure_url, publicId: data.public_id };
 
-//   const stream = cloudinary.uploader.upload_stream(
-//    {
-//     folder: folder,
-//     timestamp: timestamp,
-//     public_id: public_id,
-//     signature: signature,
-//     api_key: apiKey,
-//     unique_filename: false,
-//     resource_type: "auto",
-//    },
-//    (err: Error, data: any) => {
-//     if (!err)
-//      req.cloudinaryResult = { url: data.secure_url, publicId: data.public_id };
-
-//     next();
-//    },
-//   );
-//   req.pipe(stream);
-//  };
-// };
+    next();
+   },
+  );
+  streamifier.createReadStream(req.file.buffer).pipe(stream);
+ };
+};

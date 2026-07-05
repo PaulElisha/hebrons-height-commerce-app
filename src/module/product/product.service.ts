@@ -2,9 +2,13 @@
 import db from "@db/db.ts";
 import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import NotFoundException from "@shared/error/not-found.ts";
 import * as helper from "@shared/helper.ts";
 import { Pagination } from "@shared/types.ts";
 import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
+import { UploadImages } from "@shared/types.ts";
 
 // import { TProduct } from "./product.controller.ts";
 
@@ -140,7 +144,10 @@ class ProductService {
   };
  };
 
- createProduct = async (userId: string, body: CreateProductDto) => {
+ createProduct = async (
+  userId: string,
+  body: CreateProductDto & { imageUrl?: string },
+ ) => {
   const targetMerchantId = await helper.getMerchantIdFromUser(userId);
 
   const [newProduct] = await db
@@ -149,7 +156,7 @@ class ProductService {
     merchantId: targetMerchantId,
     name: body.name,
     description: body.description,
-    image: body.image,
+    image: body.imageUrl as string,
     price: body.price,
     quantity: body.quantity,
     category: body.category,
@@ -160,6 +167,44 @@ class ProductService {
    .returning();
 
   return newProduct;
+ };
+
+ uploadAdditionalMediaForProduct = async (
+  userId: string,
+  productId: string,
+  uploadedImages: UploadImages,
+ ) => {
+  const targetMerchantId = await helper.getMerchantIdFromUser(userId);
+
+  const [existingProduct] = await db
+   .select()
+   .from(product)
+   .where(
+    and(eq(product.id, productId), eq(product.merchantId, targetMerchantId)),
+   )
+   .limit(1);
+
+  if (existingProduct) {
+   throw new NotFoundException(
+    "product not found",
+    HttpStatus.NOT_FOUND,
+    ErrorCode.RESOURCE_NOT_FOUND,
+   );
+  }
+
+  const imageLinks = uploadedImages.map((img) => img.url);
+
+  const [updatedImages] = await db
+   .update(product)
+   .set({
+    additionalImages: imageLinks,
+   })
+   .where(
+    and(eq(product.id, productId), eq(product.merchantId, targetMerchantId)),
+   )
+   .returning();
+
+  return updatedImages;
  };
 
  updateProduct = async (

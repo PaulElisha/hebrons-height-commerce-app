@@ -15,6 +15,7 @@ import stripeWebhookRoutes from "@module/webhook/stripe/stripe.route.ts";
 import uploadRouter from "@module/upload/upload.route.ts";
 import { toNodeHandler } from "better-auth/node";
 import express, { Express } from "express";
+import cookieParser from "cookie-parser";
 
 import Env from "./env.ts";
 import spec, { options } from "@app/swagger.ts";
@@ -35,6 +36,7 @@ class App {
   this.app.use(cors);
   this.app.use(limiter);
   this.app.use(helmet);
+  this.app.use(cookieParser());
   this.initializeAuthRoutes();
   this.app.use(express.json({ limit: "50mb" }));
   this.app.use(express.urlencoded({ extended: true, limit: "50mb" }));
@@ -76,7 +78,7 @@ class App {
 
  startServer = async () => {
   this.app.listen(Env.PORT, () => {
-   console.log(`Server is running on ${Env.BASE_URL}`);
+   console.log(`Server is running on ${Env.LOCAL_URL}`);
   });
  };
 }

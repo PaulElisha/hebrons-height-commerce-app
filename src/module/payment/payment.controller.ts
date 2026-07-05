@@ -12,6 +12,7 @@ import PaymentService, {
 } from "./payment.service.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
+import Stripe from "stripe";
 
 class PaymentController {
  initialize = asyncHandler(
@@ -34,13 +35,24 @@ class PaymentController {
     );
    }
 
+   const paymentData = {
+    rail: data.rail,
+    email: data.email,
+    currency: data.currency as string,
+    mode: data.mode as Stripe.Checkout.SessionCreateParams.Mode,
+   };
+
    const checkoutUrl = await PaymentService.fetchPaymentForOrderByRail(
     userId,
     orderId,
-    data as PaymentData,
+    paymentData,
    );
 
-   res.redirect(checkoutUrl);
+   return res.json({
+    status: "ok",
+    message: "payment created",
+    data: checkoutUrl,
+   });
   },
  );
 }

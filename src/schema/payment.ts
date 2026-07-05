@@ -29,6 +29,7 @@ export const payment = pgTable(
   id: text("id")
    .primaryKey()
    .$defaultFn(() => crypto.randomUUID()),
+
   orderId: text("order_id")
    .notNull()
    .references(() => order.id)

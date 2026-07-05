@@ -1,6 +1,6 @@
 /** @format */
 
-import { account, session, user, verification } from "@schema/auth.ts";
+import { account, session, user, verification, jwks } from "@schema/auth.ts";
 import { cart, cartItem } from "@schema/cart.ts";
 import { merchant } from "@schema/merchant.ts";
 import { order, orderItem } from "@schema/order.ts";
@@ -12,6 +12,7 @@ export default {
  verification,
  account,
  session,
+ jwks,
  merchant,
  product,
  cart,

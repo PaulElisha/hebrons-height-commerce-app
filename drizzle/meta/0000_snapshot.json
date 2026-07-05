@@ -1,5 +1,5 @@
 {
-  "id": "d752d27b-c03f-4908-b624-3ada8b0f672f",
+  "id": "294e4b5b-1e38-4861-81c8-164705291b56",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -103,6 +103,43 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.jwks": {
+      "name": "jwks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "public_key": {
+          "name": "public_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "private_key": {
+          "name": "private_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -1034,8 +1071,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "paidAt": {
-          "name": "paidAt",
+        "paid_at": {
+          "name": "paid_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,

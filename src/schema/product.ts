@@ -28,7 +28,7 @@ export const product = pgTable(
   name: text("name").notNull(),
   description: text("description").notNull(),
   image: text("image").notNull(),
-  additionalImages: jsonb("additional_images").$type<Record<string, string>>(),
+  additionalImages: jsonb("additional_images").$type<string[]>(),
   price: integer("price").notNull(),
   quantity: integer("quantity").notNull(),
   category: text("category").notNull(),

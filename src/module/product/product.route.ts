@@ -2,9 +2,12 @@
 
 import roleGuard from "@middleware/role-guard.ts";
 import authenticate from "@shared/middleware/authenticate.ts";
-import { Request, Router } from "express";
+import { Router } from "express";
 
 import ProductController from "./product.controller.ts";
+import { cloudinaryUploadStream } from "@shared/middleware/cloudinary-upload-stream.ts";
+import upload from "@shared/middleware/multer-upload.ts";
+import { cloudinaryUploadBulkStream } from "@shared/middleware/cloudinary-upload-bulk-stream.ts";
 
 class ProductRouter {
  router: Router;
@@ -15,18 +18,18 @@ class ProductRouter {
 
  initializeRoutes() {
   this.router.get("/latest", ProductController.getLatestProducts);
+  this.router.get(
+   "/:productId",
+   authenticate,
+   roleGuard("user"),
+   ProductController.getSingleProduct,
+  );
   this.router.get("/", ProductController.getProducts);
   this.router.get(
    "/merchant",
    authenticate,
    roleGuard("merchant"),
    ProductController.getMerchantProduct,
-  );
-  this.router.get(
-   "/:productId",
-   authenticate,
-   roleGuard("user"),
-   ProductController.getSingleProduct,
   );
   this.router.get(
    "/:merchantId/merchant",
@@ -38,7 +41,17 @@ class ProductRouter {
    "/",
    authenticate,
    roleGuard("merchant"),
+   upload.single("file"),
+   cloudinaryUploadStream("product_images"),
    ProductController.createProduct,
+  );
+  this.router.put(
+   "/additional-images/:productId",
+   authenticate,
+   roleGuard("merchant"),
+   upload.array("files", 5),
+   cloudinaryUploadBulkStream("additional_images"),
+   ProductController.uploadAdditionalMediaForProduct,
   );
   this.router.put(
    "/:productId",

@@ -6,7 +6,7 @@ import db from "@db/db.ts";
 import * as schema from "@schema/auth.ts";
 import { hashPassword, verifyPassword } from "@shared/util/password.ts";
 import { betterAuth } from "better-auth";
-import { bearer, openAPI } from "better-auth/plugins";
+import { jwt, openAPI } from "better-auth/plugins";
 
 const allowedOrigins = Env.CORS_ORIGIN.includes(",")
  ? Env.CORS_ORIGIN.split(",")
@@ -44,15 +44,12 @@ export const auth = betterAuth({
  advanced: {
   useSecureCookies: Env.BASE_URL.startsWith("https://"),
 
+  cookiePrefix: "hhg",
   cookies: {
    session_token: {
     name: "auth_session_token",
    },
   },
-
-  disableCSRFCheck: true,
-  crossSubDomainCookie: { enabled: false },
-  trustHost: true,
  },
- plugins: [openAPI(), bearer()],
+ plugins: [openAPI(), jwt()],
 });

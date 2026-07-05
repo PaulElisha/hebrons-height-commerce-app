@@ -22,10 +22,8 @@ export interface CheckoutData {
 
 export interface PaymentData {
  email: string;
- amount: number;
  currency: string;
  rail: string;
- channels?: Array<string>;
  mode?: Stripe.Checkout.SessionCreateParams.Mode;
 }
 

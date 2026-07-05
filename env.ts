@@ -28,7 +28,9 @@ const EnvSchema = z.object({
 
  DB_PASS: z.string(),
  DB_URL: z.string(),
+
  BASE_URL: z.string(),
+ LOCAL_URL: z.string(),
 
  AUTH_SECRET: z.string(),
 

@@ -14,6 +14,13 @@ CREATE TABLE "account" (
 	"updated_at" timestamp NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "jwks" (
+	"id" text PRIMARY KEY NOT NULL,
+	"public_key" text NOT NULL,
+	"private_key" text NOT NULL,
+	"created_at" timestamp NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "session" (
 	"id" text PRIMARY KEY NOT NULL,
 	"expires_at" timestamp NOT NULL,
@@ -144,7 +151,7 @@ CREATE TABLE "payment" (
 	"access_code" varchar(255),
 	"authorization_url" text,
 	"transaction_id" text,
-	"paidAt" timestamp DEFAULT now() NOT NULL,
+	"paid_at" timestamp DEFAULT now() NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "payment_order_id_unique" UNIQUE("order_id"),

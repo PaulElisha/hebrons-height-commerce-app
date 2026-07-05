@@ -10,8 +10,5 @@ const allowedOrigins = Env.CORS_ORIGIN.includes(",")
 export default cors({
  origin: allowedOrigins,
  methods: ["GET", "POST", "PUT", "DELETE"],
- credentials: false,
- exposedHeaders: ["set-auth-token"],
- preflightContinue: false,
- optionsSuccessStatus: 204,
+ credentials: true,
 });

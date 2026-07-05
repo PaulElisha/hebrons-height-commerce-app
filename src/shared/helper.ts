@@ -77,3 +77,9 @@ export async function getMerchantIdFromProductId(
 
  return String(productMerchant?.merchant?.id);
 }
+
+export function createPublicId(
+ folder: "product_images" | "additional_images" | "avatar" | "product_videos",
+) {
+ return `${folder}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+}

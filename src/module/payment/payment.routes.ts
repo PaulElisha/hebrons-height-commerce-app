@@ -14,8 +14,6 @@ class PaymentRoutes {
  }
 
  initializeRoutes() {
-  this.router.post("/initialize/:orderId", PaymentController.initialize);
-
   this.router.get("/success", async (req, res) => {
    res.send("Payment successful");
   });
@@ -23,6 +21,8 @@ class PaymentRoutes {
   this.router.get("/failed", async (req, res) => {
    res.send("Payment failed");
   });
+
+  this.router.post("/initialize/:orderId", PaymentController.initialize);
  }
 }
 

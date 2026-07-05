@@ -83,3 +83,10 @@ export type TOrderAndItems = {
  order: TOrder;
  order_items: TOrderItems[];
 };
+
+interface UploadImage {
+ url: string;
+ publicId: string;
+}
+
+export type UploadImages = UploadImage[];

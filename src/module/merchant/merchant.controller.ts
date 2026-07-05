@@ -46,7 +46,7 @@ class MerchantController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = req.params.merchantId as string;
+   const merchantId = req.params.merchantId;
    const body = req.body;
 
    const data = await MerchantService.updateMerchantProfile(
@@ -70,7 +70,7 @@ class MerchantController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = req.params.merchantId as string;
+   const merchantId = req.params.merchantId;
 
    await MerchantService.deleteMerchantProfile(userId, merchantId);
 

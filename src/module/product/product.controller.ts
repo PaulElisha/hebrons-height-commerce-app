@@ -3,10 +3,11 @@
 import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { Pagination } from "@shared/types.ts";
+import { Pagination, UploadImages } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 
 import ProductService from "./product.service.ts";
+import { getMerchantIdFromUser } from "@shared/helper.ts";
 
 export interface ProductParams {
  productId?: string;
@@ -122,8 +123,12 @@ class ProductController {
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
    const userId = req.user.id;
    const body = req.body;
+   const imageUrl = req.cloudinaryResult.url;
 
-   const data = await ProductService.createProduct(userId, body);
+   const data = await ProductService.createProduct(userId, {
+    ...body,
+    imageUrl,
+   });
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -144,6 +149,30 @@ class ProductController {
    const body = req.body;
 
    const data = await ProductService.updateProduct(userId, productId, body);
+
+   return res.status(HttpStatus.OK).json({
+    status: "ok",
+    message: "product updated successfully",
+    data,
+   });
+  },
+ );
+
+ uploadAdditionalMediaForProduct = asyncHandler(
+  async (
+   req: Request<ProductParams>,
+   res: Response,
+   next: NextFunction,
+  ): Promise<any> => {
+   const userId = req.user.id;
+   const productId = req.params.productId as string;
+   const imageUrls = req.cloudinaryResults as UploadImages;
+
+   const data = await ProductService.uploadAdditionalMediaForProduct(
+    userId,
+    productId,
+    imageUrls,
+   );
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
