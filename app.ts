@@ -78,7 +78,7 @@ class App {
 
  startServer = async () => {
   this.app.listen(Env.PORT, () => {
-   console.log(`Server is running on ${Env.LOCAL_URL}`);
+   console.log(`Server is running on ${Env.BASE_URL}`);
   });
  };
 }
