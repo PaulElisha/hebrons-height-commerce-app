@@ -72,21 +72,20 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-   CreateMerchantDto: {
-    type: "object",
-    required: [
-     "businessName",
-     "businessLogo",
-     "businessDescription",
-     "address",
-    ],
-    properties: {
-     businessName: { type: "string" },
-     businessLogo: { type: "string" },
-     businessDescription: { type: "string" },
-     address: { type: "string" },
+    CreateMerchantDto: {
+     type: "object",
+     required: [
+      "businessName",
+      "businessDescription",
+      "address",
+     ],
+     properties: {
+      businessName: { type: "string" },
+      businessDescription: { type: "string" },
+      address: { type: "string" },
+      businessLogo: { type: "string", description: "Provided via file upload (multipart/form-data field 'file')" },
+     },
     },
-   },
    UpdateMerchantDto: {
     type: "object",
     properties: {
@@ -104,11 +103,11 @@ const spec = {
      name: { type: "string" },
      description: { type: "string" },
      image: { type: "string" },
-     additionalImages: {
-      type: "object",
-      additionalProperties: { type: "string" },
-      nullable: true,
-     },
+      additionalImages: {
+       type: "array",
+       items: { type: "string" },
+       nullable: true,
+      },
      price: { type: "integer" },
      quantity: { type: "integer" },
      category: { type: "string" },
@@ -123,31 +122,30 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-   CreateProductDto: {
-    type: "object",
-    required: [
-     "name",
-     "description",
-     "image",
-     "price",
-     "quantity",
-     "category",
-     "subCategory",
-    ],
-    properties: {
-     name: { type: "string" },
-     description: { type: "string" },
-     image: { type: "string" },
-     price: { type: "integer" },
-     quantity: { type: "integer" },
-     category: { type: "string" },
-     subCategory: { type: "string" },
-     additionalData: {
-      type: "object",
-      additionalProperties: { type: "string" },
+    CreateProductDto: {
+     type: "object",
+     required: [
+      "name",
+      "description",
+      "price",
+      "quantity",
+      "category",
+      "subCategory",
+     ],
+     properties: {
+      name: { type: "string" },
+      description: { type: "string" },
+      price: { type: "integer" },
+      quantity: { type: "integer" },
+      category: { type: "string" },
+      subCategory: { type: "string" },
+      image: { type: "string", description: "Provided via file upload (multipart/form-data field 'file')" },
+      additionalData: {
+       type: "object",
+       additionalProperties: { type: "string" },
+      },
      },
     },
-   },
    UpdateProductDto: {
     type: "object",
     properties: {
@@ -356,8 +354,8 @@ const spec = {
     tags: ["Health"],
     summary: "Health check endpoint",
     responses: {
-     "200": {
-      description: "Server is running",
+      "200": {
+       description: "Welcome to Hebrons Height Commerce APP",
       content: {
        "text/plain": {
         schema: { type: "string" },
@@ -405,36 +403,49 @@ const spec = {
     tags: ["Merchant"],
     summary: "Create a new merchant profile",
     security: [{ bearerAuth: [] }],
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: { $ref: "#/components/schemas/CreateMerchantDto" },
-      },
-     },
-    },
-     responses: {
-      "200": {
-       description: "Merchant profile created",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "merchant profile created" },
-           data: { $ref: "#/components/schemas/Merchant" },
+     requestBody: {
+      required: true,
+      content: {
+       "multipart/form-data": {
+        schema: {
+         type: "object",
+         required: ["businessName", "businessDescription", "address", "file"],
+         properties: {
+          businessName: { type: "string" },
+          businessDescription: { type: "string" },
+          address: { type: "string" },
+          file: {
+           type: "string",
+           format: "binary",
+           description: "Business logo image file",
           },
          },
         },
        },
       },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-      "403": { description: "Forbidden — user is not a merchant" },
+     },
+      responses: {
+       "200": {
+        description: "Merchant profile created",
+        content: {
+         "application/json": {
+          schema: {
+           type: "object",
+           properties: {
+            status: { type: "string", example: "ok" },
+            message: { type: "string", example: "merchant profile created" },
+            data: { $ref: "#/components/schemas/Merchant" },
+           },
+          },
+         },
+        },
+       },
+       "401": { description: "Unauthorized — invalid or missing session token" },
+       "403": { description: "Forbidden — user is not a merchant" },
+      },
      },
     },
-   },
-   "/api/merchant/{merchantId}": {
+    "/api/merchant/{merchantId}": {
     put: {
      tags: ["Merchant"],
      summary: "Update merchant profile",
@@ -448,13 +459,25 @@ const spec = {
        description: "Merchant ID",
       },
      ],
-     requestBody: {
-      content: {
-       "application/json": {
-        schema: { $ref: "#/components/schemas/UpdateMerchantDto" },
+      requestBody: {
+       content: {
+        "multipart/form-data": {
+         schema: {
+          type: "object",
+          properties: {
+           businessName: { type: "string" },
+           businessDescription: { type: "string" },
+           address: { type: "string" },
+           file: {
+            type: "string",
+            format: "binary",
+            description: "New business logo image file",
+           },
+          },
+         },
+        },
        },
       },
-     },
      responses: {
       "200": {
        description: "Merchant profile updated",
@@ -625,18 +648,39 @@ const spec = {
      },
     },
    },
-    post: {
-     tags: ["Product"],
-     summary: "Create a new product",
-     security: [{ bearerAuth: [] }],
-     requestBody: {
-      required: true,
-      content: {
-       "application/json": {
-        schema: { $ref: "#/components/schemas/CreateProductDto" },
+     post: {
+      tags: ["Product"],
+      summary: "Create a new product",
+      security: [{ bearerAuth: [] }],
+      requestBody: {
+       required: true,
+       content: {
+        "multipart/form-data": {
+         schema: {
+          type: "object",
+          required: ["name", "description", "price", "quantity", "category", "subCategory", "file"],
+          properties: {
+           name: { type: "string" },
+           description: { type: "string" },
+           price: { type: "integer" },
+           quantity: { type: "integer" },
+           category: { type: "string" },
+           subCategory: { type: "string" },
+           additionalData: {
+            type: "object",
+            additionalProperties: { type: "string" },
+            description: "Optional additional product data as JSON object",
+           },
+           file: {
+            type: "string",
+            format: "binary",
+            description: "Product main image file",
+           },
+          },
+         },
+        },
        },
       },
-     },
      responses: {
       "200": {
        description: "Product created successfully",
@@ -832,10 +876,67 @@ const spec = {
       "401": { description: "Unauthorized — invalid or missing session token" },
       "403": { description: "Forbidden — user is not a user" },
       "404": { description: "Merchant not found" },
+      },
      },
     },
-   },
-   "/api/cart/{cartId}": {
+    "/api/product/additional-images/{productId}": {
+     put: {
+      tags: ["Product"],
+      summary: "Upload additional media/images for a product (up to 5 files)",
+      security: [{ bearerAuth: [] }],
+      parameters: [
+       {
+        name: "productId",
+        in: "path",
+        required: true,
+        schema: { type: "string" },
+        description: "Product ID",
+       },
+      ],
+      requestBody: {
+       required: true,
+       content: {
+        "multipart/form-data": {
+         schema: {
+          type: "object",
+          required: ["files"],
+          properties: {
+           files: {
+            type: "array",
+            items: {
+             type: "string",
+             format: "binary",
+            },
+            description: "Up to 5 image files to attach as additional media",
+           },
+          },
+         },
+        },
+       },
+      },
+      responses: {
+       "200": {
+        description: "Product updated successfully with additional images",
+        content: {
+         "application/json": {
+          schema: {
+           type: "object",
+           properties: {
+            status: { type: "string", example: "ok" },
+            message: { type: "string", example: "product updated successfully" },
+            data: { $ref: "#/components/schemas/Product" },
+           },
+          },
+         },
+        },
+       },
+       "401": { description: "Unauthorized — invalid or missing session token" },
+       "403": { description: "Forbidden — user is not a merchant" },
+       "404": { description: "Product not found" },
+      },
+     },
+    },
+    "/api/cart/{cartId}": {
     get: {
      tags: ["Cart"],
      summary: "Get user's cart with items by cart ID",
@@ -1251,9 +1352,14 @@ const spec = {
          schema: {
           type: "object",
           properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "order placed" },
-           data: { type: "string", description: "Newly created order ID" },
+            status: { type: "string", example: "ok" },
+            message: { type: "string", example: "order placed" },
+            data: {
+             type: "object",
+             properties: {
+              orderId: { type: "string", description: "Newly created order ID" },
+             },
+            },
           },
          },
         },
