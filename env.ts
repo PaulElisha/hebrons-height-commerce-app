@@ -77,7 +77,7 @@ try {
 
   e.issues.forEach((err) => {
    const path = err.path.join(".");
-   console.log(`${path} - ${err.message}`);
+   console.log(`${path}-${err.message}`);
   });
 
   process.exit(1);
