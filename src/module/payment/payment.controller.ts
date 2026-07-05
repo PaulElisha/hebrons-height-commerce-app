@@ -48,11 +48,7 @@ class PaymentController {
     paymentData,
    );
 
-   return res.json({
-    status: "ok",
-    message: "payment created",
-    data: checkoutUrl,
-   });
+   res.redirect(checkoutUrl);
   },
  );
 }

@@ -21,19 +21,21 @@ class OrderController {
  placeOrder = asyncHandler(
   async (
    req: Request<CartParams>,
-   res: Response<APIResponse<string>>,
+   res: Response<APIResponse<object>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
    const cartId = req.params.cartId as string;
    const body = req.body;
 
-   const data = await OrderService.placeOrder(userId, cartId, body);
+   const orderId = await OrderService.placeOrder(userId, cartId, body);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "order placed",
-    data,
+    data: {
+     orderId,
+    },
    });
   },
  );

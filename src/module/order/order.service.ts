@@ -12,10 +12,16 @@ import {
 } from "@shared/types.ts";
 import { and, count, desc, eq, isNotNull, lt, ne, SQL, sql } from "drizzle-orm";
 import FA from "fasy";
+import { Mutex } from "async-mutex";
+import BadRequestException from "@shared/error/bad-request.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
 
 interface CreateOrderDto {
  deliveryAddress: Record<string, string>;
 }
+
+const mutex = new Mutex();
 
 class OrderService {
  placeOrder = async (
@@ -24,42 +30,55 @@ class OrderService {
   body: CreateOrderDto,
  ): Promise<string> => {
   const data = await CartService.getUserCart(userId, cartId);
-  const [newOrder] = await db
-   .insert(order)
-   .values({
-    userId,
-    cartId,
-    subtotal: data?.cart?.subtotal as number,
-    deliveryAddress: {
-     label: "home",
-     address: body.deliveryAddress.address,
-     city: body.deliveryAddress.city,
-     state: body.deliveryAddress.state,
-     country: body.deliveryAddress.country,
-     line1: body.deliveryAddress.line1,
-     line2: body.deliveryAddress.line2,
-    } as any,
-   })
-   .returning();
 
-  const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {
-   const merchantId = await helper.getMerchantIdFromProductId(v.productId);
+  const [orderExists] = await helper.validateOrderForCart(cartId, userId);
 
-   return {
-    orderId: newOrder?.id,
-    productId: v.productId,
-    merchantId,
-    quantity: v.quantity,
-    unitPrice: v.price,
-    lineTotal: v.quantity * v.price,
-   };
-  }, data?.cart_items || []);
-
-  if (itemsToInsert.length > 0) {
-   await db.insert(orderItem).values(itemsToInsert);
+  if (orderExists) {
+   throw new BadRequestException(
+    "Order already created",
+    HttpStatus.UNPROCESSABLE_ENTITY,
+    ErrorCode.VALIDATION_ERROR,
+   );
   }
 
-  return newOrder.id;
+  return await mutex.runExclusive(async () => {
+   const [newOrder] = await db
+    .insert(order)
+    .values({
+     userId,
+     cartId,
+     subtotal: data?.cart?.subtotal as number,
+     deliveryAddress: {
+      label: "home",
+      address: body.deliveryAddress.address,
+      city: body.deliveryAddress.city,
+      state: body.deliveryAddress.state,
+      country: body.deliveryAddress.country,
+      line1: body.deliveryAddress.line1,
+      line2: body.deliveryAddress.line2,
+     } as any,
+    })
+    .returning();
+
+   const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {
+    const merchantId = await helper.getMerchantIdFromProductId(v.productId);
+
+    return {
+     orderId: newOrder?.id,
+     productId: v.productId,
+     merchantId,
+     quantity: v.quantity,
+     unitPrice: v.price,
+     lineTotal: v.quantity * v.price,
+    };
+   }, data?.cart_items || []);
+
+   if (itemsToInsert.length > 0) {
+    await db.insert(orderItem).values(itemsToInsert);
+   }
+
+   return newOrder.id;
+  });
  };
 
  getUserOrderByStatus = async (

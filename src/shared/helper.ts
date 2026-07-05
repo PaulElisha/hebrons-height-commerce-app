@@ -2,6 +2,7 @@
 import db from "@db/db.ts";
 import { cart, cartItem } from "@schema/cart.ts";
 import { merchant } from "@schema/merchant.ts";
+import { order } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
 import { TCartAndItem, Transaction } from "@shared/types.ts";
 import { and, eq, sum } from "drizzle-orm";
@@ -82,4 +83,11 @@ export function createPublicId(
  folder: "product_images" | "additional_images" | "avatar" | "product_videos",
 ) {
  return `${folder}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+}
+
+export async function validateOrderForCart(cartId: string, userId: string) {
+ return await db
+  .select()
+  .from(order)
+  .where(and(eq(order.cartId, cartId), eq(order.userId, userId)));
 }

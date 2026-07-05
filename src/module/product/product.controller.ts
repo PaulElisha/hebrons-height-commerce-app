@@ -123,11 +123,11 @@ class ProductController {
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
    const userId = req.user.id;
    const body = req.body;
-   const imageUrl = req.cloudinaryResult.url;
+   const image = req.upload_image.url;
 
    const data = await ProductService.createProduct(userId, {
     ...body,
-    imageUrl,
+    image,
    });
 
    return res.status(HttpStatus.OK).json({
@@ -166,7 +166,7 @@ class ProductController {
   ): Promise<any> => {
    const userId = req.user.id;
    const productId = req.params.productId as string;
-   const imageUrls = req.cloudinaryResults as UploadImages;
+   const imageUrls = req.upload_images as UploadImages;
 
    const data = await ProductService.uploadAdditionalMediaForProduct(
     userId,

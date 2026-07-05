@@ -11,7 +11,7 @@ import merchantRouter from "@module/merchant/merchant.route.ts";
 import orderRouter from "@module/order/order.route.ts";
 import paymentRouter from "@module/payment/payment.routes.ts";
 import productRouter from "@module/product/product.route.ts";
-import stripeWebhookRoutes from "@module/webhook/stripe/stripe.route.ts";
+import stripeWebhookRouter from "@module/webhook/stripe/stripe.route.ts";
 import uploadRouter from "@module/upload/upload.route.ts";
 import { toNodeHandler } from "better-auth/node";
 import express, { Express } from "express";
@@ -47,7 +47,7 @@ class App {
  }
 
  initializeWebhooks() {
-  this.app.use("/api/webhook", stripeWebhookRoutes);
+  this.app.use("/api/webhook", stripeWebhookRouter);
  }
 
  initializeApiRoutes() {

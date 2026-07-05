@@ -144,10 +144,7 @@ class ProductService {
   };
  };
 
- createProduct = async (
-  userId: string,
-  body: CreateProductDto & { imageUrl?: string },
- ) => {
+ createProduct = async (userId: string, body: CreateProductDto) => {
   const targetMerchantId = await helper.getMerchantIdFromUser(userId);
 
   const [newProduct] = await db
@@ -156,7 +153,7 @@ class ProductService {
     merchantId: targetMerchantId,
     name: body.name,
     description: body.description,
-    image: body.imageUrl as string,
+    image: body.image,
     price: body.price,
     quantity: body.quantity,
     category: body.category,
@@ -184,7 +181,7 @@ class ProductService {
    )
    .limit(1);
 
-  if (existingProduct) {
+  if (!existingProduct) {
    throw new NotFoundException(
     "product not found",
     HttpStatus.NOT_FOUND,

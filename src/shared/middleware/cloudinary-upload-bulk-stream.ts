@@ -5,12 +5,7 @@ import { createPublicId } from "@shared/helper.ts";
 import streamifier from "streamifier";
 import { Request, Response, NextFunction } from "express";
 import FA from "fasy";
-
-export type AssetType =
- | "product_images"
- | "additional_images"
- | "avatar"
- | "product_videos";
+import { AssetType } from "@shared/types.ts";
 
 export const cloudinaryUploadBulkStream = (folder: AssetType) => {
  return async (req: Request, res: Response, next: NextFunction) => {
@@ -40,7 +35,7 @@ export const cloudinaryUploadBulkStream = (folder: AssetType) => {
     });
    }, targetFiles);
 
-   req.cloudinaryResults = results;
+   req.upload_images = results;
 
    next();
   } catch (error) {

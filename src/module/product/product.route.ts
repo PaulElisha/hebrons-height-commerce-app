@@ -18,18 +18,18 @@ class ProductRouter {
 
  initializeRoutes() {
   this.router.get("/latest", ProductController.getLatestProducts);
-  this.router.get(
-   "/:productId",
-   authenticate,
-   roleGuard("user"),
-   ProductController.getSingleProduct,
-  );
   this.router.get("/", ProductController.getProducts);
   this.router.get(
    "/merchant",
    authenticate,
    roleGuard("merchant"),
    ProductController.getMerchantProduct,
+  );
+  this.router.get(
+   "/:productId",
+   authenticate,
+   roleGuard("user"),
+   ProductController.getSingleProduct,
   );
   this.router.get(
    "/:merchantId/merchant",

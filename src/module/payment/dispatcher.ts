@@ -61,7 +61,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
       .where(eq(order.id, orderId));
     }
 
-    return { url: session.url };
+    return session.url;
    });
  },
 };

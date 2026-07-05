@@ -41,6 +41,7 @@
     "@epic-web/remember": "^1.1.0",
     "@node-rs/argon2": "^2.0.2",
     "@stripe/cli": "^1.43.2",
+    "async-mutex": "^0.5.0",
     "better-auth": "^1.6.22",
     "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",

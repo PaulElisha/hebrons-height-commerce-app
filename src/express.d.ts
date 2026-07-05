@@ -11,9 +11,9 @@ declare global {
    user: Session["user"];
    session: Session["session"];
 
-   cloudinaryResult: UploadImage;
+   upload_image: UploadImage;
 
-   cloudinaryResults: UploadImages;
+   upload_images: UploadImages;
 
    file: Express.Multer.File;
    files: Express.Multer.File[];
