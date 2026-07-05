@@ -1,7 +1,7 @@
 /** @format */
 
 import { auth } from "@auth/auth.ts";
-import { UploadImages } from "@shared/types.ts";
+import { UploadImages, UploadImage } from "@shared/types.ts";
 
 type Session = typeof auth.$Infer.Session;
 
@@ -11,10 +11,7 @@ declare global {
    user: Session["user"];
    session: Session["session"];
 
-   cloudinaryResult: {
-    url: string;
-    publicId: string;
-   };
+   cloudinaryResult: UploadImage;
 
    cloudinaryResults: UploadImages;
 
