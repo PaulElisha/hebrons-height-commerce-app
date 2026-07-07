@@ -132,7 +132,7 @@ class OrderService {
  getUserOrderByStatus = async (
   userId: string,
   status: string,
- ): Promise<any> => {
+ ): Promise<TOrderAndItems> => {
   const result = await db
    .select()
    .from(order)
@@ -146,7 +146,10 @@ class OrderService {
    )
    .orderBy(desc(order.createdAt));
 
-  return result;
+  return {
+   order: result[0].orders,
+   order_items: result.filter((i) => i.orderItem).map((o) => o.orderItem),
+  };
  };
 
  getOrderDetails = async (
@@ -249,17 +252,19 @@ class OrderService {
     .where(and(eq(order.id, orderId), ne(order.paymentStatus, "paid")))
     .returning();
 
-   const [item] = await tx
+   const items = await tx
     .select({
      productId: orderItem.productId,
     })
     .from(orderItem)
     .where(eq(orderItem.orderId, orderId));
 
+   const productIds = items.map((item) => item.productId);
+
    PublishEvent({
     event_type: EventType.ORDER_CANCELLED,
     payload: {
-     productId: item?.productId,
+     productIds,
      orderId: cancelledOrder?.id,
     },
    });

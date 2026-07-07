@@ -49,7 +49,7 @@ onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
     })
     .from(merchant)
     .innerJoin(user, eq(merchant.userId, user.id))
-    .where(eq(merchantForProduct.userId, user.id));
+    .where(eq(merchant.id, merchantForProduct.id));
 
    const emailMessage = `Hi ${userMerchant.user.name}, a purchase of #${orderId} has been made for your product`;
 

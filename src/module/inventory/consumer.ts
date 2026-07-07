@@ -26,16 +26,18 @@ onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
 
 onEvent<EventContract>(EventType.ORDER_CANCELLED).subscribe({
  next: async (payload) => {
-  const { orderId, productId } = payload.payload;
+  const { orderId, productIds } = payload.payload;
   console.log("Inventory update for Order cancelled:", {
-   product_id: productId,
+   product_ids: productIds,
   });
 
-  await InventoryService.updateProductThreshold(
-   productId,
-   orderId,
-   "cancelOrder",
-  );
+  await FA.concurrent.map(async (productId: string) => {
+   await InventoryService.updateProductThreshold(
+    productId,
+    orderId,
+    "cancelOrder",
+   );
+  }, productIds);
  },
  error: (error) => {
   console.error(error);

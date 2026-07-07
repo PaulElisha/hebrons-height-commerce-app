@@ -1,5 +1,4 @@
 /** @format */
-/** @format */
 
 import Env from "@/env.ts";
 import { MailSubject } from "@module/email/email.service.ts";

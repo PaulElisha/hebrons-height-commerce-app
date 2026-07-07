@@ -2,6 +2,7 @@
 
 import "@module/email/consumer.ts";
 import "@module/inventory/consumer.ts";
+import "@module/merchant/consumer.ts";
 
 import cors from "@app/cors.ts";
 import helmet from "@app/helmet.ts";
