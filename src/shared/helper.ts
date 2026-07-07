@@ -34,7 +34,7 @@ export async function getMerchantIdFromProductId(
  tx: Transaction,
  productId: string,
 ): Promise<string> {
- const [productMerchant] = await db
+ const [productMerchant] = await tx
   .select()
   .from(product)
   .innerJoin(merchant, eq(product.merchantId, merchant.id))
