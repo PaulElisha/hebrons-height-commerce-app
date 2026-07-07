@@ -4,13 +4,13 @@ import stripeClient from "@app/stripe.ts";
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
 import { order } from "@schema/order.ts";
+import { product } from "@schema/product.ts";
 import { TOrderItems } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import Env from "env.ts";
 import FA from "fasy";
 
 import { PaymentData } from "./payment.service.ts";
-import { product } from "@schema/product.ts";
 
 export const FetchRail: Record<string, (...any: any[]) => any> = {
  initializePaystackCheckout: () => {},
@@ -45,7 +45,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      orderData.order_items,
     ),
     metadata: {
-     orderId: orderData.order.id,
+     orderId: orderData?.order?.id,
     },
     success_url: `${Env.BASE_URL}/success`,
     cancel_url: `${Env.BASE_URL}/failed`,

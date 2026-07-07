@@ -1,8 +1,12 @@
 /** @format */
 
+import "@module/email/consumer.ts";
+import "@module/inventory/consumer.ts";
+
 import cors from "@app/cors.ts";
 import helmet from "@app/helmet.ts";
 import limiter from "@app/limiter.ts";
+import spec, { options } from "@app/swagger.ts";
 import { auth } from "@auth/auth.ts";
 import HttpStatus from "@enum/http.ts";
 import errorHandler from "@middleware/error-handler.ts";
@@ -11,16 +15,15 @@ import merchantRouter from "@module/merchant/merchant.route.ts";
 import orderRouter from "@module/order/order.route.ts";
 import paymentRouter from "@module/payment/payment.routes.ts";
 import productRouter from "@module/product/product.route.ts";
-import stripeWebhookRouter from "@module/webhook/stripe/stripe.route.ts";
 import uploadRouter from "@module/upload/upload.route.ts";
+import userRouter from "@module/user/user.routes.ts";
+import stripeWebhookRouter from "@module/webhook/stripe/stripe.route.ts";
 import { toNodeHandler } from "better-auth/node";
-import express, { Express } from "express";
 import cookieParser from "cookie-parser";
+import express, { Express } from "express";
+import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
-import spec, { options } from "@app/swagger.ts";
-import swaggerUi from "swagger-ui-express";
-import userRouter from "@module/user/user.routes.ts";
 
 class App {
  app: Express;
@@ -80,7 +83,7 @@ class App {
 
  startServer = async () => {
   this.app.listen(Env.PORT, () => {
-   console.log(`Server is running on ${Env.BASE_URL}`);
+   console.log(`Server is running on ${Env.LOCAL_URL}`);
   });
  };
 }

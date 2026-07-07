@@ -23,7 +23,6 @@ export type MailerCallback<T, U> = (
 
 export interface MailData<U> {
  user: U;
- subject: string;
  message: string;
 }
 
@@ -41,6 +40,8 @@ export interface TCart {
 }
 
 export interface TCartItem {
+ orderId?: string;
+ cartId: string;
  id: string;
  productId: string;
  price: number;
@@ -58,7 +59,7 @@ export interface TOrder {
  userId: string;
  cartId: string;
  subtotal: number;
- serviceCharge: number | null;
+ serviceCharge?: number | null;
  deliveryFee: number | null;
  taxAmount: number | null;
  discountAmount: number | null;
@@ -83,6 +84,12 @@ export type TOrderAndItems = {
  order: TOrder;
  order_items: TOrderItems[];
 };
+
+export interface TUser {
+ id: string;
+ name: string;
+ email: string;
+}
 
 export interface UploadImage {
  url: string;

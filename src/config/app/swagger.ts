@@ -11,7 +11,7 @@ const spec = {
  },
  servers: [
   {
-   url: Env.BASE_URL,
+   url: Env.LOCAL_URL,
    description: "Server",
   },
  ],
@@ -58,8 +58,16 @@ const spec = {
     type: "object",
     properties: {
      name: { type: "string", description: "New display name" },
-     email: { type: "string", format: "email", description: "New email address" },
-     file: { type: "string", format: "binary", description: "New avatar image file (multipart/form-data)" },
+     email: {
+      type: "string",
+      format: "email",
+      description: "New email address",
+     },
+     file: {
+      type: "string",
+      format: "binary",
+      description: "New avatar image file (multipart/form-data)",
+     },
     },
    },
    Merchant: {
@@ -82,16 +90,16 @@ const spec = {
    },
    CreateMerchantDto: {
     type: "object",
-    required: [
-     "businessName",
-     "businessDescription",
-     "address",
-    ],
+    required: ["businessName", "businessDescription", "address"],
     properties: {
      businessName: { type: "string" },
      businessDescription: { type: "string" },
      address: { type: "string" },
-     businessLogo: { type: "string", description: "Provided via file upload (multipart/form-data field 'file')" },
+     businessLogo: {
+      type: "string",
+      description:
+       "Provided via file upload (multipart/form-data field 'file')",
+     },
     },
    },
    UpdateMerchantDto: {
@@ -147,7 +155,11 @@ const spec = {
      quantity: { type: "integer" },
      category: { type: "string" },
      subCategory: { type: "string" },
-     image: { type: "string", description: "Provided via file upload (multipart/form-data field 'file')" },
+     image: {
+      type: "string",
+      description:
+       "Provided via file upload (multipart/form-data field 'file')",
+     },
      additionalData: {
       type: "object",
       additionalProperties: { type: "string" },
@@ -387,7 +399,10 @@ const spec = {
          type: "object",
          properties: {
           status: { type: "string", example: "ok" },
-          message: { type: "string", example: "user profile fetched successfully" },
+          message: {
+           type: "string",
+           example: "user profile fetched successfully",
+          },
           data: { $ref: "#/components/schemas/User" },
          },
         },
@@ -420,7 +435,10 @@ const spec = {
          type: "object",
          properties: {
           status: { type: "string", example: "ok" },
-          message: { type: "string", example: "user profile updated successfully" },
+          message: {
+           type: "string",
+           example: "user profile updated successfully",
+          },
           data: { $ref: "#/components/schemas/User" },
          },
         },
@@ -719,7 +737,15 @@ const spec = {
       "multipart/form-data": {
        schema: {
         type: "object",
-        required: ["name", "description", "price", "quantity", "category", "subCategory", "file"],
+        required: [
+         "name",
+         "description",
+         "price",
+         "quantity",
+         "category",
+         "subCategory",
+         "file",
+        ],
         properties: {
          name: { type: "string" },
          description: { type: "string" },
@@ -1188,7 +1214,8 @@ const spec = {
   "/api/order/merchant": {
    get: {
     tags: ["Order"],
-    summary: "Get orders for the authenticated user's merchant store (paginated)",
+    summary:
+     "Get orders for the authenticated user's merchant store (paginated)",
     security: [{ bearerAuth: [] }],
     parameters: [
      {
@@ -1464,7 +1491,9 @@ const spec = {
       },
      },
      "401": { description: "Unauthorized — invalid or missing session token" },
-     "422": { description: "Invalid order — order or payment status is not pending" },
+     "422": {
+      description: "Invalid order — order or payment status is not pending",
+     },
      "409": { description: "Payment already created for this order" },
      "500": { description: "Failed to initialize payment" },
     },

@@ -6,9 +6,8 @@ import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import NotFoundException from "@shared/error/not-found.ts";
 import * as helper from "@shared/helper.ts";
-import { Pagination } from "@shared/types.ts";
+import { Pagination, UploadImages } from "@shared/types.ts";
 import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
-import { UploadImages } from "@shared/types.ts";
 
 // import { TProduct } from "./product.controller.ts";
 

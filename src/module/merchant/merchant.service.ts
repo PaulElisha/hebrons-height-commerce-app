@@ -3,6 +3,7 @@
 import db from "@db/db.ts";
 import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
+import { product } from "@schema/product.ts";
 import { and, eq, isNotNull } from "drizzle-orm";
 
 interface CreateMerchantDto {
@@ -20,6 +21,16 @@ interface UpdateMerchantDto {
 }
 
 class MerchantService {
+ getMerchantIdFromProductId = async (productId: string): Promise<any> => {
+  const [productMerchant] = await db
+   .select()
+   .from(product)
+   .innerJoin(merchant, eq(product.merchantId, merchant.id))
+   .where(eq(product.id, productId));
+
+  return productMerchant?.merchant;
+ };
+
  getMerchantProfile = async (userId: string) => {
   const [merchantProfile] = await db
    .select()

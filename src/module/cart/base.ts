@@ -1,15 +1,10 @@
 /** @format */
 
 import db from "@db/db.ts";
-import ErrorCode from "@enum/error-code.ts";
-import HttpStatus from "@enum/http.ts";
-import AppError from "@error/app-error.ts";
-import InternalServerError from "@error/internal-server.ts";
-import NotFoundException from "@error/not-found.ts";
+import InventoryService from "@module/inventory/inventory.service.ts";
 import { cart, cartItem } from "@schema/cart.ts";
-import { product } from "@schema/product.ts";
 import * as helper from "@shared/helper.ts";
-import { Result, type Transaction } from "@shared/types.ts";
+import { type Transaction } from "@shared/types.ts";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 
 import CartActions from "./dispatcher.ts";
@@ -65,7 +60,10 @@ class CartBase {
       cart_items: [existingItem],
      };
 
-    const [price, e] = await this.checkInventoryThreshold(tx, productId);
+    const [price, e] = await InventoryService.checkInventoryThreshold(
+     tx,
+     productId,
+    );
 
     if (e) throw e;
 
@@ -77,7 +75,10 @@ class CartBase {
     );
 
     if (existingItem) {
-     const [price, e] = await this.checkInventoryThreshold(tx, productId);
+     const [price, e] = await InventoryService.checkInventoryThreshold(
+      tx,
+      productId,
+     );
 
      if (e) throw e;
     }
@@ -92,48 +93,6 @@ class CartBase {
    return await helper.getCartAndItems(tx)(userCart.id, userId);
   });
  };
-
- async checkInventoryThreshold(
-  tx: Transaction,
-  productId: string,
- ): Promise<Result<number, AppError>> {
-  const [{ price, quantity: threshold }] = await tx
-   .select({ price: product.price, quantity: product.quantity })
-   .from(product)
-   .where(and(eq(product.id, productId), isNotNull(product.quantity)))
-   .limit(1);
-
-  if (threshold <= 0)
-   return [
-    null,
-    new NotFoundException(
-     "Product is out of stock",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-
-  const currentAllocatedQuantity = await helper.getProductAllocatedQuantity(
-   tx,
-   productId,
-  );
-
-  const currentAllocatedCount = currentAllocatedQuantity?.totalQuantity
-   ? Number(currentAllocatedQuantity?.totalQuantity)
-   : 0;
-
-  if (currentAllocatedCount + 1 > threshold)
-   return [
-    null,
-    new InternalServerError(
-     "Product threshold exceeded",
-     HttpStatus.UNPROCESSABLE_ENTITY,
-     ErrorCode.INTERNAL_SERVER_ERROR,
-    ),
-   ];
-
-  return [price, null];
- }
 }
 
 export default new CartBase();

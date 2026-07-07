@@ -20,6 +20,7 @@ class OrderRouter {
   this.router.get("/:orderId", OrderController.getOrderDetails);
   this.router.post("/:cartId", OrderController.placeOrder);
   this.router.put("/:orderId", OrderController.cancelOrder);
+  this.router.delete("/:orderId", OrderController.deleteOrderItem);
  }
 }
 

@@ -1,9 +1,10 @@
 /** @format */
-import asyncHandler from "@shared/middleware/async-handler.ts";
-import UploadService, { UploadResult } from "./upload.service.ts";
-import { NextFunction, Request, Response } from "express";
-import { APIResponse } from "@shared/types.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import asyncHandler from "@shared/middleware/async-handler.ts";
+import { APIResponse } from "@shared/types.ts";
+import { NextFunction, Request, Response } from "express";
+
+import UploadService, { UploadResult } from "./upload.service.ts";
 
 interface UploadBody {
  folder: "product_images" | "avatar" | "product_videos";

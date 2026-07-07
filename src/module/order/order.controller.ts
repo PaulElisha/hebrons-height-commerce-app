@@ -135,5 +135,18 @@ class OrderController {
    });
   },
  );
+
+ deleteOrderItem = asyncHandler(
+  async (req: Request<OrderParams>, res: Response, next: NextFunction) => {
+   const orderId = req.params.orderId as string;
+
+   await OrderService.deleteOrderItem(orderId);
+
+   return res.status(HttpStatus.OK).json({
+    status: "ok",
+    message: "order deleted",
+   });
+  },
+ );
 }
 export default new OrderController();

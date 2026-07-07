@@ -2,12 +2,12 @@
 
 import roleGuard from "@middleware/role-guard.ts";
 import authenticate from "@shared/middleware/authenticate.ts";
+import { cloudinaryUploadBulkStream } from "@shared/middleware/cloudinary-upload-bulk-stream.ts";
+import { cloudinaryUploadStream } from "@shared/middleware/cloudinary-upload-stream.ts";
+import upload from "@shared/middleware/multer-upload.ts";
 import { Router } from "express";
 
 import ProductController from "./product.controller.ts";
-import { cloudinaryUploadStream } from "@shared/middleware/cloudinary-upload-stream.ts";
-import upload from "@shared/middleware/multer-upload.ts";
-import { cloudinaryUploadBulkStream } from "@shared/middleware/cloudinary-upload-bulk-stream.ts";
 
 class ProductRouter {
  router: Router;

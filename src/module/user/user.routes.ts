@@ -7,8 +7,9 @@ import HttpStatus from "@shared/enum/http.ts";
 import { cloudinaryUploadStream } from "@shared/middleware/cloudinary-upload-stream.ts";
 import upload from "@shared/middleware/multer-upload.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
+import { APIResponse, TUser } from "@shared/types.ts";
 import { and, eq, isNotNull } from "drizzle-orm";
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 
 class UserRouter {
  router: Router;
@@ -20,20 +21,23 @@ class UserRouter {
  }
 
  initializeRoutes() {
-  this.router.get("/profile", async (req, res) => {
-   const user = req.user;
-   res.json({
-    status: "ok",
-    message: "user profile fetched successfully",
-    data: user,
-   });
-  });
+  this.router.get(
+   "/profile",
+   async (req: Request, res: Response<APIResponse<TUser>>) => {
+    const user = req.user;
+    res.json({
+     status: "ok",
+     message: "user profile fetched successfully",
+     data: user,
+    });
+   },
+  );
 
   this.router.put(
    "/update",
    upload.single("file"),
    cloudinaryUploadStream("avatar"),
-   async (req, res) => {
+   async (req: Request, res: Response<APIResponse<TUser>>) => {
     const body = req.body;
     const userId = req.user.id;
     const image = req.upload_image.url;

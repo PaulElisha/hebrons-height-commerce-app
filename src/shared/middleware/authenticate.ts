@@ -13,13 +13,9 @@ const authenticate = async (
  next: NextFunction,
 ) => {
  try {
-  console.log("Headers passing to Auth:", req.headers);
-
   const session = await auth.api.getSession({
    headers: fromNodeHeaders(req.headers),
   });
-
-  console.log("Better Auth Session Output:", session);
 
   if (!session) {
    throw new UnauthorizedExceptionError(

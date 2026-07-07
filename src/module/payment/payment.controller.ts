@@ -1,18 +1,15 @@
 /** @format */
 
 import { OrderParams } from "@module/order/order.controller.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import InternalServerError from "@shared/error/internal-server.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import { APIResponse } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
-
-import PaymentService, {
- CheckoutData,
- PaymentData,
-} from "./payment.service.ts";
-import InternalServerError from "@shared/error/internal-server.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
 import Stripe from "stripe";
+
+import PaymentService, { CheckoutData } from "./payment.service.ts";
 
 class PaymentController {
  initialize = asyncHandler(

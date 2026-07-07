@@ -1,7 +1,7 @@
 /** @format */
 
 import { auth } from "@auth/auth.ts";
-import { UploadImages, UploadImage } from "@shared/types.ts";
+import { UploadImage, UploadImages } from "@shared/types.ts";
 
 type Session = typeof auth.$Infer.Session;
 

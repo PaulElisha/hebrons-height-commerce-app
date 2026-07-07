@@ -7,7 +7,6 @@ import { Pagination, UploadImages } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 
 import ProductService from "./product.service.ts";
-import { getMerchantIdFromUser } from "@shared/helper.ts";
 
 export interface ProductParams {
  productId?: string;

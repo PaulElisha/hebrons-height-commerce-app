@@ -1,12 +1,12 @@
 /** @format */
 
 import authenticate from "@middleware/authenticate.ts";
+import { cloudinaryUploadStream } from "@middleware/cloudinary-upload-stream.ts";
+import upload from "@middleware/multer-upload.ts";
 import roleGuard from "@middleware/role-guard.ts";
 import { Router } from "express";
 
 import MerchantController from "./merchant.controller.ts";
-import upload from "@middleware/multer-upload.ts";
-import { cloudinaryUploadStream } from "@middleware/cloudinary-upload-stream.ts";
 
 class MerchantRouter {
  router: Router;

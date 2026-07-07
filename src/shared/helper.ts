@@ -5,7 +5,7 @@ import { merchant } from "@schema/merchant.ts";
 import { order } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
 import { TCartAndItem, Transaction } from "@shared/types.ts";
-import { and, eq, sum } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export async function fetchMerchantProductsFromDb(merchantId: string) {
  const productsForMerchant = await db
@@ -28,6 +28,19 @@ export async function getMerchantIdFromUser(userId: string): Promise<string> {
   .limit(1);
 
  return relatedMerchant?.id;
+}
+
+export async function getMerchantIdFromProductId(
+ tx: Transaction,
+ productId: string,
+): Promise<string> {
+ const [productMerchant] = await db
+  .select()
+  .from(product)
+  .innerJoin(merchant, eq(product.merchantId, merchant.id))
+  .where(eq(product.id, productId));
+
+ return productMerchant?.merchant.id;
 }
 
 export const getCartAndItems =
@@ -54,30 +67,6 @@ export const checkItemExistsInCart =
    .limit(1);
   return existingItem[0];
  };
-
-export const getProductAllocatedQuantity = async (
- tx: Transaction,
- productId: string,
-): Promise<any> => {
- const [allocatedQuantity] = await tx
-  .select({ totalQuantity: sum(cartItem.quantity) })
-  .from(cartItem)
-  .where(eq(cartItem.productId, productId))
-  .limit(1);
- return allocatedQuantity;
-};
-
-export async function getMerchantIdFromProductId(
- productId: string,
-): Promise<String> {
- const [productMerchant] = await db
-  .select()
-  .from(product)
-  .innerJoin(merchant, eq(product.merchantId, merchant.id))
-  .where(eq(product.id, productId));
-
- return String(productMerchant?.merchant?.id);
-}
 
 export function createPublicId(
  folder: "product_images" | "additional_images" | "avatar" | "product_videos",
