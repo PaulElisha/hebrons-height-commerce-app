@@ -73,8 +73,6 @@ class OrderService {
    );
   }
 
-  const merchantId = await helper.getMerchantIdFromUser(userId);
-
   const [returnData, e] = await mutex.runExclusive(async () => {
    return await db.transaction(async (tx: Transaction) => {
     const [newOrder] = await tx
@@ -100,6 +98,11 @@ class OrderService {
      const [_, e] = await InventoryService.getProductThreshold(v.productId);
 
      if (e) return [null, e];
+
+     const merchantId = await helper.getMerchantIdFromProductId(
+      tx,
+      v.productId,
+     );
 
      return {
       orderId: newOrder?.id,
