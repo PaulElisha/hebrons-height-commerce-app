@@ -11,7 +11,7 @@ const spec = {
  },
  servers: [
   {
-    url: Env.LOCAL_URL,
+   url: Env.BASE_URL,
    description: "Server",
   },
  ],
@@ -353,19 +353,19 @@ const spec = {
       type: "string",
       enum: ["initializePaystackCheckout", "initializeStripeCheckout"],
      },
-      channels: {
-       type: "array",
-       items: { type: "string" },
-      },
-      callback_url: {
-       type: "string",
-       format: "uri",
-       description: "URL to redirect back to after payment",
-      },
-      mode: {
-       type: "string",
-       enum: ["payment", "subscription", "setup"],
-      },
+     channels: {
+      type: "array",
+      items: { type: "string" },
+     },
+     callback_url: {
+      type: "string",
+      format: "uri",
+      description: "URL to redirect back to after payment",
+     },
+     mode: {
+      type: "string",
+      enum: ["payment", "subscription", "setup"],
+     },
     },
    },
    Pagination: {
@@ -1513,69 +1513,70 @@ const spec = {
    },
   },
   "/api/payment/paystack/verify": {
-    get: {
-     tags: ["Payment"],
-     summary: "Verify a Paystack payment by reference",
-     security: [{ bearerAuth: [] }],
-     parameters: [
-      {
-       name: "reference",
-       in: "query",
-       required: true,
-       schema: { type: "string" },
-       description: "Paystack payment reference",
-      },
-     ],
-     responses: {
-      "204": {
-       description: "Payment verified, no content",
-      },
-      "400": { description: "Payment verification error" },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-     },
-    },
-   },
-   "/api/payment/initialize/{orderId}": {
-    post: {
-     tags: ["Payment"],
-     summary: "Initialize payment for an order (redirects to Stripe/Paystack checkout)",
-     security: [{ bearerAuth: [] }],
-     parameters: [
-      {
-       name: "orderId",
-       in: "path",
-       required: true,
-       schema: { type: "string" },
-       description: "Order ID to initialize payment for",
-      },
-     ],
-     requestBody: {
+   get: {
+    tags: ["Payment"],
+    summary: "Verify a Paystack payment by reference",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "reference",
+      in: "query",
       required: true,
-      content: {
-       "application/json": {
-        schema: { $ref: "#/components/schemas/CheckoutData" },
-       },
-      },
+      schema: { type: "string" },
+      description: "Paystack payment reference",
      },
-     responses: {
-      "302": {
-       description: "Redirect to checkout URL (Stripe or Paystack)",
-       headers: {
-        Location: {
-         type: "string",
-         description: "Checkout session URL",
-        },
-       },
-      },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-      "422": {
-       description: "Invalid order — order or payment status is not pending",
-      },
-      "409": { description: "Payment already created for this order" },
-      "500": { description: "Failed to initialize payment" },
+    ],
+    responses: {
+     "204": {
+      description: "Payment verified, no content",
      },
+     "400": { description: "Payment verification error" },
+     "401": { description: "Unauthorized — invalid or missing session token" },
     },
    },
+  },
+  "/api/payment/initialize/{orderId}": {
+   post: {
+    tags: ["Payment"],
+    summary:
+     "Initialize payment for an order (redirects to Stripe/Paystack checkout)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "orderId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Order ID to initialize payment for",
+     },
+    ],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: { $ref: "#/components/schemas/CheckoutData" },
+      },
+     },
+    },
+    responses: {
+     "302": {
+      description: "Redirect to checkout URL (Stripe or Paystack)",
+      headers: {
+       Location: {
+        type: "string",
+        description: "Checkout session URL",
+       },
+      },
+     },
+     "401": { description: "Unauthorized — invalid or missing session token" },
+     "422": {
+      description: "Invalid order — order or payment status is not pending",
+     },
+     "409": { description: "Payment already created for this order" },
+     "500": { description: "Failed to initialize payment" },
+    },
+   },
+  },
   "/api/payment/success": {
    get: {
     tags: ["Payment"],
