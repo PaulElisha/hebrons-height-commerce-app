@@ -26,14 +26,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
  ) => {
   const orderWithUser = await OrderService.getOrderWithUser(userId, orderId);
 
-  const targetUrl =
-   Env.PAYSTACK_INIT_URL || "https://api.paystack.co/transaction/initialize";
-
-  const amountInSubunits = Math.round(
-   Number(orderWithUser.subtotal) * (Env.SCALER || 100),
-  );
-
-  const response = await fetch(targetUrl, {
+  const response = await fetch(Env.PAYSTACK_INIT_URL, {
    method: "POST",
    headers: {
     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
@@ -41,7 +34,8 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    },
    body: JSON.stringify({
     email: data.email,
-    amount: amountInSubunits,
+    amount: Math.round(Number(orderWithUser.subtotal) * Env.SCALER),
+    currency: data.currency,
     callback_url: data.callback_url,
     metadata: {
      name: orderWithUser.user.name,
