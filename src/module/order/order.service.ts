@@ -73,7 +73,7 @@ class OrderService {
    );
   }
 
-  const merchantId = helper.getMerchantIdFromUser(userId);
+  const merchantId = await helper.getMerchantIdFromUser(userId);
 
   const [returnData, e] = await mutex.runExclusive(async () => {
    return await db.transaction(async (tx: Transaction) => {

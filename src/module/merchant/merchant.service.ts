@@ -4,6 +4,9 @@ import db from "@db/db.ts";
 import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import BadRequestException from "@shared/error/bad-request.ts";
 import { and, eq, isNotNull } from "drizzle-orm";
 
 interface CreateMerchantDto {
@@ -35,7 +38,7 @@ class MerchantService {
   const [merchantProfile] = await db
    .select()
    .from(merchant)
-   .innerJoin(user, eq(merchant?.userId, userId))
+   .innerJoin(user, eq(merchant.userId, user.id))
    .where(and(eq(merchant?.userId, userId), isNotNull(merchant?.id)))
    .limit(1);
 
@@ -43,6 +46,23 @@ class MerchantService {
  };
 
  createMerchantProfile = async (userId: string, body: CreateMerchantDto) => {
+  const [existing] = await db
+   .select()
+   .from(merchant)
+   .where(eq(merchant.userId, userId))
+   .limit(1);
+
+  if (existing) {
+   return [
+    null,
+    new BadRequestException(
+     "A merchant profile already exists for this user.",
+     HttpStatus.CONFLICT,
+     ErrorCode.ACCESS_UNAUTHORIZED,
+    ),
+   ];
+  }
+
   const [newMerchant] = await db
    .insert(merchant)
    .values({
@@ -52,7 +72,6 @@ class MerchantService {
     businessDescription: body.businessDescription,
     address: body.address,
    })
-   .onConflictDoNothing()
    .returning();
 
   return newMerchant;
