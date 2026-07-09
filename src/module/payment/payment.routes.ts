@@ -22,6 +22,8 @@ class PaymentRoutes {
    res.send("Payment failed");
   });
 
+  this.router.get("/paystack/verify", PaymentController.verifyPaystack);
+
   this.router.post("/initialize/:orderId", PaymentController.initialize);
  }
 }

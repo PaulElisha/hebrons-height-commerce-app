@@ -5,8 +5,8 @@ import { onEvent } from "@shared/event-bus/consumer.ts";
 
 onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
-  const { orderId, productIds } = payload.payload;
-  console.log("Inventory update for Order placement:", productIds);
+  // const { orderId, product_ids } = payload.payload;
+  // console.log("Inventory update for Order placement:", product_ids);
  },
  error: (error) => {
   console.error(error);

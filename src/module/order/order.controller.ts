@@ -28,7 +28,9 @@ class OrderController {
    const cartId = req.params.cartId as string;
    const body = req.body;
 
-   const orderId = await OrderService.placeOrder(userId, cartId, body);
+   const [orderId, e] = await OrderService.placeOrder(userId, cartId, body);
+
+   if (e) return next(e);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -49,7 +51,9 @@ class OrderController {
    const userId = req.user.id;
    const status = req.query.status;
 
-   const data = await OrderService.getUserOrderByStatus(userId, status);
+   const [data, e] = await OrderService.getUserOrderByStatus(userId, status);
+
+   if (e) return next(e);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -62,13 +66,15 @@ class OrderController {
  getOrderDetails = asyncHandler(
   async (
    req: Request<OrderParams>,
-   res: Response<APIResponse<TOrderAndItems>>,
+   res: Response<APIResponse<TOrderAndItems | null>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
    const orderId = req.params.orderId as string;
 
-   const data = await OrderService.getOrderDetails(userId, orderId);
+   const [data, e] = await OrderService.getOrderDetails(userId, orderId);
+
+   if (e) return next(e);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -105,11 +111,13 @@ class OrderController {
     status: req.query.status,
    };
 
-   const data = await OrderService.getMerchantOrders(
+   const [data, e] = await OrderService.getMerchantOrders(
     userId,
     filters,
     pagination,
    );
+
+   if (e) return next(e);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -122,11 +130,13 @@ class OrderController {
  cancelOrder = asyncHandler(
   async (
    req: Request<OrderParams>,
-   res: Response<APIResponse<TOrder>>,
+   res: Response<APIResponse<TOrder | null>>,
    next: NextFunction,
   ): Promise<any> => {
    const orderId = req.params.orderId as string;
-   const data = await OrderService.cancelOrder(orderId);
+   const [data, e] = await OrderService.cancelOrder(orderId);
+
+   if (e) return next(e);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

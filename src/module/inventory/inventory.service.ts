@@ -14,26 +14,16 @@ import { Result, Transaction } from "@shared/types.ts";
 import { and, eq, isNotNull, sum } from "drizzle-orm";
 
 class InventoryService {
- getProductThreshold = async (tx: Transaction, productId: string) => {
-  const [{ price, quantity: threshold }] = await tx
+ getProductThreshold = async (
+  productId: string,
+ ): Promise<Result<any, AppError>> => {
+  const [data] = await db
    .select({ price: product.price, quantity: product.quantity })
    .from(product)
    .where(and(eq(product.id, productId), isNotNull(product.quantity)))
    .limit(1);
 
-  return [price, threshold];
- };
-
- checkInventoryThreshold = async (
-  tx: Transaction,
-  productId: string,
- ): Promise<Result<number, AppError>> => {
-  const [price, currentQuantity] = await this.getProductThreshold(
-   tx,
-   productId,
-  );
-
-  if (currentQuantity <= 0)
+  if (data.quantity <= 0)
    return [
     null,
     new NotFoundException(
@@ -42,6 +32,18 @@ class InventoryService {
      ErrorCode.RESOURCE_NOT_FOUND,
     ),
    ];
+
+  return [data, null];
+ };
+
+ checkInventoryThreshold = async (
+  tx: Transaction,
+  productId: string,
+ ): Promise<Result<number, AppError>> => {
+  const [{ price, currentQuantity }, e] =
+   await this.getProductThreshold(productId);
+
+  if (e) throw e;
 
   const currentAllocatedQuantityForProduct =
    await this.getProductAllocatedQuantity(tx, productId);
@@ -80,32 +82,14 @@ class InventoryService {
   productId: string,
   orderId: string,
   action: "placeOrder" | "cancelOrder",
- ) => {
-  await db.transaction(async (tx: Transaction) => {
-   const [price, currentQuantity] = await this.getProductThreshold(
-    tx,
-    productId,
-   );
+ ): Promise<Result<void, AppError>> => {
+  try {
+   const [{ _, currentQuantity }, e] =
+    await this.getProductThreshold(productId);
 
-   if (action === "placeOrder") {
-    if (currentQuantity <= 0) {
-     throw new NotFoundException(
-      "Product is out of stock",
-      HttpStatus.NOT_FOUND,
-      ErrorCode.RESOURCE_NOT_FOUND,
-     );
-    }
+   if (e) return [null, e];
 
-    const newQuantity = currentQuantity - 1;
-
-    await tx
-     .update(product)
-     .set({
-      quantity: currentQuantity - 1,
-      status: newQuantity === 0 ? "sold_out" : "available",
-     })
-     .where(and(eq(product.id, productId), isNotNull(product.quantity)));
-   } else if (action === "cancelOrder") {
+   return await db.transaction(async (tx: Transaction) => {
     const [ItemQuantityPurchased] = await tx
      .select({ quantityPurchased: orderItem.quantity })
      .from(orderItem)
@@ -114,21 +98,43 @@ class InventoryService {
      );
 
     if (!ItemQuantityPurchased) {
-     throw new BadRequestException(
-      "This product was not part of the original order.",
-      HttpStatus.BAD_REQUEST,
-      ErrorCode.VALIDATION_ERROR,
-     );
+     return [
+      null,
+      new BadRequestException(
+       "This product was not part of the original order.",
+       HttpStatus.BAD_REQUEST,
+       ErrorCode.VALIDATION_ERROR,
+      ),
+     ];
     }
 
-    await tx
-     .update(product)
-     .set({
-      quantity: currentQuantity + ItemQuantityPurchased.quantityPurchased,
-     })
-     .where(eq(product.id, productId));
-   }
-  });
+    const newQuantity =
+     action === "cancelOrder"
+      ? currentQuantity + ItemQuantityPurchased.quantityPurchased
+      : currentQuantity - ItemQuantityPurchased.quantityPurchased;
+
+    if (action === "placeOrder") {
+     await tx
+      .update(product)
+      .set({
+       quantity: newQuantity,
+       status: newQuantity === 0 ? "sold_out" : "available",
+      })
+      .where(and(eq(product.id, productId), isNotNull(product.quantity)));
+    } else if (action === "cancelOrder") {
+     await tx
+      .update(product)
+      .set({
+       quantity: newQuantity,
+      })
+      .where(eq(product.id, productId));
+    }
+
+    return [null, null];
+   });
+  } catch (error) {
+   return [null, error as AppError];
+  }
  };
 }
 

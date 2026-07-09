@@ -11,15 +11,68 @@ import Env from "env.ts";
 import FA from "fasy";
 
 import { PaymentData } from "./payment.service.ts";
+import CartService from "@module/cart/cart.service.ts";
+import BadRequestException from "@shared/error/bad-request.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
+import { PublishEvent } from "@shared/event-bus/publisher.ts";
+import { EventType } from "@shared/event-bus/config.ts";
 
 export const FetchRail: Record<string, (...any: any[]) => any> = {
- initializePaystackCheckout: () => {},
+ initializePaystackCheckout: async (
+  userId: string,
+  orderId: string,
+  data: PaymentData,
+ ) => {
+  const orderWithUser = await OrderService.getOrderWithUser(userId, orderId);
+
+  const response = await fetch(Env.PAYSTACK_INIT_URL, {
+   method: "POST",
+   headers: {
+    Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+    "Content-Type": "application/json",
+   },
+   body: JSON.stringify({
+    email: data.email,
+    amount: orderWithUser.subtotal,
+    callback_url: data.callback_url,
+    metadata: {
+     name: orderWithUser.user.name,
+     email: orderWithUser.user.email,
+     ...data.metadata,
+    },
+   }),
+  });
+
+  if (!response.status)
+   return [
+    null,
+    new BadRequestException(
+     "Payment Initialization error",
+     HttpStatus.BAD_REQUEST,
+     ErrorCode.VALIDATION_ERROR,
+    ),
+   ];
+
+  PublishEvent({
+   event_type: EventType.PAYMENT_INITIALIZED,
+   payload: {
+    ...((await response.json()) as any),
+    orderId,
+    provider: "paystack",
+   },
+  });
+
+  return [(await response.json()).authorization_url as any, null];
+ },
  initializeStripeCheckout: async (
   userId: string,
   orderId: string,
   data: PaymentData,
  ) => {
-  const orderData = await OrderService.getOrderDetails(userId, orderId);
+  const [orderData, e] = await OrderService.getOrderDetails(userId, orderId);
+
+  if (orderData == null) return [null, e];
 
   return await stripeClient.checkout.sessions
    .create({
@@ -44,24 +97,23 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      }),
      orderData.order_items,
     ),
-    metadata: {
-     orderId: orderData?.order?.id,
-    },
+    metadata: data.metadata,
     success_url: `${Env.BASE_URL}/success`,
     cancel_url: `${Env.BASE_URL}/failed`,
    })
    .then(async (session) => {
     if (session.url) {
-     await db
-      .update(order)
-      .set({
-       orderStatus: "processing",
-       paymentStatus: "processing",
-      })
-      .where(eq(order.id, orderId));
+     PublishEvent({
+      event_type: EventType.PAYMENT_INITIALIZED,
+      payload: {
+       checkoutUrl: session.url,
+       orderId,
+       provider: "stripe",
+      },
+     });
     }
 
-    return session.url;
+    return [session.url, null];
    });
  },
 };

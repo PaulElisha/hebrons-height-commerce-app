@@ -3,6 +3,7 @@
 import "@module/email/consumer.ts";
 import "@module/inventory/consumer.ts";
 import "@module/merchant/consumer.ts";
+import "@module/payment/consumer.ts";
 
 import cors from "@app/cors.ts";
 import helmet from "@app/helmet.ts";
@@ -84,7 +85,7 @@ class App {
 
  startServer = async () => {
   this.app.listen(Env.PORT, () => {
-   console.log(`Server is running on ${Env.LOCAL_URL}`);
+   console.log(`Server is running on ${Env.BASE_URL}`);
   });
  };
 }

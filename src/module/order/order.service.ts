@@ -2,16 +2,20 @@
 
 import db from "@db/db.ts";
 import CartService from "@module/cart/cart.service.ts";
+import InventoryService from "@module/inventory/inventory.service.ts";
 import { user } from "@schema/auth.ts";
 import { order, orderItem } from "@schema/order.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
+import NotFoundException from "@shared/error/not-found.ts";
 import { EventType } from "@shared/event-bus/config.ts";
 import { PublishEvent } from "@shared/event-bus/publisher.ts";
 import * as helper from "@shared/helper.ts";
 import {
  Pagination,
+ Result,
  TCartItem,
  TOrder,
  TOrderAndItems,
@@ -28,8 +32,8 @@ interface CreateOrderDto {
 const mutex = new Mutex();
 
 class OrderService {
- getOrderWithUser = async (orderId: string) => {
-  const [result] = await db
+ getOrderWithUser = async (userId: string, orderId: string) => {
+  const result = await db
    .select({
     id: order.id,
     subtotal: order.subtotal,
@@ -43,33 +47,35 @@ class OrderService {
    })
    .from(order)
    .innerJoin(user, eq(order.userId, user.id))
-   .where(eq(order.id, orderId));
+   .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-  if (!result) {
+  if (!(result.length > 0)) {
    throw new Error(`Order with ID ${orderId} not found`);
   }
 
-  return result;
+  return result[0];
  };
 
  placeOrder = async (
   userId: string,
   cartId: string,
   body: CreateOrderDto,
- ): Promise<string> => {
+ ): Promise<Result<string, AppError>> => {
   const data = await CartService.getUserCart(userId, cartId);
 
-  // const [orderExists] = await helper.validateOrderForCart(cartId, userId);
+  const [orderExists] = await helper.validateOrderForCart(cartId, userId);
 
-  // if (orderExists) {
-  //  throw new BadRequestException(
-  //   "Order already created",
-  //   HttpStatus.UNPROCESSABLE_ENTITY,
-  //   ErrorCode.VALIDATION_ERROR,
-  //  );
-  // }
+  if (orderExists) {
+   throw new BadRequestException(
+    "Order already created",
+    HttpStatus.UNPROCESSABLE_ENTITY,
+    ErrorCode.VALIDATION_ERROR,
+   );
+  }
 
-  const { orderId, productIds } = await mutex.runExclusive(async () => {
+  const merchantId = helper.getMerchantIdFromUser(userId);
+
+  const [returnData, e] = await mutex.runExclusive(async () => {
    return await db.transaction(async (tx: Transaction) => {
     const [newOrder] = await tx
      .insert(order)
@@ -91,10 +97,9 @@ class OrderService {
      .returning();
 
     const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {
-     const merchantId = await helper.getMerchantIdFromProductId(
-      tx,
-      v.productId,
-     );
+     const [_, e] = await InventoryService.getProductThreshold(v.productId);
+
+     if (e) return [null, e];
 
      return {
       orderId: newOrder?.id,
@@ -108,31 +113,42 @@ class OrderService {
 
     const productIds = itemsToInsert.map((item: TCartItem) => item.productId);
 
-    if (itemsToInsert.length > 0) {
-     await tx.insert(orderItem).values(itemsToInsert);
+    if (!(itemsToInsert.length !== 0)) {
+     return [
+      null,
+      new NotFoundException(
+       "Item not found in cart",
+       HttpStatus.NOT_FOUND,
+       ErrorCode.RESOURCE_NOT_FOUND,
+      ),
+     ];
     }
 
-    return { orderId: newOrder.id, productIds };
+    await tx.insert(orderItem).values(itemsToInsert);
+
+    return [{ orderId: newOrder.id, productIds }, null];
    });
   });
+
+  if (e) throw e;
 
   PublishEvent({
    event_type: EventType.ORDER_PLACED,
    payload: {
     userId,
     cartId,
-    orderId,
-    productIds,
+    orderId: returnData?.orderId,
+    productIds: returnData?.productIds,
    },
   });
 
-  return orderId;
+  return [returnData.orderId, null];
  };
 
  getUserOrderByStatus = async (
   userId: string,
   status: string,
- ): Promise<TOrderAndItems> => {
+ ): Promise<Result<any, AppError>> => {
   const result = await db
    .select()
    .from(order)
@@ -146,26 +162,47 @@ class OrderService {
    )
    .orderBy(desc(order.createdAt));
 
-  return {
-   order: result[0].orders,
-   order_items: result.filter((i) => i.orderItem).map((o) => o.orderItem),
-  };
+  if (!(result.length > 0))
+   return [
+    null,
+    new NotFoundException(
+     `${status} order not found`,
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+
+  return [result, null];
  };
 
  getOrderDetails = async (
   userId: string,
   orderId: string,
- ): Promise<TOrderAndItems> => {
+ ): Promise<Result<TOrderAndItems, AppError>> => {
   const result = await db
    .select()
    .from(order)
    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-  return {
-   order: result[0].orders,
-   order_items: result.filter((i) => i.orderItem).map((o) => o.orderItem),
-  };
+  if (!(result.length > 0)) {
+   return [
+    null,
+    new NotFoundException(
+     "order not found",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
+  return [
+   {
+    order: result[0].orders,
+    order_items: result.filter((i) => i.orderItem).map((o) => o.orderItem),
+   },
+   null,
+  ];
  };
 
  getMerchantOrders = async (
@@ -174,7 +211,7 @@ class OrderService {
    status?: string;
   },
   pagination: Pagination,
- ): Promise<any> => {
+ ): Promise<Result<any, AppError>> => {
   const merchantId = await helper.getMerchantIdFromUser(userId);
 
   const limit = Math.min(Math.max(pagination.pageSize ?? 10, 1), 50);
@@ -204,16 +241,19 @@ class OrderService {
   const totalOrders = Number(totalCountResult?.totalCount);
   const totalPages = Math.ceil(totalOrders / limit);
 
-  return {
-   fetchedOrders,
-   pagination: {
-    limit,
-    pageNumber,
-    totalOrders,
-    totalPages,
-    offset,
+  return [
+   {
+    fetchedOrders,
+    pagination: {
+     limit,
+     pageNumber,
+     totalOrders,
+     totalPages,
+     offset,
+    },
    },
-  };
+   null,
+  ];
  };
 
  clearPendingOrders = async () => {
@@ -228,7 +268,7 @@ class OrderService {
    );
  };
 
- cancelOrder = async (orderId: string): Promise<TOrder> => {
+ cancelOrder = async (orderId: string): Promise<Result<TOrder, AppError>> => {
   return await db.transaction(async (tx: Transaction) => {
    const [existingOrder] = await tx
     .select({ orderStatus: order.orderStatus })
@@ -269,7 +309,7 @@ class OrderService {
     },
    });
 
-   return cancelledOrder;
+   return [cancelledOrder, null];
   });
  };
 

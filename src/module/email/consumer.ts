@@ -14,9 +14,9 @@ import EmailWorker from "./email.worker.ts";
 
 onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
-  const { orderId } = payload.payload;
+  const { userId, orderId } = payload.payload;
 
-  const orderDetails = await OrderService.getOrderWithUser(orderId);
+  const orderDetails = await OrderService.getOrderWithUser(userId, orderId);
 
   const emailMessage = `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`;
 

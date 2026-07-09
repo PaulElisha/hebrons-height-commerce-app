@@ -4,6 +4,8 @@ import stripeClient from "@app/stripe.ts";
 import db from "@db/db.ts";
 import { order } from "@schema/order.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import { EventType } from "@shared/event-bus/config.ts";
+import { PublishEvent } from "@shared/event-bus/publisher.ts";
 import { eq } from "drizzle-orm";
 import Env from "env.ts";
 import { Request, Response } from "express";
@@ -57,13 +59,13 @@ async function handleOrderCheckoutCompleted(session: Stripe.Checkout.Session) {
  }
 
  try {
-  await db
-   .update(order)
-   .set({
-    orderStatus: "fulfilled",
-    paymentStatus: "paid",
-   })
-   .where(eq(order.id, orderId));
+  PublishEvent({
+   event_type: EventType.PAYMENT_VERIFIED,
+   payload: {
+    orderId,
+    provider: "stripe",
+   },
+  });
 
   console.log(`Order marked as paid`);
  } catch (error) {

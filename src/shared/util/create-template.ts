@@ -35,4 +35,4 @@ const createTemplateTag = (baseDir: string) => {
 
 const template = createTemplateTag("./shared/email/template");
 
-export { template };
+export default { template };

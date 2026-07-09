@@ -20,7 +20,15 @@ export const paymentStatuses: readonly [
  string,
  string,
  string,
-] = ["pending", "paid", "failed", "cancelled", "refunded"] as const;
+ string,
+] = [
+ "pending",
+ "initialized",
+ "paid",
+ "failed",
+ "cancelled",
+ "refunded",
+] as const;
 export type PaymentStatus = (typeof paymentStatuses)[number];
 
 export const payment = pgTable(
@@ -47,15 +55,13 @@ export const payment = pgTable(
   attempts: integer("attempts"),
   mode: text("mode"),
   rail: text("rail").notNull(),
-  channels: jsonb("channels").$type<string[]>(),
   paymentReference: text("payment_reference").$defaultFn(() =>
    crypto.randomUUID(),
   ),
   paymentProvider: text("payment_provider"),
   accessCode: varchar("access_code", { length: 255 }),
   authorizationUrl: text("authorization_url"),
-  transactionId: text("transaction_id"),
-  paidAt: timestamp("paid_at", { mode: "date" }).notNull().defaultNow(),
+  paidAt: timestamp("paid_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
  },

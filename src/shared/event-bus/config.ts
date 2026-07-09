@@ -6,12 +6,11 @@ export enum EventType {
  ORDER_PLACED = "order.placed",
  ORDER_ACCEPTED = "order.accepted",
  ORDER_REJECTED = "order.rejected",
- ORDER_COMPLETED = "ORDER_COMPLETED",
  ORDER_PENDING = "order.pending",
  ORDER_CANCELLED = "order.cancelled",
- USER_REGISTERED = "USER_REGISTERED",
- USER_VERIFIED = "USER_VERIFIED",
  UPDATE_INVENTORY = "inventory.update",
+ PAYMENT_VERIFIED = "payment.checkout.verified",
+ PAYMENT_INITIALIZED = "payment.checkout.initialized",
 }
 
 export interface EventContract {

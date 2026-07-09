@@ -1,15 +1,15 @@
 /** @format */
 
 import { OrderParams } from "@module/order/order.controller.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
-import InternalServerError from "@shared/error/internal-server.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import { APIResponse } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 import Stripe from "stripe";
 
 import PaymentService, { CheckoutData } from "./payment.service.ts";
+import { payment } from "@schema/payment.ts";
+import db from "@db/db.ts";
+import HttpStatus from "@shared/enum/http.ts";
 
 class PaymentController {
  initialize = asyncHandler(
@@ -22,30 +22,54 @@ class PaymentController {
    const orderId = req.params.orderId as string;
    const body = req.body;
 
-   const data = await PaymentService.initialize(userId, orderId, body);
+   const [data, e] = await PaymentService.initialize(userId, orderId, body);
 
-   if (!data) {
-    throw new InternalServerError(
-     "Failed to initialize payment",
-     HttpStatus.INTERNAL_SERVER_ERROR,
-     ErrorCode.INTERNAL_SERVER_ERROR,
-    );
-   }
+   if (e) return next(e);
 
    const paymentData = {
     rail: data.rail,
     email: data.email,
     currency: data.currency as string,
+    callback_url: body.callback_url,
     mode: data.mode as Stripe.Checkout.SessionCreateParams.Mode,
+    metadata: {
+     orderId,
+    },
    };
 
-   const checkoutUrl = await PaymentService.fetchPaymentForOrderByRail(
+   const [checkoutUrl, err] = await PaymentService.fetchPaymentForOrderByRail(
     userId,
     orderId,
     paymentData,
    );
 
+   if (err) return next(err);
+
    res.redirect(checkoutUrl);
+
+   return res.status(HttpStatus.NO_CONTENT).send({
+    status: "ok",
+    message: "Payment initialized",
+   });
+  },
+ );
+
+ verifyPaystack = asyncHandler(
+  async (
+   req: Request<any, any, any, { reference: string }>,
+   res: Response,
+   next: NextFunction,
+  ) => {
+   const reference = req.query.reference;
+
+   const [data, e] = await PaymentService.verifyPaystack(reference);
+
+   if (e) return next(e);
+
+   return res.status(HttpStatus.NO_CONTENT).send({
+    status: "ok",
+    message: "Payment verified",
+   });
   },
  );
 }

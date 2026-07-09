@@ -4,19 +4,24 @@ import OrderService from "@module/order/order.service.ts";
 import { payment } from "@schema/payment.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
+import { Result } from "@shared/types.ts";
 import { and, eq } from "drizzle-orm";
 import Stripe from "stripe";
 
 import { FetchRail } from "./dispatcher.ts";
+import Env from "env.ts";
+import { PublishEvent } from "@shared/event-bus/publisher.ts";
+import { EventType } from "@shared/event-bus/config.ts";
 
 export interface CheckoutData {
  email: string;
  amount: number;
  currency: string;
  rail: string;
- channels?: Array<string>;
+ callback_url?: string;
  mode?: Stripe.Checkout.SessionCreateParams.Mode;
 }
 
@@ -24,6 +29,8 @@ export interface PaymentData {
  email: string;
  currency: string;
  rail: string;
+ callback_url?: string;
+ metadata?: Record<string, any>;
  mode?: Stripe.Checkout.SessionCreateParams.Mode;
 }
 
@@ -32,18 +39,23 @@ class PaymentService {
   userId: string,
   orderId: string,
   checkoutData: CheckoutData,
- ) => {
-  const data = await OrderService.getOrderDetails(userId, orderId);
+ ): Promise<Result<any, AppError>> => {
+  const [data, e] = await OrderService.getOrderDetails(userId, orderId);
+
+  if (data == null) return [null, e];
 
   if (
    data.order.orderStatus !== "pending" &&
    data.order.paymentStatus !== "pending"
   ) {
-   throw new BadRequestException(
-    "Invalid order",
-    HttpStatus.UNPROCESSABLE_ENTITY,
-    ErrorCode.VALIDATION_ERROR,
-   );
+   return [
+    null,
+    new BadRequestException(
+     "Invalid order",
+     HttpStatus.UNPROCESSABLE_ENTITY,
+     ErrorCode.VALIDATION_ERROR,
+    ),
+   ];
   }
 
   const [paymentExists] = await db
@@ -52,11 +64,14 @@ class PaymentService {
    .where(and(eq(payment.orderId, orderId)));
 
   if (paymentExists) {
-   throw new BadRequestException(
-    "Payment already created",
-    HttpStatus.CONFLICT,
-    ErrorCode.VALIDATION_ERROR,
-   );
+   return [
+    null,
+    new BadRequestException(
+     "Payment already created",
+     HttpStatus.CONFLICT,
+     ErrorCode.VALIDATION_ERROR,
+    ),
+   ];
   }
 
   const [paymentCreated] = await db
@@ -70,43 +85,86 @@ class PaymentService {
     amount: checkoutData.amount,
     currency: checkoutData.currency,
     attempts: 2,
-    channels: checkoutData.channels,
    })
    .returning();
 
-  return paymentCreated;
+  if (!paymentCreated) {
+   return [
+    null,
+    new InternalServerError(
+     "Failed to initialize payment",
+     HttpStatus.INTERNAL_SERVER_ERROR,
+     ErrorCode.INTERNAL_SERVER_ERROR,
+    ),
+   ];
+  }
+
+  return [paymentCreated, null];
+ };
+
+ verifyPaystack = async (paymentReference: string) => {
+  const response = await fetch(`Env.PAYSTACK_VERIFY_URL/${paymentReference}`, {
+   method: "GET",
+   headers: {
+    Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+    "Content-Type": "application/json",
+   },
+  });
+
+  if (!response.status)
+   return [
+    null,
+    new BadRequestException(
+     "Payment verification error",
+     HttpStatus.BAD_REQUEST,
+     ErrorCode.VALIDATION_ERROR,
+    ),
+   ];
+
+  PublishEvent({
+   event_type: EventType.PAYMENT_VERIFIED,
+   payload: {
+    ...((await response.json()) as any),
+    provider: "paystack",
+   },
+  });
+
+  return [(await response.json()) as any, null];
  };
 
  fetchPaymentForOrderByRail = async (
   userId: string,
   orderId: string,
   paymentData: PaymentData,
- ) => {
-  const [paymentExists] = await db
+ ): Promise<Result<any, AppError>> => {
+  const [paymentRecord] = await db
    .select()
    .from(payment)
    .where(and(eq(payment.orderId, orderId)));
 
+  if (!paymentRecord || paymentRecord.rail !== paymentData.rail) {
+   return [
+    null,
+    new InternalServerError(
+     "Invalid payment rail",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
   const rail = paymentData.rail;
 
-  if (!paymentExists || paymentData.rail !== rail) {
-   throw new InternalServerError(
-    "Invalid payment rail",
-    HttpStatus.NOT_FOUND,
-    ErrorCode.RESOURCE_NOT_FOUND,
-   );
-  }
-
   const callback = FetchRail[rail];
-  let url;
+  let url, e;
 
   if (typeof rail === "string" && rail == "initializePaystackCheckout") {
-   await callback(userId, orderId, paymentData);
+   [url, e] = await callback(userId, orderId, paymentData);
   } else if (typeof rail === "string" && rail == "initializeStripeCheckout") {
-   url = await callback(userId, orderId, paymentData);
+   [url, e] = await callback(userId, orderId, paymentData);
   }
 
-  return url;
+  return [url, e];
  };
 }
 
