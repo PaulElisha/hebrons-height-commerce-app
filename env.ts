@@ -19,26 +19,17 @@ if (isProduction) {
 
 const EnvSchema = z.object({
  PORT: z.coerce.number(),
- HOST: z.string(),
 
  NODE_ENV: z
   .enum(["production", "development", "testing"])
   .default("production"),
  APP_STAGE: z.enum(["dev", "test", "prod"]).default("dev"),
 
- DB_PASS: z.string(),
  DB_URL: z.string(),
 
  BASE_URL: z.string(),
- LOCAL_URL: z.string(),
 
  AUTH_SECRET: z.string(),
-
- JWT_SECRET: z.string().min(32, "Must be 32 char long"),
- JWT_EXPIRY: z.string(),
-
- REFRESH_SECRET: z.string(),
- REFRESH_EXPIRY: z.string(),
 
  SALT: z.coerce.number().min(10),
 
@@ -56,7 +47,7 @@ const EnvSchema = z.object({
  EMAIL_PASS: z.string(),
 
  PAYSTACK_INIT_URL: z.string(),
- PAYSTACK_VERIFY_URL: z.string().default("https://api.paystack.co/transaction/verify/"),
+ PAYSTACK_VERIFY_URL: z.string(),
  PAYSTACK_SECRET_KEY: z.string(),
 
  STRIPE_SECRET_KEY: z.string(),

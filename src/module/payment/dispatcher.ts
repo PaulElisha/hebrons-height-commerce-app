@@ -69,7 +69,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    },
   });
 
-  return [resBody?.data.authorization_url, null];
+  return [resBody?.authorization_url, null];
  },
  initializeStripeCheckout: async (
   userId: string,
