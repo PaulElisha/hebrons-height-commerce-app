@@ -46,11 +46,6 @@ class PaymentController {
    if (err) return next(err);
 
    res.redirect(checkoutUrl);
-
-   return res.status(HttpStatus.NO_CONTENT).send({
-    status: "ok",
-    message: "Payment initialized",
-   });
   },
  );
 

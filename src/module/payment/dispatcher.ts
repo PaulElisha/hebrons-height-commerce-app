@@ -26,7 +26,10 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
  ) => {
   const orderWithUser = await OrderService.getOrderWithUser(userId, orderId);
 
-  const response = await fetch(Env.PAYSTACK_INIT_URL, {
+  const targetUrl =
+   Env.PAYSTACK_INIT_URL || "https://api.paystack.co/transaction/initialize";
+
+  const response = await fetch(targetUrl, {
    method: "POST",
    headers: {
     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
@@ -44,7 +47,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    }),
   });
 
-  if (!response.status)
+  if (!response.ok)
    return [
     null,
     new BadRequestException(
@@ -54,16 +57,18 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
     ),
    ];
 
+  const resBody = (await response.json()) as any;
+
   PublishEvent({
    event_type: EventType.PAYMENT_INITIALIZED,
    payload: {
-    ...((await response.json()) as any),
+    ...resBody,
     orderId,
     provider: "paystack",
    },
   });
 
-  return [(await response.json()).authorization_url as any, null];
+  return [resBody?.authorization_url, null];
  },
  initializeStripeCheckout: async (
   userId: string,

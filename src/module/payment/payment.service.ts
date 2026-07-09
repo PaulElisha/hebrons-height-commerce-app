@@ -102,14 +102,17 @@ class PaymentService {
   return [paymentCreated, null];
  };
 
-  verifyPaystack = async (paymentReference: string) => {
-   const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}${paymentReference}`, {
-   method: "GET",
-   headers: {
-    Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
-    "Content-Type": "application/json",
+ verifyPaystack = async (paymentReference: string) => {
+  const response = await fetch(
+   `${Env.PAYSTACK_VERIFY_URL}${paymentReference}`,
+   {
+    method: "GET",
+    headers: {
+     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+     "Content-Type": "application/json",
+    },
    },
-  });
+  );
 
   if (!response.status)
    return [
@@ -121,15 +124,17 @@ class PaymentService {
     ),
    ];
 
+  const resBody = (await response.json()) as any;
+
   PublishEvent({
    event_type: EventType.PAYMENT_VERIFIED,
    payload: {
-    ...((await response.json()) as any),
+    ...resBody,
     provider: "paystack",
    },
   });
 
-  return [(await response.json()) as any, null];
+  return [resBody, null];
  };
 
  fetchPaymentForOrderByRail = async (
