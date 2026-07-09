@@ -29,6 +29,10 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
   const targetUrl =
    Env.PAYSTACK_INIT_URL || "https://api.paystack.co/transaction/initialize";
 
+  const amountInSubunits = Math.round(
+   Number(orderWithUser.subtotal) * (Env.SCALER || 100),
+  );
+
   const response = await fetch(targetUrl, {
    method: "POST",
    headers: {
@@ -37,7 +41,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    },
    body: JSON.stringify({
     email: data.email,
-    amount: orderWithUser.subtotal,
+    amount: amountInSubunits,
     callback_url: data.callback_url,
     metadata: {
      name: orderWithUser.user.name,
@@ -47,15 +51,18 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    }),
   });
 
-  if (!response.ok)
+  if (!response.ok) {
+   const errBody = await response.json().catch(() => ({}));
+
    return [
     null,
     new BadRequestException(
-     "Payment Initialization error",
+     errBody.message || "Payment Initialization error",
      HttpStatus.BAD_REQUEST,
      ErrorCode.VALIDATION_ERROR,
     ),
    ];
+  }
 
   const resBody = (await response.json()) as any;
 
@@ -68,7 +75,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    },
   });
 
-  return [resBody?.authorization_url, null];
+  return [resBody?.data.authorization_url, null];
  },
  initializeStripeCheckout: async (
   userId: string,
