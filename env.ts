@@ -56,7 +56,7 @@ const EnvSchema = z.object({
  EMAIL_PASS: z.string(),
 
  PAYSTACK_INIT_URL: z.string(),
- PAYSTACK_VERIFY_URL: z.string(),
+ PAYSTACK_VERIFY_URL: z.string().default("https://api.paystack.co/transaction/verify/"),
  PAYSTACK_SECRET_KEY: z.string(),
 
  STRIPE_SECRET_KEY: z.string(),

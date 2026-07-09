@@ -102,8 +102,8 @@ class PaymentService {
   return [paymentCreated, null];
  };
 
- verifyPaystack = async (paymentReference: string) => {
-  const response = await fetch(`Env.PAYSTACK_VERIFY_URL/${paymentReference}`, {
+  verifyPaystack = async (paymentReference: string) => {
+   const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}${paymentReference}`, {
    method: "GET",
    headers: {
     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
