@@ -24,10 +24,18 @@ import {
 import { Mutex } from "async-mutex";
 import { and, count, desc, eq, isNotNull, lt, ne, SQL, sql } from "drizzle-orm";
 import FA from "fasy";
+import z, { record } from "zod";
 
-interface CreateOrderDto {
- deliveryAddress: Record<string, string>;
-}
+export const CreateOrderDto = z.object({
+ deliveryAddress: z.object({
+  address: z.string(),
+  city: z.string(),
+  state: z.string(),
+  country: z.string(),
+  line1: z.string(),
+  line2: z.string().optional(),
+ }),
+});
 
 const mutex = new Mutex();
 
@@ -59,7 +67,7 @@ class OrderService {
  placeOrder = async (
   userId: string,
   cartId: string,
-  body: CreateOrderDto,
+  body: z.infer<typeof CreateOrderDto>,
  ): Promise<Result<string, AppError>> => {
   const data = await CartService.getUserCart(userId, cartId);
 

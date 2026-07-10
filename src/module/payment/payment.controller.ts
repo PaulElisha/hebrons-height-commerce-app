@@ -6,15 +6,19 @@ import { APIResponse } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 import Stripe from "stripe";
 
-import PaymentService, { CheckoutData } from "./payment.service.ts";
+import PaymentService, {
+ CheckoutData,
+ PaymentData,
+} from "./payment.service.ts";
 import { payment } from "@schema/payment.ts";
 import db from "@db/db.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import z from "zod";
 
 class PaymentController {
  initialize = asyncHandler(
   async (
-   req: Request<OrderParams, {}, CheckoutData>,
+   req: Request<OrderParams, {}, z.infer<typeof CheckoutData>>,
    res: Response<APIResponse<any>>,
    next: NextFunction,
   ): Promise<any> => {
@@ -27,11 +31,11 @@ class PaymentController {
    if (e) return next(e);
 
    const paymentData = {
-    rail: data.rail,
-    email: data.email,
-    currency: data.currency as string,
-    callback_url: body.callback_url,
-    mode: data.mode as Stripe.Checkout.SessionCreateParams.Mode,
+    rail: data?.rail,
+    email: data?.email,
+    currency: data?.currency,
+    callback_url: data?.callbackUrl,
+    mode: data?.mode as Stripe.Checkout.SessionCreateParams.Mode,
     metadata: {
      orderId,
     },
@@ -40,7 +44,7 @@ class PaymentController {
    const [checkoutUrl, err] = await PaymentService.fetchPaymentForOrderByRail(
     userId,
     orderId,
-    paymentData,
+    paymentData as PaymentData,
    );
 
    if (err) return next(err);

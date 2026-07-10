@@ -4,6 +4,9 @@ import authenticate from "@shared/middleware/authenticate.ts";
 import { Router } from "express";
 
 import PaymentController from "./payment.controller.ts";
+import { validate } from "@shared/middleware/validate.ts";
+import { CheckoutData } from "./payment.service.ts";
+import z from "zod";
 
 class PaymentRoutes {
  router: Router;
@@ -24,7 +27,11 @@ class PaymentRoutes {
 
   this.router.get("/paystack/verify", PaymentController.verifyPaystack);
 
-  this.router.post("/initialize/:orderId", PaymentController.initialize);
+  this.router.post(
+   "/initialize/:orderId",
+   validate(CheckoutData),
+   PaymentController.initialize,
+  );
  }
 }
 

@@ -8,20 +8,21 @@ import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import { and, eq, isNotNull } from "drizzle-orm";
+import z from "zod";
 
-interface CreateMerchantDto {
- businessName: string;
- businessLogo: string;
- businessDescription: string;
- address: string;
-}
+export const CreateMerchantDto = z.object({
+ businessName: z.string(),
+ businessLogo: z.string(),
+ businessDescription: z.string(),
+ address: z.string(),
+});
 
-interface UpdateMerchantDto {
- businessName?: string;
- businessLogo?: string;
- businessDescription?: string;
- address?: string;
-}
+export const UpdateMerchantDto = z.object({
+ businessName: z.string().optional(),
+ businessLogo: z.string().optional(),
+ businessDescription: z.string().optional(),
+ address: z.string().optional(),
+});
 
 class MerchantService {
  getMerchantIdFromProductId = async (productId: string): Promise<any> => {
@@ -45,7 +46,10 @@ class MerchantService {
   return merchantProfile;
  };
 
- createMerchantProfile = async (userId: string, body: CreateMerchantDto) => {
+ createMerchantProfile = async (
+  userId: string,
+  body: z.infer<typeof CreateMerchantDto>,
+ ) => {
   const [existing] = await db
    .select()
    .from(merchant)
@@ -80,7 +84,7 @@ class MerchantService {
  updateMerchantProfile = async (
   userId: string,
   merchantId: string,
-  body: UpdateMerchantDto,
+  body: z.infer<typeof UpdateMerchantDto>,
  ) => {
   const updateData: { [k: string]: any } = {};
 

@@ -11,7 +11,8 @@ import {
 } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 
-import OrderService from "./order.service.ts";
+import OrderService, { CreateOrderDto } from "./order.service.ts";
+import z from "zod";
 
 export interface OrderParams {
  orderId?: string;
@@ -20,7 +21,7 @@ export interface OrderParams {
 class OrderController {
  placeOrder = asyncHandler(
   async (
-   req: Request<CartParams>,
+   req: Request<CartParams, any, z.infer<typeof CreateOrderDto>>,
    res: Response<APIResponse<object>>,
    next: NextFunction,
   ): Promise<any> => {

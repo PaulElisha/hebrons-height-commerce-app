@@ -15,14 +15,36 @@ import { FetchRail } from "./dispatcher.ts";
 import Env from "env.ts";
 import { PublishEvent } from "@shared/event-bus/publisher.ts";
 import { EventType } from "@shared/event-bus/config.ts";
+import z from "zod";
 
-export interface CheckoutData {
+export const CheckoutData = z.object({
+ email: z.email(),
+ amount: z.number().positive(),
+ currency: z.string(),
+ rail: z.string(),
+ callback_url: z.url().optional(),
+ mode: z.custom<Stripe.Checkout.SessionCreateParams.Mode>().optional(),
+});
+
+interface TPayment {
  email: string;
- amount: number;
- currency: string;
+ amount: number | null;
+ currency: string | null;
  rail: string;
- callback_url?: string;
- mode?: Stripe.Checkout.SessionCreateParams.Mode;
+ mode: string | null;
+ id: string;
+ createdAt: Date;
+ updatedAt: Date;
+ userId: string;
+ status: string;
+ orderId: string;
+ attempts: number | null;
+ callbackUrl: string | null;
+ paymentReference: string | null;
+ paymentProvider: string | null;
+ accessCode: string | null;
+ authorizationUrl: string | null;
+ paidAt: Date | null;
 }
 
 export interface PaymentData {
@@ -38,8 +60,8 @@ class PaymentService {
  initialize = async (
   userId: string,
   orderId: string,
-  checkoutData: CheckoutData,
- ): Promise<Result<any, AppError>> => {
+  checkoutData: z.infer<typeof CheckoutData>,
+ ): Promise<Result<TPayment, AppError>> => {
   const [data, e] = await OrderService.getOrderDetails(userId, orderId);
 
   if (data == null) return [null, e];
@@ -83,6 +105,7 @@ class PaymentService {
     mode: checkoutData.mode,
     rail: checkoutData.rail,
     amount: checkoutData.amount,
+    callbackUrl: checkoutData.callback_url,
     currency: checkoutData.currency,
     attempts: 2,
    })
@@ -100,41 +123,6 @@ class PaymentService {
   }
 
   return [paymentCreated, null];
- };
-
- verifyPaystack = async (paymentReference: string) => {
-  const response = await fetch(
-   `${Env.PAYSTACK_VERIFY_URL}/${paymentReference}`,
-   {
-    method: "GET",
-    headers: {
-     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
-     "Content-Type": "application/json",
-    },
-   },
-  );
-
-  if (!response.ok)
-   return [
-    null,
-    new BadRequestException(
-     "Payment verification error",
-     HttpStatus.BAD_REQUEST,
-     ErrorCode.VALIDATION_ERROR,
-    ),
-   ];
-
-  const responseData = (await response.json()) as any;
-
-  PublishEvent({
-   event_type: EventType.PAYMENT_VERIFIED,
-   payload: {
-    ...responseData,
-    provider: "paystack",
-   },
-  });
-
-  return [responseData, null];
  };
 
  fetchPaymentForOrderByRail = async (
@@ -170,6 +158,41 @@ class PaymentService {
   }
 
   return [url, e];
+ };
+
+ verifyPaystack = async (paymentReference: string) => {
+  const response = await fetch(
+   `${Env.PAYSTACK_VERIFY_URL}/${paymentReference}`,
+   {
+    method: "GET",
+    headers: {
+     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+     "Content-Type": "application/json",
+    },
+   },
+  );
+
+  if (!response.ok)
+   return [
+    null,
+    new BadRequestException(
+     "Payment verification error",
+     HttpStatus.BAD_REQUEST,
+     ErrorCode.VALIDATION_ERROR,
+    ),
+   ];
+
+  const responseData = (await response.json()) as any;
+
+  PublishEvent({
+   event_type: EventType.PAYMENT_VERIFIED,
+   payload: {
+    ...responseData,
+    provider: "paystack",
+   },
+  });
+
+  return [responseData, null];
  };
 }
 

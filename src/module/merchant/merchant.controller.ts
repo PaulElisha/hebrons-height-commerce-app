@@ -4,7 +4,11 @@ import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import { NextFunction, Request, Response } from "express";
 
-import MerchantService from "./merchant.service.ts";
+import MerchantService, {
+ CreateMerchantDto,
+ UpdateMerchantDto,
+} from "./merchant.service.ts";
+import z from "zod";
 
 export interface MerchantParams {
  merchantId?: string;
@@ -45,7 +49,7 @@ class MerchantController {
 
  updateMerchantProfile = asyncHandler(
   async (
-   req: Request<MerchantParams>,
+   req: Request<MerchantParams, any, any, z.infer<typeof UpdateMerchantDto>>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {

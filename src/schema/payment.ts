@@ -55,6 +55,7 @@ export const payment = pgTable(
   attempts: integer("attempts"),
   mode: text("mode"),
   rail: text("rail").notNull(),
+  callbackUrl: text("callback_url"),
   paymentReference: text("payment_reference").$defaultFn(() =>
    crypto.randomUUID(),
   ),

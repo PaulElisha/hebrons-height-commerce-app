@@ -8,30 +8,29 @@ import NotFoundException from "@shared/error/not-found.ts";
 import * as helper from "@shared/helper.ts";
 import { Pagination, UploadImages } from "@shared/types.ts";
 import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
+import z from "zod";
 
-// import { TProduct } from "./product.controller.ts";
+export const CreateProductDto = z.object({
+ name: z.string(),
+ description: z.string(),
+ image: z.string(),
+ price: z.number(),
+ quantity: z.number(),
+ category: z.string(),
+ subCategory: z.string(),
+ additionalData: z.record(z.string(), z.string()),
+});
 
-interface CreateProductDto {
- name: string;
- description: string;
- image: string;
- price: number;
- quantity: number;
- category: string;
- subCategory: string;
- additionalData: Record<string, string>;
-}
-
-interface UpdateProductDto {
- name: string;
- description: string;
- image: string;
- price: number;
- quantity: number;
- category: string;
- subCategory: string;
- additionalData: string;
-}
+export const UpdateProductDto = z.object({
+ name: z.string().optional(),
+ description: z.string().optional(),
+ image: z.string().optional(),
+ price: z.number().positive().optional(),
+ quantity: z.number().positive().optional(),
+ category: z.string().optional(),
+ subCategory: z.string().optional(),
+ additionalData: z.record(z.string(), z.string()),
+});
 
 class ProductService {
  getMerchantProducts = async (userId: string) => {
@@ -143,7 +142,10 @@ class ProductService {
   };
  };
 
- createProduct = async (userId: string, body: CreateProductDto) => {
+ createProduct = async (
+  userId: string,
+  body: z.infer<typeof CreateProductDto>,
+ ) => {
   const targetMerchantId = await helper.getMerchantIdFromUser(userId);
 
   const [newProduct] = await db
@@ -206,7 +208,7 @@ class ProductService {
  updateProduct = async (
   userId: string,
   productId: string,
-  body: UpdateProductDto,
+  body: z.infer<typeof UpdateProductDto>,
  ) => {
   const targetMerchantId = await helper.getMerchantIdFromUser(userId);
 
