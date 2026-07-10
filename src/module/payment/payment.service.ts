@@ -195,15 +195,7 @@ class PaymentService {
     },
    });
 
-  return [
-   {
-    checkoutUrl: responseData.data?.authorization_url,
-    reference: responseData.data?.reference,
-    accessCode: responseData.data?.access_code,
-   },
-   ,
-   null,
-  ];
+  return [responseData.data, null];
  };
 }
 

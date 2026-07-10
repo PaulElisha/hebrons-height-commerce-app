@@ -31,7 +31,7 @@ onEvent<EventContract>(EventType.PAYMENT_INITIALIZED).subscribe({
       paymentProvider: provider,
       updatedAt: new Date(Date.now()),
      })
-     .where(eq(order.id, orderId));
+     .where(eq(payment.orderId, orderId));
    } else if (provider === "paystack") {
     await db
      .update(payment)
@@ -43,7 +43,7 @@ onEvent<EventContract>(EventType.PAYMENT_INITIALIZED).subscribe({
       paymentProvider: provider,
       updatedAt: new Date(),
      })
-     .where(eq(order.id, orderId));
+     .where(eq(payment.orderId, orderId));
    }
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);
@@ -78,7 +78,9 @@ onEvent<EventContract>(EventType.PAYMENT_VERIFIED).subscribe({
       paymentReference: reference,
       updatedAt: new Date(Date.now()),
      })
-     .where(and(eq(order.id, orderId), eq(payment.paymentProvider, provider)));
+     .where(
+      and(eq(payment.orderId, orderId), eq(payment.paymentProvider, provider)),
+     );
    } else if (provider === "paystack") {
     await db
      .update(payment)
@@ -87,7 +89,9 @@ onEvent<EventContract>(EventType.PAYMENT_VERIFIED).subscribe({
       paidAt: new Date(),
       updatedAt: new Date(),
      })
-     .where(and(eq(order.id, orderId), eq(payment.paymentProvider, provider)));
+     .where(
+      and(eq(payment.orderId, orderId), eq(payment.paymentProvider, provider)),
+     );
    }
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);

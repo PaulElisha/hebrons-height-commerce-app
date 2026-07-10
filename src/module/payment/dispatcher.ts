@@ -70,7 +70,14 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
     },
    });
 
-  return [responseData.data, null];
+  return [
+   {
+    checkoutUrl: responseData.data?.authorization_url,
+    reference: responseData.data?.reference,
+    accessCode: responseData.data?.access_code,
+   },
+   null,
+  ];
  },
  initializeStripeCheckout: async (
   userId: string,

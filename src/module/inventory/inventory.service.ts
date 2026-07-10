@@ -88,7 +88,7 @@ class InventoryService {
 
    if (e) return [null, e];
 
-   const currentQuantity = productData!.quantity;
+   const currentQuantity = Number(productData!.quantity);
 
    return await db.transaction(async (tx: Transaction) => {
     const [ItemQuantityPurchased] = await tx
