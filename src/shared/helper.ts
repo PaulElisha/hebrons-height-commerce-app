@@ -4,8 +4,12 @@ import { cart, cartItem } from "@schema/cart.ts";
 import { merchant } from "@schema/merchant.ts";
 import { order } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
-import { TCartAndItem, Transaction } from "@shared/types.ts";
-import { and, eq } from "drizzle-orm";
+import { Result, TCartAndItem, Transaction } from "@shared/types.ts";
+import { and, eq, isNotNull } from "drizzle-orm";
+import AppError from "./error/app-error.ts";
+import NotFoundException from "./error/not-found.ts";
+import ErrorCode from "./enum/error-code.ts";
+import HttpStatus from "./enum/http.ts";
 
 export async function fetchMerchantProductsFromDb(merchantId: string) {
  const productsForMerchant = await db
@@ -79,4 +83,28 @@ export async function validateOrderForCart(cartId: string, userId: string) {
   .select()
   .from(order)
   .where(and(eq(order.cartId, cartId), eq(order.userId, userId)));
+}
+
+export async function getProductThreshold(
+ tx: Transaction,
+ productId: string,
+): Promise<Result<any, AppError>> {
+ const [data] = await tx
+  .select({ price: product.price, quantity: product.quantity })
+  .from(product)
+  .where(and(eq(product.id, productId), isNotNull(product.quantity)))
+  .limit(1);
+
+ if (data.quantity <= 0) {
+  return [
+   null,
+   new NotFoundException(
+    "Product is out of stock",
+    HttpStatus.NOT_FOUND,
+    ErrorCode.RESOURCE_NOT_FOUND,
+   ),
+  ];
+ }
+
+ return [data, null];
 }

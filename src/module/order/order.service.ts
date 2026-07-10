@@ -102,9 +102,9 @@ class OrderService {
      .returning();
 
     const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {
-     const [_, e] = await InventoryService.getProductThreshold(v.productId);
+     const [productData, e] = await helper.getProductThreshold(tx, v.productId);
 
-     if (e) return [null, e];
+     if (e || !productData) return [null, e];
 
      const merchantId = await helper.getMerchantIdFromProductId(
       tx,
@@ -123,7 +123,7 @@ class OrderService {
 
     const productIds = itemsToInsert.map((item: TCartItem) => item.productId);
 
-    if (!(itemsToInsert.length !== 0)) {
+    if (itemsToInsert.length <= 0) {
      return [
       null,
       new NotFoundException(

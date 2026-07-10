@@ -23,7 +23,7 @@ class InventoryService {
    .where(and(eq(product.id, productId), isNotNull(product.quantity)))
    .limit(1);
 
-  if (data.quantity <= 0)
+  if (data.quantity <= 0) {
    return [
     null,
     new NotFoundException(
@@ -32,6 +32,7 @@ class InventoryService {
      ErrorCode.RESOURCE_NOT_FOUND,
     ),
    ];
+  }
 
   return [data, null];
  };
@@ -88,7 +89,7 @@ class InventoryService {
 
    if (e) return [null, e];
 
-   const currentQuantity = Number(productData!.quantity);
+   const currentQuantity = Number(productData?.quantity);
 
    return await db.transaction(async (tx: Transaction) => {
     const [ItemQuantityPurchased] = await tx
