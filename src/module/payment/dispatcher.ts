@@ -64,7 +64,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    PublishEvent({
     event_type: EventType.PAYMENT_INITIALIZED,
     payload: {
-     ...responseData.data.data,
+     ...responseData.data,
      orderId,
      provider: "paystack",
     },

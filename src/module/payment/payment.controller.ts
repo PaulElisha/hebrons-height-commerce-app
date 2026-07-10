@@ -52,7 +52,7 @@ class PaymentController {
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "Checkout session created successfully",
-    data: { checkoutData },
+    data: checkoutData,
    });
   },
  );
