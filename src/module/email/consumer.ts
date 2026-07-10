@@ -11,19 +11,25 @@ import { eq } from "drizzle-orm";
 import FA from "fasy";
 
 import EmailWorker from "./email.worker.ts";
+import { formatErrorPayload } from "@module/inventory/consumer.ts";
 
 onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
-  const { userId, orderId } = payload.payload;
+  try {
+   const { userId, orderId } = payload.payload;
 
-  const orderDetails = await OrderService.getOrderWithUser(userId, orderId);
+   const orderDetails = await OrderService.getOrderWithUser(userId, orderId);
 
-  const emailMessage = `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`;
+   const emailMessage = `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`;
 
-  await EmailWorker({
-   user: orderDetails.user,
-   message: emailMessage,
-  });
+   await EmailWorker({
+    user: orderDetails.user,
+    message: emailMessage,
+   });
+  } catch (error) {
+   const formatted = formatErrorPayload(error as Error);
+   console.error("[Background Event Error Intercepted]:", formatted.body);
+  }
  },
  error: (error) => {
   console.error(error);
@@ -32,32 +38,37 @@ onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
 
 onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
-  const { orderId, productIds } = payload.payload;
+  try {
+   const { orderId, productIds } = payload.payload;
 
-  await FA.concurrent.map(async (productId: string) => {
-   const merchantForProduct =
-    await MerchantService.getMerchantIdFromProductId(productId);
+   await FA.concurrent.map(async (productId: string) => {
+    const merchantForProduct =
+     await MerchantService.getMerchantIdFromProductId(productId);
 
-   const [userMerchant] = await db
-    .select({
-     businessName: merchant.businessName,
-     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-     },
-    })
-    .from(merchant)
-    .innerJoin(user, eq(merchant.userId, user.id))
-    .where(eq(merchant.id, merchantForProduct.id));
+    const [userMerchant] = await db
+     .select({
+      businessName: merchant.businessName,
+      user: {
+       id: user.id,
+       email: user.email,
+       name: user.name,
+      },
+     })
+     .from(merchant)
+     .innerJoin(user, eq(merchant.userId, user.id))
+     .where(eq(merchant.id, merchantForProduct.id));
 
-   const emailMessage = `Hi ${userMerchant.user.name}, a purchase of #${orderId} has been made for your product`;
+    const emailMessage = `Hi ${userMerchant.user.name}, a purchase of #${orderId} has been made for your product`;
 
-   await EmailWorker({
-    user: userMerchant.user,
-    message: emailMessage,
-   });
-  }, productIds);
+    await EmailWorker({
+     user: userMerchant.user,
+     message: emailMessage,
+    });
+   }, productIds);
+  } catch (error) {
+   const formatted = formatErrorPayload(error as Error);
+   console.error("[Background Event Error Intercepted]:", formatted.body);
+  }
  },
  error: (error) => {
   console.error(error);

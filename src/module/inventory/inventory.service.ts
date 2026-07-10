@@ -84,10 +84,11 @@ class InventoryService {
   action: "placeOrder" | "cancelOrder",
  ): Promise<Result<void, AppError>> => {
   try {
-   const [{ _, currentQuantity }, e] =
-    await this.getProductThreshold(productId);
+   const [productData, e] = await this.getProductThreshold(productId);
 
    if (e) return [null, e];
+
+   const currentQuantity = productData!.quantity;
 
    return await db.transaction(async (tx: Transaction) => {
     const [ItemQuantityPurchased] = await tx
@@ -118,7 +119,7 @@ class InventoryService {
       .update(product)
       .set({
        quantity: newQuantity,
-       status: newQuantity === 0 ? "sold_out" : "available",
+       status: newQuantity <= 0 ? "sold_out" : "available",
       })
       .where(and(eq(product.id, productId), isNotNull(product.quantity)));
     } else if (action === "cancelOrder") {
@@ -126,6 +127,7 @@ class InventoryService {
       .update(product)
       .set({
        quantity: newQuantity,
+       status: "available",
       })
       .where(eq(product.id, productId));
     }
