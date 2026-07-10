@@ -156,11 +156,7 @@ class OrderService {
    .from(order)
    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
    .where(
-    and(
-     eq(order.userId, userId),
-     eq(order.orderStatus, status ?? "pending"),
-     eq(order.id, orderItem.orderId),
-    ),
+    and(eq(order.userId, userId), eq(order.orderStatus, status ?? "pending")),
    )
    .orderBy(desc(order.createdAt));
 

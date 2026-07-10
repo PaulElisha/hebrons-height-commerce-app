@@ -104,7 +104,7 @@ class PaymentService {
 
  verifyPaystack = async (paymentReference: string) => {
   const response = await fetch(
-   `${Env.PAYSTACK_VERIFY_URL}${paymentReference}`,
+   `${Env.PAYSTACK_VERIFY_URL}/${paymentReference}`,
    {
     method: "GET",
     headers: {
@@ -114,7 +114,7 @@ class PaymentService {
    },
   );
 
-  if (!response.status)
+  if (!response.ok)
    return [
     null,
     new BadRequestException(
@@ -124,17 +124,17 @@ class PaymentService {
     ),
    ];
 
-  const resBody = (await response.json()) as any;
+  const responseData = (await response.json()) as any;
 
   PublishEvent({
    event_type: EventType.PAYMENT_VERIFIED,
    payload: {
-    ...resBody,
+    ...responseData,
     provider: "paystack",
    },
   });
 
-  return [resBody, null];
+  return [responseData, null];
  };
 
  fetchPaymentForOrderByRail = async (

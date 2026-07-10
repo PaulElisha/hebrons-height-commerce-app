@@ -58,18 +58,18 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    ];
   }
 
-  const resBody = (await response.json()) as any;
+  const responseData = (await response.json()) as any;
 
   PublishEvent({
    event_type: EventType.PAYMENT_INITIALIZED,
    payload: {
-    ...resBody,
+    ...responseData,
     orderId,
     provider: "paystack",
    },
   });
 
-  return [resBody?.authorization_url, null];
+  return [responseData?.authorization_url, null];
  },
  initializeStripeCheckout: async (
   userId: string,
