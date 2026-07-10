@@ -40,8 +40,7 @@ export const payment = pgTable(
 
   orderId: text("order_id")
    .notNull()
-   .references(() => order.id)
-   .unique(),
+   .references(() => order.id),
   email: text("email").notNull(),
   userId: text("user_id")
    .notNull()

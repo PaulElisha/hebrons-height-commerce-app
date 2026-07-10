@@ -31,19 +31,19 @@ onEvent<EventContract>(EventType.PAYMENT_INITIALIZED).subscribe({
       paymentProvider: provider,
       updatedAt: new Date(Date.now()),
      })
-     .where(eq(payment.orderId, orderId));
+     .where(and(eq(payment.orderId, orderId), eq(payment.status, "pending")));
    } else if (provider === "paystack") {
     await db
      .update(payment)
      .set({
       status: "initialized",
-      accessCode: paystackData.access_code,
-      paymentReference: paystackData.reference,
-      authorizationUrl: paystackData.authorization_url,
+      accessCode: paystackData?.access_code,
+      paymentReference: paystackData?.reference,
+      authorizationUrl: paystackData?.authorization_url,
       paymentProvider: provider,
       updatedAt: new Date(),
      })
-     .where(eq(payment.orderId, orderId));
+     .where(and(eq(payment.orderId, orderId), eq(payment.status, "pending")));
    }
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);
