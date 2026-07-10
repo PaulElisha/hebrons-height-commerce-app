@@ -7,12 +7,14 @@ import PaymentController from "./payment.controller.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { CheckoutData } from "./payment.service.ts";
 import z from "zod";
+import roleGuard from "@shared/middleware/role-guard.ts";
 
 class PaymentRoutes {
  router: Router;
  constructor() {
   this.router = Router();
   this.router.use(authenticate);
+  this.router.use(roleGuard("user"));
   this.initializeRoutes();
  }
 
