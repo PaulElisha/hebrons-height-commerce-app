@@ -58,8 +58,8 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    ];
   }
 
-  const responseData = (await response.json()) as any;
-
+  const responseData = await response.json();
+  console.log("Initialization data", responseData);
   PublishEvent({
    event_type: EventType.PAYMENT_INITIALIZED,
    payload: {
@@ -69,7 +69,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    },
   });
 
-  return [responseData?.authorization_url, null];
+  return [responseData, null];
  },
  initializeStripeCheckout: async (
   userId: string,
