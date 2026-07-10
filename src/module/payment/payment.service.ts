@@ -183,7 +183,7 @@ class PaymentService {
    ];
 
   const responseData = await response.json();
-  console.log("Verify data:", responseData.data.authorization_url);
+  console.log("Verify data:", responseData);
 
   PublishEvent({
    event_type: EventType.PAYMENT_VERIFIED,

@@ -59,7 +59,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
   }
 
   const responseData = await response.json();
-  console.log("Initialization data", responseData);
+  console.log("Initialization data", responseData.data);
   PublishEvent({
    event_type: EventType.PAYMENT_INITIALIZED,
    payload: {
