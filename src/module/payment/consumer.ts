@@ -12,8 +12,8 @@ onEvent<EventContract>(EventType.PAYMENT_INITIALIZED).subscribe({
   const {
    provider,
    reference,
-   authorizationUrl,
-   accessCode,
+   authorization_url,
+   access_code,
    checkoutUrl,
    orderId,
   } = payload.payload;
@@ -43,9 +43,9 @@ onEvent<EventContract>(EventType.PAYMENT_INITIALIZED).subscribe({
    .update(payment)
    .set({
     status: "initialized",
-    accessCode: accessCode,
+    accessCode: access_code,
     paymentReference: reference,
-    authorizationUrl: authorizationUrl,
+    authorizationUrl: authorization_url,
     paymentProvider: provider,
     updatedAt: new Date(Date.now()),
    })

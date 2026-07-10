@@ -149,15 +149,15 @@ class PaymentService {
   const rail = paymentData.rail;
 
   const callback = FetchRail[rail];
-  let url, e;
+  let checkoutData, e;
 
   if (typeof rail === "string" && rail == "initializePaystackCheckout") {
-   [url, e] = await callback(userId, orderId, paymentData);
+   [checkoutData, e] = await callback(userId, orderId, paymentData);
   } else if (typeof rail === "string" && rail == "initializeStripeCheckout") {
-   [url, e] = await callback(userId, orderId, paymentData);
+   [checkoutData, e] = await callback(userId, orderId, paymentData);
   }
 
-  return [url, e];
+  return [checkoutData, e];
  };
 
  verifyPaystack = async (paymentReference: string) => {
@@ -183,7 +183,8 @@ class PaymentService {
    ];
 
   const responseData = await response.json();
-  console.log("Verify data:", responseData);
+
+  console.log("Verify data:", responseData.data);
 
   PublishEvent({
    event_type: EventType.PAYMENT_VERIFIED,
@@ -193,7 +194,7 @@ class PaymentService {
    },
   });
 
-  return [responseData, null];
+  return [responseData.data, null];
  };
 }
 

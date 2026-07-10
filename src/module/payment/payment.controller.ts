@@ -41,7 +41,7 @@ class PaymentController {
     },
    };
 
-   const [checkoutUrl, err] = await PaymentService.fetchPaymentForOrderByRail(
+   const [checkoutData, err] = await PaymentService.fetchPaymentForOrderByRail(
     userId,
     orderId,
     paymentData as PaymentData,
@@ -52,7 +52,7 @@ class PaymentController {
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "Checkout session created successfully",
-    data: { checkoutUrl },
+    data: { checkoutData },
    });
   },
  );
@@ -72,6 +72,7 @@ class PaymentController {
    return res.status(HttpStatus.NO_CONTENT).send({
     status: "ok",
     message: "Payment verified",
+    data,
    });
   },
  );
