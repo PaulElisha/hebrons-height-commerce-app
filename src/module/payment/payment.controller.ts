@@ -49,7 +49,11 @@ class PaymentController {
 
    if (err) return next(err);
 
-   res.redirect(checkoutUrl);
+   return res.status(HttpStatus.OK).json({
+    status: "ok",
+    message: "Checkout session created successfully",
+    data: { checkoutUrl },
+   });
   },
  );
 

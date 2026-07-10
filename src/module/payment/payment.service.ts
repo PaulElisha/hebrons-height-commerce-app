@@ -18,7 +18,7 @@ import { EventType } from "@shared/event-bus/config.ts";
 import z from "zod";
 
 export const CheckoutData = z.object({
- email: z.email(),
+ email: z.string().email(),
  amount: z.number().positive(),
  currency: z.string(),
  rail: z.string(),
