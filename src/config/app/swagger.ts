@@ -192,10 +192,11 @@ const spec = {
      quantity: { type: "integer" },
      category: { type: "string" },
      subCategory: { type: "string" },
-     additionalData: {
-      type: "string",
-      description: "Optional additional product data as JSON string",
-     },
+      additionalData: {
+       type: "object",
+       additionalProperties: { type: "string" },
+       description: "Optional additional product data",
+      },
     },
    },
    Cart: {
@@ -236,10 +237,10 @@ const spec = {
      userId: { type: "string" },
      cartId: { type: "string" },
      subtotal: { type: "integer" },
-     serviceCharge: { type: "integer", nullable: true },
-     deliveryFee: { type: "integer", nullable: true },
-     taxAmount: { type: "integer", nullable: true },
-     discountAmount: { type: "integer", nullable: true },
+      serviceCharge: { type: "integer" },
+      deliveryFee: { type: "integer" },
+      taxAmount: { type: "integer" },
+      discountAmount: { type: "integer" },
      deliveryAddress: {
       type: "object",
       additionalProperties: { type: "string" },
@@ -321,25 +322,21 @@ const spec = {
      currency: { type: "string", nullable: true },
      status: {
       type: "string",
-      enum: ["pending", "paid", "failed", "cancelled", "refunded"],
+       enum: ["pending", "initialized", "paid", "failed", "cancelled", "refunded"],
       default: "pending",
      },
      attempts: { type: "integer", nullable: true },
      mode: { type: "string", nullable: true },
      rail: { type: "string" },
-     channels: {
-      type: "array",
-      items: { type: "string" },
-      nullable: true,
-     },
-     paymentReference: { type: "string" },
+      callbackUrl: { type: "string", nullable: true },
+      paymentReference: { type: "string" },
      paymentProvider: { type: "string", nullable: true },
      accessCode: { type: "string", nullable: true },
      authorizationUrl: { type: "string", nullable: true },
      transactionId: { type: "string", nullable: true },
-     paidAt: { type: "string", format: "date-time" },
-     createdAt: { type: "string", format: "date-time" },
-     updatedAt: { type: "string", format: "date-time" },
+      paidAt: { type: "string", format: "date-time", nullable: true },
+      createdAt: { type: "string", format: "date-time" },
+      updatedAt: { type: "string", format: "date-time" },
     },
    },
    CheckoutData: {
@@ -349,14 +346,7 @@ const spec = {
      email: { type: "string", format: "email" },
      amount: { type: "integer" },
      currency: { type: "string" },
-     rail: {
-      type: "string",
-      enum: ["initializePaystackCheckout", "initializeStripeCheckout"],
-     },
-     channels: {
-      type: "array",
-      items: { type: "string" },
-     },
+      rail: { type: "string" },
      callback_url: {
       type: "string",
       format: "uri",
@@ -1283,15 +1273,20 @@ const spec = {
            type: "string",
            example: "merchant orders fetched successfully",
           },
-          data: {
-           type: "object",
-           properties: {
-            order: { $ref: "#/components/schemas/Order" },
-            order_items: {
-             type: "array",
-             items: { $ref: "#/components/schemas/OrderItem" },
-            },
-            pagination: {
+           data: {
+            type: "object",
+            properties: {
+             fetchedOrders: {
+              type: "array",
+              items: {
+               type: "object",
+               properties: {
+                orders: { $ref: "#/components/schemas/Order" },
+                orderItem: { $ref: "#/components/schemas/OrderItem" },
+               },
+              },
+             },
+             pagination: {
              type: "object",
              properties: {
               limit: { type: "integer" },
@@ -1348,18 +1343,21 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "fetched order status" },
-          data: { $ref: "#/components/schemas/OrderAndItems" },
+           data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/OrderAndItems" },
+           },
+          },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
      },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — user is not a user" },
     },
    },
-  },
-  "/api/order/{orderId}": {
+   "/api/order/{orderId}": {
    get: {
     tags: ["Order"],
     summary: "Get order details by order ID",
@@ -1539,7 +1537,7 @@ const spec = {
    post: {
     tags: ["Payment"],
     summary:
-     "Initialize payment for an order (redirects to Stripe/Paystack checkout)",
+      "Initialize payment for an order (returns checkout session data for Stripe/Paystack)",
     security: [{ bearerAuth: [] }],
     parameters: [
      {
@@ -1558,16 +1556,29 @@ const spec = {
       },
      },
     },
-    responses: {
-     "302": {
-      description: "Redirect to checkout URL (Stripe or Paystack)",
-      headers: {
-       Location: {
-        type: "string",
-        description: "Checkout session URL",
+     responses: {
+      "200": {
+       description: "Checkout session created successfully",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "Checkout session created successfully" },
+           data: {
+            type: "object",
+            properties: {
+             checkoutUrl: { type: "string" },
+             reference: { type: "string" },
+             accessCode: { type: "string" },
+            },
+           },
+          },
+         },
+        },
        },
       },
-     },
      "401": { description: "Unauthorized — invalid or missing session token" },
      "422": {
       description: "Invalid order — order or payment status is not pending",
