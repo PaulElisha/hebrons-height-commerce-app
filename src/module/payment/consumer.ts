@@ -9,14 +9,7 @@ import { and, eq } from "drizzle-orm";
 
 onEvent<EventContract>(EventType.PAYMENT_INITIALIZED).subscribe({
  next: async (payload) => {
-  const {
-   provider,
-   reference,
-   authorization_url,
-   access_code,
-   checkoutUrl,
-   orderId,
-  } = payload.payload;
+  const { provider, paystackData, checkoutUrl, orderId } = payload.payload;
 
   await db
    .update(order)
@@ -43,9 +36,9 @@ onEvent<EventContract>(EventType.PAYMENT_INITIALIZED).subscribe({
    .update(payment)
    .set({
     status: "initialized",
-    accessCode: access_code,
-    paymentReference: reference,
-    authorizationUrl: authorization_url,
+    accessCode: paystackData.access_code,
+    paymentReference: paystackData.reference,
+    authorizationUrl: paystackData.authorization_url,
     paymentProvider: provider,
     updatedAt: new Date(Date.now()),
    })
@@ -85,7 +78,6 @@ onEvent<EventContract>(EventType.PAYMENT_VERIFIED).subscribe({
    .update(payment)
    .set({
     status: "paid",
-
     updatedAt: new Date(Date.now()),
    })
    .where(and(eq(order.id, orderId), eq(payment.paymentProvider, provider)));

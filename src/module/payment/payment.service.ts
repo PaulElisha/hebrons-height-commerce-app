@@ -186,13 +186,14 @@ class PaymentService {
 
   console.log("Verify data:", responseData.data);
 
-  PublishEvent({
-   event_type: EventType.PAYMENT_VERIFIED,
-   payload: {
-    ...responseData,
-    provider: "paystack",
-   },
-  });
+  if (responseData.data)
+   PublishEvent({
+    event_type: EventType.PAYMENT_VERIFIED,
+    payload: {
+     data: responseData.data,
+     provider: "paystack",
+    },
+   });
 
   return [responseData.data, null];
  };

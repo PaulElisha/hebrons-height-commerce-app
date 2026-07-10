@@ -60,11 +60,11 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
 
   const responseData = await response.json();
 
-  if (responseData.data.authorization_url)
+  if (responseData.data)
    PublishEvent({
     event_type: EventType.PAYMENT_INITIALIZED,
     payload: {
-     ...responseData.data,
+     paystackData: responseData.data,
      orderId,
      provider: "paystack",
     },
