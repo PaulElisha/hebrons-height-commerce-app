@@ -36,7 +36,6 @@ export const PaymentData = z.object({
 
 export const CheckoutData = z.object({
  email: z.string().email(),
- amount: z.number().positive(),
  currency: z.string(),
  rail: z.string(),
  metadata: z.record(z.string(), z.any()).optional(),

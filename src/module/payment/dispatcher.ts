@@ -41,11 +41,11 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
     currency: data.currency,
     callback_url: data.callback_url,
     metadata: {
-      name: orderWithUser.user.name,
-      email: orderWithUser.user.email,
-      orderId,
-      ...data.metadata,
-     },
+     name: orderWithUser.user.name,
+     email: orderWithUser.user.email,
+     orderId,
+     ...data.metadata,
+    },
    }),
   });
 
@@ -68,7 +68,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    email: data.email,
    mode: data.mode,
    rail: data.rail,
-   amount: data.amount,
+   amount: Math.round(Number(orderWithUser.subtotal) * Env.SCALER),
    currency: data.currency,
    callbackUrl: data.callback_url,
    checkout_url: responseData.data?.authorization_url,
@@ -140,7 +140,6 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      email: data.email,
      mode: data.mode,
      rail: data.rail,
-     amount: data.amount,
      currency: data.currency,
      callbackUrl: data.callback_url,
      checkout_url: session.url,
