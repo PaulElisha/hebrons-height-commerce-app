@@ -29,6 +29,10 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
  ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
   const orderWithUser = await OrderService.getOrderWithUser(userId, orderId);
 
+  const baseAmount = Math.round(Number(orderWithUser.subtotal) * Env.SCALER);
+  const subCharge = (baseAmount * 15) / 100; // paystack fee
+  const totalAmount = baseAmount + subCharge;
+
   const response = await fetch(Env.PAYSTACK_INIT_URL, {
    method: "POST",
    headers: {
@@ -37,7 +41,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    },
    body: JSON.stringify({
     email: data.email,
-    amount: Math.round(Number(orderWithUser.subtotal) * Env.SCALER),
+    amount: totalAmount,
     currency: data.currency,
     callback_url: data.callback_url,
     metadata: {
@@ -68,7 +72,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    email: data.email,
    mode: data.mode,
    rail: data.rail,
-   amount: Math.round(Number(orderWithUser.subtotal) * Env.SCALER),
+   amount: totalAmount,
    currency: data.currency,
    callbackUrl: data.callback_url,
    checkout_url: responseData.data?.authorization_url,
