@@ -25,6 +25,7 @@ export const PaymentData = z.object({
  email: z.string().email(),
  amount: z.number().positive(),
  currency: z.string(),
+ paymentProvider: z.string(),
  rail: z.string(),
  callback_url: z.url().optional(),
  mode: z.custom<Stripe.Checkout.SessionCreateParams.Mode>().optional(),
@@ -68,6 +69,24 @@ interface TPayment {
 }
 
 class PaymentService {
+ fetchPaymentForOrderByRail = async (
+  userId: string,
+  orderId: string,
+  checkout: z.infer<typeof CheckoutData>,
+ ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
+  const rail = checkout.rail;
+
+  const callback = FetchRail[rail];
+  let paymentResponse, e;
+
+  if (typeof rail === "string" && rail == "initializePaystackCheckout") {
+   [paymentResponse, e] = await callback(userId, orderId, checkout);
+  } else if (typeof rail === "string" && rail == "initializeStripeCheckout") {
+   [paymentResponse, e] = await callback(userId, orderId, checkout);
+  }
+  return [paymentResponse, e];
+ };
+
  createPayment = async (
   userId: string,
   orderId: string,
@@ -118,40 +137,12 @@ class PaymentService {
     amount: paymentData.amount,
     callbackUrl: paymentData.callback_url,
     currency: paymentData.currency,
+    paymentProvider: paymentData.paymentProvider,
     attempts: 2,
    })
    .returning();
 
-  if (!paymentCreated) {
-   return [
-    null,
-    new InternalServerError(
-     "Failed to initialize payment",
-     HttpStatus.INTERNAL_SERVER_ERROR,
-     ErrorCode.INTERNAL_SERVER_ERROR,
-    ),
-   ];
-  }
-
   return [paymentCreated, null];
- };
-
- fetchPaymentForOrderByRail = async (
-  userId: string,
-  orderId: string,
-  checkout: z.infer<typeof CheckoutData>,
- ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
-  const rail = checkout.rail;
-
-  const callback = FetchRail[rail];
-  let paymentResponse, e;
-
-  if (typeof rail === "string" && rail == "initializePaystackCheckout") {
-   [paymentResponse, e] = await callback(userId, orderId, checkout);
-  } else if (typeof rail === "string" && rail == "initializeStripeCheckout") {
-   [paymentResponse, e] = await callback(userId, orderId, checkout);
-  }
-  return [paymentResponse, e];
  };
 
  // verifyPaystack = async (paymentReference: string) => {

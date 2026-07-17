@@ -64,6 +64,12 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
   const responseData = await response.json();
 
   const res = {
+   email: data.email,
+   mode: data.mode,
+   rail: data.rail,
+   amount: data.amount,
+   currency: data.currency,
+   callbackUrl: data.callback_url,
    checkout_url: responseData.data?.authorization_url,
    reference: responseData.data?.reference,
    access_code: responseData.data?.access_code,
@@ -74,6 +80,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
     event_type: EventType.PAYSTACK_PAYMENT_INITIALIZED,
     payload: {
      paystackData: res,
+     userId,
      orderId,
     },
    });
@@ -128,10 +135,21 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      ];
     }
 
+    const res = {
+     email: data.email,
+     mode: data.mode,
+     rail: data.rail,
+     amount: data.amount,
+     currency: data.currency,
+     callbackUrl: data.callback_url,
+     checkout_url: session.url,
+    };
+
     PublishEvent({
      event_type: EventType.STRIPE_PAYMENT_INITIALIZED,
      payload: {
-      checkoutUrl: session.url,
+      stripeData: res,
+      userId,
       orderId,
      },
     });

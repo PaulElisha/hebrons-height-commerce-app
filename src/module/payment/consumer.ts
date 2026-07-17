@@ -17,32 +17,34 @@ import BadRequestException from "@shared/error/bad-request.ts";
 import Env from "env.ts";
 import { cartItem } from "@schema/cart.ts";
 import { Transaction } from "@shared/types.ts";
+import PaymentService from "./payment.service.ts";
+import InternalServerError from "@shared/error/internal-server.ts";
 onEvent<EventContract>(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
  next: async (payload) => {
   try {
-   const { paystackData, orderId } = payload.payload;
-   return await db.transaction(async (tx: Transaction) => {
-    await tx
-     .update(order)
-     .set({
-      orderStatus: "processing",
-      paymentStatus: "processing",
-      updatedAt: new Date(Date.now()),
-     })
-     .where(eq(order.id, orderId));
+   const { paystackData, userId, orderId } = payload.payload;
 
-    await tx
-     .update(payment)
-     .set({
-      status: "initialized",
-      accessCode: paystackData?.access_code,
-      paymentReference: paystackData?.reference,
-      authorizationUrl: paystackData?.checkout_url,
-      paymentProvider: "paystack",
-      updatedAt: new Date(),
-     })
-     .where(and(eq(payment.orderId, orderId), eq(payment.status, "pending")));
+   const [paymentData] = await PaymentService.createPayment(userId, orderId, {
+    ...paystackData,
+    paymentProvider: "paystack",
    });
+
+   if (!paymentData) {
+    throw new InternalServerError(
+     "Payment record failed",
+     HttpStatus.INTERNAL_SERVER_ERROR,
+     ErrorCode.INTERNAL_SERVER_ERROR,
+    );
+   }
+
+   await db
+    .update(order)
+    .set({
+     orderStatus: "processing",
+     paymentStatus: "processing",
+     updatedAt: new Date(Date.now()),
+    })
+    .where(eq(order.id, orderId));
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);
    console.error("[Background Event Error Intercepted]:", formatted.body);
@@ -56,27 +58,28 @@ onEvent<EventContract>(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
 onEvent<EventContract>(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
  next: async (payload) => {
   try {
-   const { checkoutUrl, orderId } = payload.payload;
-   return await db.transaction(async (tx: Transaction) => {
-    await tx
-     .update(order)
-     .set({
-      orderStatus: "processing",
-      paymentStatus: "processing",
-      updatedAt: new Date(Date.now()),
-     })
-     .where(eq(order.id, orderId));
-
-    await tx
-     .update(payment)
-     .set({
-      status: "initialized",
-      authorizationUrl: checkoutUrl,
-      paymentProvider: "stripe",
-      updatedAt: new Date(Date.now()),
-     })
-     .where(and(eq(payment.orderId, orderId), eq(payment.status, "pending")));
+   const { stripeData, userId, orderId } = payload.payload;
+   const [paymentData] = await PaymentService.createPayment(userId, orderId, {
+    ...stripeData,
+    paymentProvider: "stripe",
    });
+
+   if (!paymentData) {
+    throw new InternalServerError(
+     "Payment record failed",
+     HttpStatus.INTERNAL_SERVER_ERROR,
+     ErrorCode.INTERNAL_SERVER_ERROR,
+    );
+   }
+
+   await db
+    .update(order)
+    .set({
+     orderStatus: "processing",
+     paymentStatus: "processing",
+     updatedAt: new Date(Date.now()),
+    })
+    .where(eq(order.id, orderId));
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);
    console.error("[Background Event Error Intercepted]:", formatted.body);

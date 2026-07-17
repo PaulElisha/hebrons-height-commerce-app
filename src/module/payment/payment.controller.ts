@@ -21,7 +21,7 @@ import PaymentService, {
 class PaymentController {
  initialize = asyncHandler(
   async (
-   req: Request<OrderParams, {}, z.infer<typeof PaymentData>>,
+   req: Request<OrderParams, {}, z.infer<typeof CheckoutData>>,
    res: Response<APIResponse<any>>,
    next: NextFunction,
   ): Promise<any> => {
@@ -29,15 +29,7 @@ class PaymentController {
    const orderId = req.params.orderId as string;
    const body = req.body;
 
-   const [paymentData, e] = await PaymentService.createPayment(
-    userId,
-    orderId,
-    body,
-   );
-
-   if (e || !paymentData) return next(e);
-
-   const [paymentRes, err] = await PaymentService.fetchPaymentForOrderByRail(
+   const [paymentRes, e] = await PaymentService.fetchPaymentForOrderByRail(
     userId,
     orderId,
     {
@@ -48,12 +40,12 @@ class PaymentController {
     },
    );
 
-   if (err || !paymentRes) return next(err);
+   if (e || !paymentRes) return next(e);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "Checkout session created successfully",
-    data: paymentData,
+    data: paymentRes,
    });
   },
  );
