@@ -1,5 +1,5 @@
 /** @format */
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, isNotNull, ne } from "drizzle-orm";
 
 import db from "@db/db.ts";
 
@@ -85,7 +85,13 @@ export async function validateOrderForCart(cartId: string, userId: string) {
  return await db
   .select()
   .from(order)
-  .where(and(eq(order.cartId, cartId), eq(order.userId, userId)));
+  .where(
+   and(
+    eq(order.cartId, cartId),
+    eq(order.userId, userId),
+    ne(order.orderStatus, "cancelled"),
+   ),
+  );
 }
 
 export async function getProductThreshold(
