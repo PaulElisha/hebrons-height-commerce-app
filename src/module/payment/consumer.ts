@@ -23,46 +23,14 @@ onEvent<EventContract>(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
  next: async (payload) => {
   try {
    const { paystackData, userId, orderId } = payload.payload;
+   console.log("[...Paystack Initialization completed]:", { paystackData });
 
    const [paymentData] = await PaymentService.createPayment(userId, orderId, {
     ...paystackData,
     paymentProvider: "paystack",
    });
 
-   if (!paymentData) {
-    throw new InternalServerError(
-     "Payment record failed",
-     HttpStatus.INTERNAL_SERVER_ERROR,
-     ErrorCode.INTERNAL_SERVER_ERROR,
-    );
-   }
-
-   await db
-    .update(order)
-    .set({
-     orderStatus: "processing",
-     paymentStatus: "processing",
-     updatedAt: new Date(Date.now()),
-    })
-    .where(eq(order.id, orderId));
-  } catch (error) {
-   const formatted = formatErrorPayload(error as Error);
-   console.error("[Background Event Error Intercepted]:", formatted.body);
-  }
- },
- error: (error) => {
-  console.error(error);
- },
-});
-
-onEvent<EventContract>(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
- next: async (payload) => {
-  try {
-   const { stripeData, userId, orderId } = payload.payload;
-   const [paymentData] = await PaymentService.createPayment(userId, orderId, {
-    ...stripeData,
-    paymentProvider: "stripe",
-   });
+   console.log("[...Paystack record created]:", { paymentData });
 
    if (!paymentData) {
     throw new InternalServerError(
@@ -72,50 +40,17 @@ onEvent<EventContract>(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
     );
    }
 
-   await db
+   const [updatedOrder] = await db
     .update(order)
     .set({
      orderStatus: "processing",
      paymentStatus: "processing",
      updatedAt: new Date(Date.now()),
     })
-    .where(eq(order.id, orderId));
-  } catch (error) {
-   const formatted = formatErrorPayload(error as Error);
-   console.error("[Background Event Error Intercepted]:", formatted.body);
-  }
- },
- error: (error) => {
-  console.error(error);
- },
-});
+    .where(eq(order.id, orderId))
+    .returning();
 
-onEvent<EventContract>(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
- next: async (payload) => {
-  try {
-   const { orderId } = payload.payload;
-
-   return await db.transaction(async (tx: Transaction) => {
-    await tx
-     .update(order)
-     .set({
-      orderStatus: "fulfilled",
-      paymentStatus: "paid",
-      updatedAt: new Date(),
-     })
-     .where(eq(order.id, orderId));
-
-    await tx
-     .update(payment)
-     .set({
-      paidAt: new Date(Date.now()),
-      status: "paid",
-      updatedAt: new Date(Date.now()),
-     })
-     .where(
-      and(eq(payment.orderId, orderId), eq(payment.paymentProvider, "stripe")),
-     );
-   });
+   console.log("[...Order record updated]:", { updatedOrder });
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);
    console.error("[Background Event Error Intercepted]:", formatted.body);
@@ -129,6 +64,7 @@ onEvent<EventContract>(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
 onEvent<EventContract>(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
  next: async (payload) => {
   const { orderId, event } = payload.payload;
+  console.log("[...Paystack verification started]:", { event });
 
   try {
    return await db.transaction(async (tx: Transaction) => {
@@ -217,7 +153,80 @@ onEvent<EventContract>(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
 
     await tx.delete(cartItem).where(eq(cartItem.userId, paymentRecord.userId));
 
+    console.log("[...Paystack verification completed]:", { event });
+
     return { handled: true, payment: updatedPayment, order: updatedOrder };
+   });
+  } catch (error) {
+   const formatted = formatErrorPayload(error as Error);
+   console.error("[Background Event Error Intercepted]:", formatted.body);
+  }
+ },
+ error: (error) => {
+  console.error(error);
+ },
+});
+
+onEvent<EventContract>(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
+ next: async (payload) => {
+  try {
+   const { stripeData, userId, orderId } = payload.payload;
+   const [paymentData] = await PaymentService.createPayment(userId, orderId, {
+    ...stripeData,
+    paymentProvider: "stripe",
+   });
+
+   if (!paymentData) {
+    throw new InternalServerError(
+     "Payment record failed",
+     HttpStatus.INTERNAL_SERVER_ERROR,
+     ErrorCode.INTERNAL_SERVER_ERROR,
+    );
+   }
+
+   await db
+    .update(order)
+    .set({
+     orderStatus: "processing",
+     paymentStatus: "processing",
+     updatedAt: new Date(Date.now()),
+    })
+    .where(eq(order.id, orderId));
+  } catch (error) {
+   const formatted = formatErrorPayload(error as Error);
+   console.error("[Background Event Error Intercepted]:", formatted.body);
+  }
+ },
+ error: (error) => {
+  console.error(error);
+ },
+});
+
+onEvent<EventContract>(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
+ next: async (payload) => {
+  try {
+   const { orderId } = payload.payload;
+
+   return await db.transaction(async (tx: Transaction) => {
+    await tx
+     .update(order)
+     .set({
+      orderStatus: "fulfilled",
+      paymentStatus: "paid",
+      updatedAt: new Date(),
+     })
+     .where(eq(order.id, orderId));
+
+    await tx
+     .update(payment)
+     .set({
+      paidAt: new Date(Date.now()),
+      status: "paid",
+      updatedAt: new Date(Date.now()),
+     })
+     .where(
+      and(eq(payment.orderId, orderId), eq(payment.paymentProvider, "stripe")),
+     );
    });
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);

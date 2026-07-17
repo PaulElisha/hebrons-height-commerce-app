@@ -85,7 +85,13 @@ export async function validateOrderForCart(cartId: string, userId: string) {
  return await db
   .select()
   .from(order)
-  .where(and(eq(order.cartId, cartId), eq(order.userId, userId)));
+  .where(
+   and(
+    eq(order.cartId, cartId),
+    eq(order.userId, userId),
+    eq(order.orderStatus, "pending"),
+   ),
+  );
 }
 
 export async function getProductThreshold(

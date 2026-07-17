@@ -28,6 +28,9 @@ export const PaymentData = z.object({
  paymentProvider: z.string(),
  rail: z.string(),
  callback_url: z.url().optional(),
+ checkout_url: z.string(),
+ access_code: z.string().optional(),
+ reference: z.string().optional(),
  mode: z.custom<Stripe.Checkout.SessionCreateParams.Mode>().optional(),
 });
 
@@ -136,6 +139,9 @@ class PaymentService {
     rail: paymentData.rail,
     amount: paymentData.amount,
     callbackUrl: paymentData.callback_url,
+    authorizationUrl: paymentData.checkout_url,
+    accessCode: paymentData.access_code,
+    paymentReference: paymentData.reference,
     currency: paymentData.currency,
     paymentProvider: paymentData.paymentProvider,
     attempts: 2,

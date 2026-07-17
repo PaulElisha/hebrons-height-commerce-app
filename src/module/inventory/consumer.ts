@@ -11,7 +11,9 @@ onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
   try {
    const { orderId, productIds } = payload.payload;
-   console.log("Inventory update for Order placement:", productIds);
+   console.log("[Inventory update for Order placement]:", {
+    product_ids: productIds,
+   });
 
    const results = await FA.concurrent.map(async (productId: any) => {
     return await InventoryService.updateProductThreshold(
@@ -40,7 +42,7 @@ onEvent<EventContract>(EventType.ORDER_CANCELLED).subscribe({
  next: async (payload) => {
   try {
    const { orderId, productIds } = payload.payload;
-   console.log("Inventory update for Order cancelled:", {
+   console.log("[Inventory update for Order cancelled]:", {
     product_ids: productIds,
    });
 
