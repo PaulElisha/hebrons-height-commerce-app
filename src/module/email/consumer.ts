@@ -1,18 +1,20 @@
 /** @format */
-
-import db from "@db/db.ts";
-import MerchantService from "@module/merchant/merchant.service.ts";
-import OrderService from "@module/order/order.service.ts";
-import { user } from "@schema/auth.ts";
-import { merchant } from "@schema/merchant.ts";
-import { EventContract, EventType } from "@shared/event-bus/config.ts";
-import { onEvent } from "@shared/event-bus/consumer.ts";
 import { eq } from "drizzle-orm";
 import FA from "fasy";
 
-import EmailWorker from "./email.worker.ts";
-import { formatErrorPayload } from "@module/inventory/consumer.ts";
+import db from "@db/db.ts";
 
+import { formatErrorPayload } from "@module/inventory/consumer.ts";
+import MerchantService from "@module/merchant/merchant.service.ts";
+import OrderService from "@module/order/order.service.ts";
+
+import { EventContract, EventType } from "@shared/event-bus/config.ts";
+import { onEvent } from "@shared/event-bus/consumer.ts";
+
+import { user } from "@schema/auth.ts";
+import { merchant } from "@schema/merchant.ts";
+
+import EmailWorker from "./email.worker.ts";
 onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
   try {

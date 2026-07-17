@@ -1,16 +1,19 @@
 /** @format */
+import { and, eq, isNotNull } from "drizzle-orm";
+
 import db from "@db/db.ts";
+
+import { Result, TCartAndItem, Transaction } from "@shared/types.ts";
+
 import { cart, cartItem } from "@schema/cart.ts";
 import { merchant } from "@schema/merchant.ts";
 import { order } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
-import { Result, TCartAndItem, Transaction } from "@shared/types.ts";
-import { and, eq, isNotNull } from "drizzle-orm";
-import AppError from "./error/app-error.ts";
-import NotFoundException from "./error/not-found.ts";
+
 import ErrorCode from "./enum/error-code.ts";
 import HttpStatus from "./enum/http.ts";
-
+import AppError from "./error/app-error.ts";
+import NotFoundException from "./error/not-found.ts";
 export async function fetchMerchantProductsFromDb(merchantId: string) {
  const productsForMerchant = await db
   .select()

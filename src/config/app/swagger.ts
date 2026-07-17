@@ -1,7 +1,5 @@
 /** @format */
-
 import Env from "@/env.ts";
-
 const spec = {
  openapi: "3.0.0",
  info: {
@@ -192,11 +190,11 @@ const spec = {
      quantity: { type: "integer" },
      category: { type: "string" },
      subCategory: { type: "string" },
-      additionalData: {
-       type: "object",
-       additionalProperties: { type: "string" },
-       description: "Optional additional product data",
-      },
+     additionalData: {
+      type: "object",
+      additionalProperties: { type: "string" },
+      description: "Optional additional product data",
+     },
     },
    },
    Cart: {
@@ -209,17 +207,18 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-   CartItem: {
-    type: "object",
-    properties: {
-     id: { type: "string" },
-     cartId: { type: "string" },
-     productId: { type: "string" },
-     price: { type: "integer" },
-     quantity: { type: "integer" },
-     totalItemPrice: { type: "integer", nullable: true },
+    CartItem: {
+     type: "object",
+     properties: {
+      id: { type: "string" },
+      userId: { type: "string" },
+      cartId: { type: "string" },
+      productId: { type: "string" },
+      price: { type: "integer" },
+      quantity: { type: "integer" },
+      totalItemPrice: { type: "integer", nullable: true },
+     },
     },
-   },
    CartAndItems: {
     type: "object",
     properties: {
@@ -237,10 +236,10 @@ const spec = {
      userId: { type: "string" },
      cartId: { type: "string" },
      subtotal: { type: "integer" },
-      serviceCharge: { type: "integer" },
-      deliveryFee: { type: "integer" },
-      taxAmount: { type: "integer" },
-      discountAmount: { type: "integer" },
+     serviceCharge: { type: "integer" },
+     deliveryFee: { type: "integer" },
+     taxAmount: { type: "integer" },
+     discountAmount: { type: "integer" },
      deliveryAddress: {
       type: "object",
       additionalProperties: { type: "string" },
@@ -322,21 +321,20 @@ const spec = {
      currency: { type: "string", nullable: true },
      status: {
       type: "string",
-       enum: ["pending", "initialized", "paid", "failed", "cancelled", "refunded"],
+      enum: ["pending", "initialized", "paid", "failed", "cancelled", "refunded"],
       default: "pending",
      },
      attempts: { type: "integer", nullable: true },
      mode: { type: "string", nullable: true },
      rail: { type: "string" },
-      callbackUrl: { type: "string", nullable: true },
-      paymentReference: { type: "string" },
+     callbackUrl: { type: "string", nullable: true },
+     paymentReference: { type: "string" },
      paymentProvider: { type: "string", nullable: true },
      accessCode: { type: "string", nullable: true },
      authorizationUrl: { type: "string", nullable: true },
-     transactionId: { type: "string", nullable: true },
-      paidAt: { type: "string", format: "date-time", nullable: true },
-      createdAt: { type: "string", format: "date-time" },
-      updatedAt: { type: "string", format: "date-time" },
+     paidAt: { type: "string", format: "date-time", nullable: true },
+     createdAt: { type: "string", format: "date-time" },
+     updatedAt: { type: "string", format: "date-time" },
     },
    },
    CheckoutData: {
@@ -346,7 +344,7 @@ const spec = {
      email: { type: "string", format: "email" },
      amount: { type: "integer" },
      currency: { type: "string" },
-      rail: { type: "string" },
+     rail: { type: "string" },
      callback_url: {
       type: "string",
       format: "uri",
@@ -365,18 +363,17 @@ const spec = {
      pageNumber: { type: "integer", minimum: 1 },
     },
    },
-   UploadResult: {
-    type: "object",
-    properties: {
-     public_id: { type: "string" },
-     url: { type: "string" },
-     folder: { type: "string" },
-     signature: { type: "string" },
-     timestamp: { type: "integer" },
-     cloudName: { type: "string" },
-     apiKey: { type: "string" },
+    UploadResult: {
+     type: "object",
+     properties: {
+      public_id: { type: "string" },
+      url: { type: "string" },
+      folder: { type: "string" },
+      signature: { type: "string" },
+      timestamp: { type: "integer" },
+      apiKey: { type: "string" },
+     },
     },
-   },
   },
  },
  paths: {
@@ -1273,20 +1270,20 @@ const spec = {
            type: "string",
            example: "merchant orders fetched successfully",
           },
-           data: {
-            type: "object",
-            properties: {
-             fetchedOrders: {
-              type: "array",
-              items: {
-               type: "object",
-               properties: {
-                orders: { $ref: "#/components/schemas/Order" },
-                orderItem: { $ref: "#/components/schemas/OrderItem" },
-               },
+          data: {
+           type: "object",
+           properties: {
+            fetchedOrders: {
+             type: "array",
+             items: {
+              type: "object",
+              properties: {
+               orders: { $ref: "#/components/schemas/Order" },
+               orderItem: { $ref: "#/components/schemas/OrderItem" },
               },
              },
-             pagination: {
+            },
+            pagination: {
              type: "object",
              properties: {
               limit: { type: "integer" },
@@ -1343,21 +1340,21 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "fetched order status" },
-           data: {
-            type: "array",
-            items: { $ref: "#/components/schemas/OrderAndItems" },
-           },
+          data: {
+           type: "array",
+           items: { $ref: "#/components/schemas/OrderAndItems" },
           },
          },
         },
        },
       },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-      "403": { description: "Forbidden — user is not a user" },
      },
+     "401": { description: "Unauthorized — invalid or missing session token" },
+     "403": { description: "Forbidden — user is not a user" },
     },
    },
-   "/api/order/{orderId}": {
+  },
+  "/api/order/{orderId}": {
    get: {
     tags: ["Order"],
     summary: "Get order details by order ID",
@@ -1537,7 +1534,7 @@ const spec = {
    post: {
     tags: ["Payment"],
     summary:
-      "Initialize payment for an order (returns checkout session data for Stripe/Paystack)",
+     "Initialize payment for an order (returns checkout session data for Stripe/Paystack)",
     security: [{ bearerAuth: [] }],
     parameters: [
      {
@@ -1556,29 +1553,29 @@ const spec = {
       },
      },
     },
-     responses: {
-      "200": {
-       description: "Checkout session created successfully",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "Checkout session created successfully" },
-           data: {
-            type: "object",
-            properties: {
-             checkoutUrl: { type: "string" },
-             reference: { type: "string" },
-             accessCode: { type: "string" },
-            },
+    responses: {
+     "200": {
+      description: "Checkout session created successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "Checkout session created successfully" },
+          data: {
+           type: "object",
+           properties: {
+            checkoutUrl: { type: "string" },
+            reference: { type: "string" },
+            accessCode: { type: "string" },
            },
           },
          },
         },
        },
       },
+     },
      "401": { description: "Unauthorized — invalid or missing session token" },
      "422": {
       description: "Invalid order — order or payment status is not pending",

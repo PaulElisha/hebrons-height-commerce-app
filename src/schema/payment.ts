@@ -13,7 +13,6 @@ import {
 
 import { user } from "./auth.ts";
 import { order } from "./order.ts";
-
 export const paymentStatuses: readonly [
  string,
  string,
@@ -59,7 +58,7 @@ export const payment = pgTable(
    crypto.randomUUID(),
   ),
   paymentProvider: text("payment_provider"),
-  accessCode: varchar("access_code", { length: 255 }),
+  accessCode: text("access_code"),
   authorizationUrl: text("authorization_url"),
   paidAt: timestamp("paid_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),

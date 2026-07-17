@@ -1,29 +1,32 @@
 /** @format */
-
-import stripeClient from "@app/stripe.ts";
-import db from "@db/db.ts";
-import OrderService from "@module/order/order.service.ts";
-import { order } from "@schema/order.ts";
-import { product } from "@schema/product.ts";
-import { TOrderItems } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import Env from "env.ts";
 import FA from "fasy";
 
-import { PaymentData } from "./payment.service.ts";
-import CartService from "@module/cart/cart.service.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
-import HttpStatus from "@shared/enum/http.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import { PublishEvent } from "@shared/event-bus/publisher.ts";
-import { EventType } from "@shared/event-bus/config.ts";
+import stripeClient from "@app/stripe.ts";
+import db from "@db/db.ts";
 
+import OrderService from "@module/order/order.service.ts";
+
+import ErrorCode from "@shared/enum/error-code.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import BadRequestException from "@shared/error/bad-request.ts";
+import { EventType } from "@shared/event-bus/config.ts";
+import { PublishEvent } from "@shared/event-bus/publisher.ts";
+import { Result, TOrderItems } from "@shared/types.ts";
+
+import { product } from "@schema/product.ts";
+
+import { CheckoutData, PaymentResponse } from "./payment.service.ts";
+import z from "zod";
+import AppError from "@shared/error/app-error.ts";
+import InternalServerError from "@shared/error/internal-server.ts";
 export const FetchRail: Record<string, (...any: any[]) => any> = {
  initializePaystackCheckout: async (
   userId: string,
   orderId: string,
-  data: PaymentData,
- ) => {
+  data: z.infer<typeof CheckoutData>,
+ ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
   const orderWithUser = await OrderService.getOrderWithUser(userId, orderId);
 
   const response = await fetch(Env.PAYSTACK_INIT_URL, {
@@ -51,7 +54,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    return [
     null,
     new BadRequestException(
-     errBody.message || "Payment Initialization error",
+     errBody.message || "Paystack Payment failed",
      HttpStatus.BAD_REQUEST,
      ErrorCode.VALIDATION_ERROR,
     ),
@@ -62,19 +65,18 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
 
   if (responseData?.data)
    PublishEvent({
-    event_type: EventType.PAYMENT_INITIALIZED,
+    event_type: EventType.PAYSTACK_PAYMENT_INITIALIZED,
     payload: {
      paystackData: responseData?.data,
      orderId,
-     provider: "paystack",
     },
    });
 
   return [
    {
-    checkoutUrl: responseData.data?.authorization_url,
+    checkout_url: responseData.data?.authorization_url,
     reference: responseData.data?.reference,
-    accessCode: responseData.data?.access_code,
+    access_code: responseData.data?.access_code,
    },
    null,
   ];
@@ -82,11 +84,11 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
  initializeStripeCheckout: async (
   userId: string,
   orderId: string,
-  data: PaymentData,
- ) => {
+  data: z.infer<typeof CheckoutData>,
+ ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
   const [orderData, e] = await OrderService.getOrderDetails(userId, orderId);
 
-  if (orderData == null) return [null, e];
+  if (e || !orderData) return [null, e];
 
   return await stripeClient.checkout.sessions
    .create({
@@ -116,18 +118,26 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
     cancel_url: `${Env.BASE_URL}/failed`,
    })
    .then(async (session) => {
-    if (session.url) {
-     PublishEvent({
-      event_type: EventType.PAYMENT_INITIALIZED,
-      payload: {
-       checkoutUrl: session.url,
-       orderId,
-       provider: "stripe",
-      },
-     });
+    if (!session.url) {
+     return [
+      null,
+      new InternalServerError(
+       "Stripe payment failed",
+       HttpStatus.INTERNAL_SERVER_ERROR,
+       ErrorCode.INTERNAL_SERVER_ERROR,
+      ),
+     ];
     }
 
-    return [session.url, null];
+    PublishEvent({
+     event_type: EventType.STRIPE_PAYMENT_INITIALIZED,
+     payload: {
+      checkoutUrl: session.url,
+      orderId,
+     },
+    });
+
+    return [{ checkout_url: session.url }, null];
    });
  },
 };

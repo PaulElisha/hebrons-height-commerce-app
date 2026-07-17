@@ -1,12 +1,13 @@
 /** @format */
-
-import db from "@db/db.ts";
-import { cart, cartItem } from "@schema/cart.ts";
-import { TCartAndItem } from "@shared/types.ts";
 import { and, eq } from "drizzle-orm";
 
-import CartBase from "./base.ts";
+import db from "@db/db.ts";
 
+import { TCartAndItem } from "@shared/types.ts";
+
+import { cart, cartItem } from "@schema/cart.ts";
+
+import CartBase from "./base.ts";
 class CartService {
  addToCart = async (
   userId: string,

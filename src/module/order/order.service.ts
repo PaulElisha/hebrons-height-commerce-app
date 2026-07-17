@@ -2,7 +2,6 @@
 
 import db from "@db/db.ts";
 import CartService from "@module/cart/cart.service.ts";
-import InventoryService from "@module/inventory/inventory.service.ts";
 import { user } from "@schema/auth.ts";
 import { order, orderItem } from "@schema/order.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
@@ -24,7 +23,7 @@ import {
 import { Mutex } from "async-mutex";
 import { and, count, desc, eq, isNotNull, lt, ne, SQL, sql } from "drizzle-orm";
 import FA from "fasy";
-import z, { record } from "zod";
+import z from "zod";
 
 export const CreateOrderDto = z.object({
  deliveryAddress: z.object({

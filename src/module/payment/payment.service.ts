@@ -1,29 +1,49 @@
 /** @format */
+import { and, eq } from "drizzle-orm";
+import Env from "env.ts";
+import Stripe from "stripe";
+import z from "zod";
+
 import db from "@db/db.ts";
+
 import OrderService from "@module/order/order.service.ts";
-import { payment } from "@schema/payment.ts";
+
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
+import { EventType } from "@shared/event-bus/config.ts";
+import { PublishEvent } from "@shared/event-bus/publisher.ts";
 import { Result } from "@shared/types.ts";
-import { and, eq } from "drizzle-orm";
-import Stripe from "stripe";
+
+import { payment } from "@schema/payment.ts";
 
 import { FetchRail } from "./dispatcher.ts";
-import Env from "env.ts";
-import { PublishEvent } from "@shared/event-bus/publisher.ts";
-import { EventType } from "@shared/event-bus/config.ts";
-import z from "zod";
 
-export const CheckoutData = z.object({
+export const PaymentData = z.object({
  email: z.string().email(),
  amount: z.number().positive(),
  currency: z.string(),
  rail: z.string(),
  callback_url: z.url().optional(),
  mode: z.custom<Stripe.Checkout.SessionCreateParams.Mode>().optional(),
+});
+
+export const CheckoutData = z.object({
+ email: z.string().email(),
+ amount: z.number().positive(),
+ currency: z.string(),
+ rail: z.string(),
+ metadata: z.record(z.string(), z.any()).optional(),
+ callback_url: z.url().optional(),
+ mode: z.custom<Stripe.Checkout.SessionCreateParams.Mode>().optional(),
+});
+
+export const PaymentResponse = z.object({
+ checkout_url: z.string().url(),
+ reference: z.string().optional(),
+ access_code: z.string().optional(),
 });
 
 interface TPayment {
@@ -47,20 +67,11 @@ interface TPayment {
  paidAt: Date | null;
 }
 
-export interface PaymentData {
- email: string;
- currency: string;
- rail: string;
- callback_url?: string;
- metadata?: Record<string, any>;
- mode?: Stripe.Checkout.SessionCreateParams.Mode;
-}
-
 class PaymentService {
- initialize = async (
+ createPayment = async (
   userId: string,
   orderId: string,
-  checkoutData: z.infer<typeof CheckoutData>,
+  paymentData: z.infer<typeof PaymentData>,
  ): Promise<Result<TPayment, AppError>> => {
   const [data, e] = await OrderService.getOrderDetails(userId, orderId);
 
@@ -100,13 +111,13 @@ class PaymentService {
    .insert(payment)
    .values({
     orderId: orderId,
-    email: checkoutData.email,
+    email: paymentData.email,
     userId: userId,
-    mode: checkoutData.mode,
-    rail: checkoutData.rail,
-    amount: checkoutData.amount,
-    callbackUrl: checkoutData.callback_url,
-    currency: checkoutData.currency,
+    mode: paymentData.mode,
+    rail: paymentData.rail,
+    amount: paymentData.amount,
+    callbackUrl: paymentData.callback_url,
+    currency: paymentData.currency,
     attempts: 2,
    })
    .returning();
@@ -128,14 +139,14 @@ class PaymentService {
  fetchPaymentForOrderByRail = async (
   userId: string,
   orderId: string,
-  paymentData: PaymentData,
- ): Promise<Result<any, AppError>> => {
+  checkout: z.infer<typeof CheckoutData>,
+ ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
   const [paymentRecord] = await db
    .select()
    .from(payment)
    .where(and(eq(payment.orderId, orderId)));
 
-  if (!paymentRecord || paymentRecord.rail !== paymentData.rail) {
+  if (!paymentRecord || paymentRecord.rail !== checkout.rail) {
    return [
     null,
     new InternalServerError(
@@ -146,57 +157,56 @@ class PaymentService {
    ];
   }
 
-  const rail = paymentData.rail;
+  const rail = checkout.rail;
 
   const callback = FetchRail[rail];
-  let checkoutData, e;
+  let paymentResponse, e;
 
   if (typeof rail === "string" && rail == "initializePaystackCheckout") {
-   [checkoutData, e] = await callback(userId, orderId, paymentData);
+   [paymentResponse, e] = await callback(userId, orderId, checkout);
   } else if (typeof rail === "string" && rail == "initializeStripeCheckout") {
-   [checkoutData, e] = await callback(userId, orderId, paymentData);
+   [paymentResponse, e] = await callback(userId, orderId, checkout);
   }
-
-  return [checkoutData, e];
+  return [paymentResponse, e];
  };
 
- verifyPaystack = async (paymentReference: string) => {
-  const response = await fetch(
-   `${Env.PAYSTACK_VERIFY_URL}/${paymentReference}`,
-   {
-    method: "GET",
-    headers: {
-     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
-     "Content-Type": "application/json",
-    },
-   },
-  );
+ // verifyPaystack = async (paymentReference: string) => {
+ //  const response = await fetch(
+ //   `${Env.PAYSTACK_VERIFY_URL}/${paymentReference}`,
+ //   {
+ //    method: "GET",
+ //    headers: {
+ //     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+ //     "Content-Type": "application/json",
+ //    },
+ //   },
+ //  );
 
-  if (!response.ok)
-   return [
-    null,
-    new BadRequestException(
-     "Payment verification error",
-     HttpStatus.BAD_REQUEST,
-     ErrorCode.VALIDATION_ERROR,
-    ),
-   ];
+ //  if (!response.ok)
+ //   return [
+ //    null,
+ //    new BadRequestException(
+ //     "Payment verification error",
+ //     HttpStatus.BAD_REQUEST,
+ //     ErrorCode.VALIDATION_ERROR,
+ //    ),
+ //   ];
 
-  const responseData = await response.json();
+ //  const responseData = await response.json();
 
-  console.log("Verify data:", responseData.data);
+ //  console.log("Verify data:", responseData.data);
 
-  if (responseData.data)
-   PublishEvent({
-    event_type: EventType.PAYMENT_VERIFIED,
-    payload: {
-     data: responseData.data,
-     provider: "paystack",
-    },
-   });
+ //  if (responseData.data)
+ //   PublishEvent({
+ //    event_type: EventType.PAYSTACK_PAYMENT_VERIFIED,
+ //    payload: {
+ //     data: responseData.data,
+ //     provider: "paystack",
+ //    },
+ //   });
 
-  return [responseData.data, null];
- };
+ //  return [responseData.data, null];
+ // };
 }
 
 export default new PaymentService();

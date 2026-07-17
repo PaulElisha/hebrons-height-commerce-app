@@ -1,8 +1,6 @@
 /** @format */
-
 import AppError from "@error/app-error.ts";
 import type { ErrorCodeType, HttpStatusCodeType } from "@shared/types.ts";
-
 export default class BadRequestException extends AppError {
  constructor(
   public message: string,

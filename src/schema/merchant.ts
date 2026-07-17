@@ -4,7 +4,6 @@ import { sql } from "drizzle-orm";
 import { check, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.ts";
-
 export const merchantStatuses: [string, string, string] = [
  "pending",
  "approved",

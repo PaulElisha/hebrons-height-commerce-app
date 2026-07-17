@@ -1,9 +1,10 @@
 /** @format */
-import db from "@db/db.ts";
-import ErrorCode from "@enum/error-code.ts";
-import HttpStatus from "@enum/http.ts";
 import Mail from "nodemailer/lib/mailer/index.js";
 
+import db from "@db/db.ts";
+
+import ErrorCode from "@enum/error-code.ts";
+import HttpStatus from "@enum/http.ts";
 export type HttpStatusCodeType = (typeof HttpStatus)[keyof typeof HttpStatus];
 
 export type ErrorCodeType = (typeof ErrorCode)[keyof typeof ErrorCode];

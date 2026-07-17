@@ -1,20 +1,23 @@
 /** @format */
 
-import { OrderParams } from "@module/order/order.controller.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
-import { APIResponse } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 import Stripe from "stripe";
+import z from "zod";
+
+import db from "@db/db.ts";
+
+import { OrderParams } from "@module/order/order.controller.ts";
+
+import HttpStatus from "@shared/enum/http.ts";
+import asyncHandler from "@shared/middleware/async-handler.ts";
+import { APIResponse } from "@shared/types.ts";
+
+import { payment } from "@schema/payment.ts";
 
 import PaymentService, {
  CheckoutData,
  PaymentData,
 } from "./payment.service.ts";
-import { payment } from "@schema/payment.ts";
-import db from "@db/db.ts";
-import HttpStatus from "@shared/enum/http.ts";
-import z from "zod";
-
 class PaymentController {
  initialize = asyncHandler(
   async (
@@ -26,56 +29,54 @@ class PaymentController {
    const orderId = req.params.orderId as string;
    const body = req.body;
 
-   const [data, e] = await PaymentService.initialize(userId, orderId, body);
-
-   if (e) return next(e);
-
-   const paymentData = {
-    rail: data?.rail,
-    email: data?.email,
-    currency: data?.currency,
-    callback_url: data?.callbackUrl,
-    mode: data?.mode as Stripe.Checkout.SessionCreateParams.Mode,
-    metadata: {
-     orderId,
-    },
-   };
-
-   const [checkoutData, err] = await PaymentService.fetchPaymentForOrderByRail(
+   const [paymentRes, err] = await PaymentService.fetchPaymentForOrderByRail(
     userId,
     orderId,
-    paymentData as PaymentData,
+    {
+     ...body,
+     metadata: {
+      orderId,
+     },
+    },
    );
 
-   if (err) return next(err);
+   if (err || !paymentRes) return next(err);
+
+   const [paymentData, e] = await PaymentService.createPayment(
+    userId,
+    orderId,
+    body,
+   );
+
+   if (e || !paymentData) return next(e);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "Checkout session created successfully",
-    data: checkoutData,
+    data: paymentData,
    });
   },
  );
 
- verifyPaystack = asyncHandler(
-  async (
-   req: Request<any, any, any, { reference: string }>,
-   res: Response,
-   next: NextFunction,
-  ) => {
-   const reference = req.query.reference;
+ // verifyPaystack = asyncHandler(
+ //  async (
+ //   req: Request<any, any, any, { reference: string }>,
+ //   res: Response,
+ //   next: NextFunction,
+ //  ) => {
+ //   const reference = req.query.reference;
 
-   const [data, e] = await PaymentService.verifyPaystack(reference);
+ //   const [data, e] = await PaymentService.verifyPaystack(reference);
 
-   if (e) return next(e);
+ //   if (e) return next(e);
 
-   return res.status(HttpStatus.NO_CONTENT).send({
-    status: "ok",
-    message: "Payment verified",
-    data,
-   });
-  },
- );
+ //   return res.status(HttpStatus.NO_CONTENT).send({
+ //    status: "ok",
+ //    message: "Payment verified",
+ //    data,
+ //   });
+ //  },
+ // );
 }
 
 export default new PaymentController();

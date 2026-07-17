@@ -1,9 +1,7 @@
 /** @format */
-
 import { catchError, filter, map, Observable, of, retry } from "rxjs";
 
 import eventBus$, { EventContract } from "./config.ts";
-
 export const onSubscribe = <T extends EventContract>(
  userId: string,
 ): Observable<T> => {

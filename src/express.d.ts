@@ -17,6 +17,8 @@ declare global {
 
    file: Express.Multer.File;
    files: Express.Multer.File[];
+
+   rawBody: string;
   }
  }
 }

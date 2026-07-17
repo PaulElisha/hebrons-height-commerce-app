@@ -1,7 +1,5 @@
 /** @format */
-
 import { hash, type Options, verify } from "@node-rs/argon2";
-
 const opts: Options = {
  memoryCost: 65536, // 64 MiB
  timeCost: 3, // 3 iterations

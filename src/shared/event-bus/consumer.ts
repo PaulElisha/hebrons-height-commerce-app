@@ -1,9 +1,7 @@
 /** @format */
-
 import { catchError, filter, map, Observable, of, retry } from "rxjs";
 
 import eventBus$, { EventContract, EventType } from "./config.ts";
-
 export const onEvent = <T extends EventContract>(
  event: (typeof EventType)[keyof typeof EventType],
 ): Observable<T> => {

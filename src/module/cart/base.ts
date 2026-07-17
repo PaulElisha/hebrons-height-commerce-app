@@ -1,14 +1,16 @@
 /** @format */
-
-import db from "@db/db.ts";
-import InventoryService from "@module/inventory/inventory.service.ts";
-import { cart, cartItem } from "@schema/cart.ts";
-import * as helper from "@shared/helper.ts";
-import { type Transaction } from "@shared/types.ts";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 
-import CartActions from "./dispatcher.ts";
+import db from "@db/db.ts";
 
+import InventoryService from "@module/inventory/inventory.service.ts";
+
+import * as helper from "@shared/helper.ts";
+import { type Transaction } from "@shared/types.ts";
+
+import { cart, cartItem } from "@schema/cart.ts";
+
+import CartActions from "./dispatcher.ts";
 interface Intent {
  userId: string;
  productId: string;

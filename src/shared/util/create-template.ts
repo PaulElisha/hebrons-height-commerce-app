@@ -1,8 +1,6 @@
 /** @format */
-
 import fs from "node:fs/promises";
 import path from "node:path";
-
 const templateCache = new Map<string, string>();
 
 const createTemplateTag = (baseDir: string) => {

@@ -1,13 +1,12 @@
 /** @format */
+import FA from "fasy";
 
 import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
 import { EventContract, EventType } from "@shared/event-bus/config.ts";
 import { onEvent } from "@shared/event-bus/consumer.ts";
-import FA from "fasy";
 
 import InventoryService from "./inventory.service.ts";
-
 onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
   try {

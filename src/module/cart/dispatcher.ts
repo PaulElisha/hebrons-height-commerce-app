@@ -1,21 +1,23 @@
 /** @format */
-
-import { cartItem } from "@schema/cart.ts";
-import * as helper from "@shared/helper.ts";
-import type { Transaction } from "@shared/types.ts";
 import { and, eq, sql } from "drizzle-orm";
 
+import * as helper from "@shared/helper.ts";
+import type { Transaction } from "@shared/types.ts";
+
+import { cartItem } from "@schema/cart.ts";
+import { user } from "@schema/auth.ts";
 export const CartActions: Record<
  string,
  (tx: Transaction) => (...args: any[]) => any
 > = {
  add:
   (tx: Transaction) =>
-  async (cartId: string, productId: string, price: number) => {
+  async (cartId: string, userId: string, productId: string, price: number) => {
    const [inserted] = await tx
     .insert(cartItem)
     .values({
      cartId,
+     userId,
      productId,
      price,
      quantity: 1,
@@ -24,25 +26,44 @@ export const CartActions: Record<
     .returning();
    return inserted;
   },
- increment: (tx: Transaction) => async (cartId: string, productId: string) => {
-  return await tx
-   .update(cartItem)
-   .set({
-    quantity: sql`${cartItem.quantity} + 1`,
-    totalItemPrice: sql`(${cartItem.quantity} + 1) * ${cartItem.price}`,
-   })
-   .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
-   .returning();
- },
+ increment:
+  (tx: Transaction) =>
+  async (cartId: string, userId: string, productId: string) => {
+   return await tx
+    .update(cartItem)
+    .set({
+     quantity: sql`${cartItem.quantity} + 1`,
+     totalItemPrice: sql`(${cartItem.quantity} + 1) * ${cartItem.price}`,
+    })
+    .where(
+     and(
+      eq(cartItem.cartId, cartId),
+      eq(cartItem.productId, productId),
+      eq(cartItem.userId, userId),
+     ),
+    )
+    .returning();
+  },
  decrement:
   (tx: Transaction) =>
-  async (cartId: string, productId: string, quantity: number) => {
+  async (
+   cartId: string,
+   userId: string,
+   productId: string,
+   quantity: number,
+  ) => {
    const item = await helper.checkItemExistsInCart(tx)(cartId, productId);
 
    if (!item || item.quantity <= 1) {
     return await tx
      .delete(cartItem)
-     .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
+     .where(
+      and(
+       eq(cartItem.cartId, cartId),
+       eq(cartItem.productId, productId),
+       eq(cartItem.userId, userId),
+      ),
+     )
      .returning();
    }
 
@@ -52,15 +73,29 @@ export const CartActions: Record<
      quantity: sql`${cartItem.quantity} - 1`,
      totalItemPrice: sql`(${cartItem.quantity} - 1) * ${cartItem.price}`,
     })
-    .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
+    .where(
+     and(
+      eq(cartItem.cartId, cartId),
+      eq(cartItem.productId, productId),
+      eq(cartItem.userId, userId),
+     ),
+    )
     .returning();
   },
- remove: (tx: Transaction) => async (cartId: string, productId: string) => {
-  return await tx
-   .delete(cartItem)
-   .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
-   .returning();
- },
+ remove:
+  (tx: Transaction) =>
+  async (cartId: string, userId: string, productId: string) => {
+   return await tx
+    .delete(cartItem)
+    .where(
+     and(
+      eq(cartItem.cartId, cartId),
+      eq(cartItem.productId, productId),
+      eq(cartItem.userId, userId),
+     ),
+    )
+    .returning();
+  },
 };
 
 export default CartActions;

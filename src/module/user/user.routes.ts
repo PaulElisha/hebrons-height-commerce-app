@@ -1,16 +1,17 @@
 /** @format */
+import { and, eq, isNotNull } from "drizzle-orm";
+import { Request, Response, Router } from "express";
 
 import db from "@db/db.ts";
+
 import authenticate from "@middleware/authenticate.ts";
-import { user } from "@schema/auth.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import { cloudinaryUploadStream } from "@shared/middleware/cloudinary-upload-stream.ts";
 import upload from "@shared/middleware/multer-upload.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { APIResponse, TUser } from "@shared/types.ts";
-import { and, eq, isNotNull } from "drizzle-orm";
-import { Request, Response, Router } from "express";
 
+import { user } from "@schema/auth.ts";
 class UserRouter {
  router: Router;
  constructor() {

@@ -1,7 +1,5 @@
 /** @format */
-
 import type { NextFunction, Request, Response } from "express";
-
 export type AsyncHandler<
  P = any,
  ResBody = any,

@@ -1,10 +1,11 @@
 /** @format */
-
-import Env from "@/env.ts";
-import { MailSubject } from "@module/email/email.service.ts";
-import type { MailData, MailerCallback, TUser } from "@shared/types.ts";
 import type { Transporter } from "nodemailer";
 
+import { MailSubject } from "@module/email/email.service.ts";
+
+import type { MailData, MailerCallback, TUser } from "@shared/types.ts";
+
+import Env from "@/env.ts";
 export const MailAction: Record<string, MailerCallback<any, TUser>> = {
  sendOrderMemo: (transporter: Transporter, data: MailData<TUser>) => {
   const { user, message } = data;

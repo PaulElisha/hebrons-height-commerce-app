@@ -1,16 +1,17 @@
 /** @format */
-
-import stripeClient from "@app/stripe.ts";
-import db from "@db/db.ts";
-import { order } from "@schema/order.ts";
-import HttpStatus from "@shared/enum/http.ts";
-import { EventType } from "@shared/event-bus/config.ts";
-import { PublishEvent } from "@shared/event-bus/publisher.ts";
 import { eq } from "drizzle-orm";
 import Env from "env.ts";
 import { Request, Response } from "express";
 import Stripe from "stripe";
 
+import stripeClient from "@app/stripe.ts";
+import db from "@db/db.ts";
+
+import HttpStatus from "@shared/enum/http.ts";
+import { EventType } from "@shared/event-bus/config.ts";
+import { PublishEvent } from "@shared/event-bus/publisher.ts";
+
+import { order } from "@schema/order.ts";
 export const stripeWebhookHandler = async (req: Request, res: Response) => {
  const sig = req.headers["stripe-signature"]!;
  let event: Stripe.Event;
@@ -60,7 +61,7 @@ async function handleOrderCheckoutCompleted(session: Stripe.Checkout.Session) {
 
  try {
   PublishEvent({
-   event_type: EventType.PAYMENT_VERIFIED,
+   event_type: EventType.STRIPE_PAYMENT_VERIFIED,
    payload: {
     orderId,
     provider: "stripe",

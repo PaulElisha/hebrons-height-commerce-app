@@ -1,0 +1,14 @@
+/** @format */
+import { verifyPaystackSignature } from "@middleware/verify-paystack-sig.ts";
+import express, { Request, Response, Router } from "express";
+import { paystackWebhookHandler } from "./paystack.webhook.ts";
+
+const paystackWebhookRouter = Router().post(
+ "/paystack",
+ verifyPaystackSignature,
+ async (req: Request, res: Response) => {
+  await paystackWebhookHandler(req.body);
+ },
+);
+
+export default paystackWebhookRouter;

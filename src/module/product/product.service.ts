@@ -1,15 +1,17 @@
 /** @format */
+import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
+import z from "zod";
+
 import db from "@db/db.ts";
-import { merchant } from "@schema/merchant.ts";
-import { product } from "@schema/product.ts";
+
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import NotFoundException from "@shared/error/not-found.ts";
 import * as helper from "@shared/helper.ts";
 import { Pagination, UploadImages } from "@shared/types.ts";
-import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
-import z from "zod";
 
+import { merchant } from "@schema/merchant.ts";
+import { product } from "@schema/product.ts";
 export const CreateProductDto = z.object({
  name: z.string(),
  description: z.string(),

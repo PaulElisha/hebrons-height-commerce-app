@@ -1,7 +1,5 @@
 /** @format */
-
 import { Subject } from "rxjs";
-
 export enum EventType {
  ORDER_PLACED = "order.placed",
  ORDER_ACCEPTED = "order.accepted",
@@ -9,8 +7,10 @@ export enum EventType {
  ORDER_PENDING = "order.pending",
  ORDER_CANCELLED = "order.cancelled",
  UPDATE_INVENTORY = "inventory.update",
- PAYMENT_VERIFIED = "payment.checkout.verified",
- PAYMENT_INITIALIZED = "payment.checkout.initialized",
+ STRIPE_PAYMENT_INITIALIZED = "payment.stripe.checkout.initialized",
+ PAYSTACK_PAYMENT_INITIALIZED = "payment.paystack.checkout.initialized",
+ PAYSTACK_PAYMENT_VERIFIED = "payment.paystack.checkout.verified",
+ STRIPE_PAYMENT_VERIFIED = "payment.stripe.checkout.verified",
 }
 
 export interface EventContract {

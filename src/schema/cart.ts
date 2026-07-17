@@ -4,7 +4,6 @@ import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.ts";
 import { product } from "./product.ts";
-
 export const cart = pgTable("cart", {
  id: text("id")
   .primaryKey()
@@ -24,6 +23,9 @@ export const cartItem = pgTable(
   id: text("id")
    .primaryKey()
    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+   .notNull()
+   .references(() => user.id),
   cartId: text("cart_id")
    .notNull()
    .references(() => cart.id),

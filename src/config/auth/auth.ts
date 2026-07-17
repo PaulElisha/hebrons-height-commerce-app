@@ -1,13 +1,15 @@
 /** @format */
-
-import Env from "@/env.ts";
-import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import db from "@db/db.ts";
-import * as schema from "@schema/auth.ts";
-import { hashPassword, verifyPassword } from "@shared/util/password.ts";
 import { betterAuth } from "better-auth";
 import { jwt, openAPI } from "better-auth/plugins";
 
+import db from "@db/db.ts";
+
+import { hashPassword, verifyPassword } from "@shared/util/password.ts";
+
+import * as schema from "@schema/auth.ts";
+
+import Env from "@/env.ts";
+import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 const allowedOrigins = Env.CORS_ORIGIN.includes(",")
  ? Env.CORS_ORIGIN.split(",")
  : [Env.CORS_ORIGIN];

@@ -1,14 +1,12 @@
 /** @format */
-
-import authenticate from "@shared/middleware/authenticate.ts";
 import { Router } from "express";
 
-import PaymentController from "./payment.controller.ts";
-import { validate } from "@shared/middleware/validate.ts";
-import { CheckoutData } from "./payment.service.ts";
-import z from "zod";
+import authenticate from "@shared/middleware/authenticate.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
+import { validate } from "@shared/middleware/validate.ts";
 
+import PaymentController from "./payment.controller.ts";
+import { CheckoutData } from "./payment.service.ts";
 class PaymentRoutes {
  router: Router;
  constructor() {
@@ -27,7 +25,7 @@ class PaymentRoutes {
    res.send("Payment failed");
   });
 
-  this.router.get("/paystack/verify", PaymentController.verifyPaystack);
+  // this.router.get("/paystack/verify", PaymentController.verifyPaystack);
 
   this.router.post(
    "/initialize/:orderId",

@@ -1,15 +1,14 @@
 /** @format */
+import { Router } from "express";
 
 import authenticate from "@middleware/authenticate.ts";
 import { cloudinaryUploadStream } from "@middleware/cloudinary-upload-stream.ts";
 import upload from "@middleware/multer-upload.ts";
 import roleGuard from "@middleware/role-guard.ts";
-import { Router } from "express";
+import { validate } from "@shared/middleware/validate.ts";
 
 import MerchantController from "./merchant.controller.ts";
-import { validate } from "@shared/middleware/validate.ts";
 import { CreateMerchantDto, UpdateMerchantDto } from "./merchant.service.ts";
-
 class MerchantRouter {
  router: Router;
  constructor() {

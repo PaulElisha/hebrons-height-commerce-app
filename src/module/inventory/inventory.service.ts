@@ -1,9 +1,8 @@
 /** @format */
+import { and, eq, isNotNull, sum } from "drizzle-orm";
 
 import db from "@db/db.ts";
-import { cartItem } from "@schema/cart.ts";
-import { orderItem } from "@schema/order.ts";
-import { product } from "@schema/product.ts";
+
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
@@ -11,8 +10,10 @@ import BadRequestException from "@shared/error/bad-request.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
 import NotFoundException from "@shared/error/not-found.ts";
 import { Result, Transaction } from "@shared/types.ts";
-import { and, eq, isNotNull, sum } from "drizzle-orm";
 
+import { cartItem } from "@schema/cart.ts";
+import { orderItem } from "@schema/order.ts";
+import { product } from "@schema/product.ts";
 class InventoryService {
  getProductThreshold = async (
   productId: string,
