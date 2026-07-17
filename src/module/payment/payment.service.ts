@@ -75,7 +75,7 @@ class PaymentService {
  ): Promise<Result<TPayment, AppError>> => {
   const [data, e] = await OrderService.getOrderDetails(userId, orderId);
 
-  if (data == null) return [null, e];
+  if (e || !data) return [null, e];
 
   if (
    data.order.orderStatus !== "pending" &&

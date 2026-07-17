@@ -21,13 +21,21 @@ import PaymentService, {
 class PaymentController {
  initialize = asyncHandler(
   async (
-   req: Request<OrderParams, {}, z.infer<typeof CheckoutData>>,
+   req: Request<OrderParams, {}, z.infer<typeof PaymentData>>,
    res: Response<APIResponse<any>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
    const orderId = req.params.orderId as string;
    const body = req.body;
+
+   const [paymentData, e] = await PaymentService.createPayment(
+    userId,
+    orderId,
+    body,
+   );
+
+   if (e || !paymentData) return next(e);
 
    const [paymentRes, err] = await PaymentService.fetchPaymentForOrderByRail(
     userId,
@@ -41,14 +49,6 @@ class PaymentController {
    );
 
    if (err || !paymentRes) return next(err);
-
-   const [paymentData, e] = await PaymentService.createPayment(
-    userId,
-    orderId,
-    body,
-   );
-
-   if (e || !paymentData) return next(e);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
