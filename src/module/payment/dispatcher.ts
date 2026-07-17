@@ -41,10 +41,11 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
     currency: data.currency,
     callback_url: data.callback_url,
     metadata: {
-     name: orderWithUser.user.name,
-     email: orderWithUser.user.email,
-     ...data.metadata,
-    },
+      name: orderWithUser.user.name,
+      email: orderWithUser.user.email,
+      orderId,
+      ...data.metadata,
+     },
    }),
   });
 

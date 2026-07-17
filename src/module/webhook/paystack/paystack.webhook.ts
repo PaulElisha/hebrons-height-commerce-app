@@ -6,15 +6,14 @@ import BadRequestException from "@shared/error/bad-request.ts";
 import { EventType } from "@shared/event-bus/config.ts";
 import { PublishEvent } from "@shared/event-bus/publisher.ts";
 
-/** @format */
 export const paystackWebhookHandler = async (body: any) => {
- const event = body.event;
+ const eventName = body.event;
 
- if (event.event !== "charge.success" && event.event !== "charge.failed") {
+ if (eventName !== "charge.success" && eventName !== "charge.failed") {
   return { handled: false };
  }
 
- const orderId = event.data?.orderId as string | undefined;
+ const orderId = body.data?.metadata?.orderId as string | undefined;
 
  if (!orderId) {
   throw new BadRequestException(
@@ -28,7 +27,7 @@ export const paystackWebhookHandler = async (body: any) => {
   event_type: EventType.PAYSTACK_PAYMENT_VERIFIED,
   payload: {
    orderId,
-   event,
+   event: body,
   },
  });
 };
