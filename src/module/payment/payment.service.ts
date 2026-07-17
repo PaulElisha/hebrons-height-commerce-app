@@ -141,22 +141,6 @@ class PaymentService {
   orderId: string,
   checkout: z.infer<typeof CheckoutData>,
  ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
-  const [paymentRecord] = await db
-   .select()
-   .from(payment)
-   .where(and(eq(payment.orderId, orderId)));
-
-  if (!paymentRecord || paymentRecord.rail !== checkout.rail) {
-   return [
-    null,
-    new InternalServerError(
-     "Invalid payment rail",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
-
   const rail = checkout.rail;
 
   const callback = FetchRail[rail];
