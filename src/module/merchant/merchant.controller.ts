@@ -5,7 +5,10 @@ import z from "zod";
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 
-import MerchantService, { UpdateMerchantDto } from "./merchant.service.ts";
+import MerchantService, {
+ CreateMerchantSchema,
+ UpdateMerchantSchema,
+} from "./merchant.service.ts";
 export interface MerchantParams {
  merchantId?: string;
 }
@@ -25,7 +28,11 @@ class MerchantController {
  );
 
  createMerchantProfile = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  async (
+   req: Request<any, any, any, z.infer<typeof CreateMerchantSchema>>,
+   res: Response,
+   next: NextFunction,
+  ): Promise<any> => {
    const userId = req.user.id;
    const body = req.body;
    const businessLogo = req.upload_image.url;
@@ -45,7 +52,7 @@ class MerchantController {
 
  updateMerchantProfile = asyncHandler(
   async (
-   req: Request<MerchantParams, any, any, z.infer<typeof UpdateMerchantDto>>,
+   req: Request<MerchantParams, any, any, z.infer<typeof UpdateMerchantSchema>>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {

@@ -11,19 +11,25 @@ import BadRequestException from "@shared/error/bad-request.ts";
 import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
-export const CreateMerchantDto = z.object({
+export const CreateMerchantSchema = z.object({
  businessName: z.string(),
- businessLogo: z.string(),
  businessDescription: z.string(),
  address: z.string(),
 });
 
-export const UpdateMerchantDto = z.object({
+export const UpdateMerchantSchema = z.object({
  businessName: z.string().optional(),
  businessLogo: z.string().optional(),
  businessDescription: z.string().optional(),
  address: z.string().optional(),
 });
+
+interface CreateMerchantDto {
+ businessName: string;
+ businessLogo: string;
+ businessDescription: string;
+ address: string;
+}
 
 class MerchantService {
  getMerchantIdFromProductId = async (productId: string): Promise<any> => {
@@ -47,10 +53,7 @@ class MerchantService {
   return merchantProfile;
  };
 
- createMerchantProfile = async (
-  userId: string,
-  body: z.infer<typeof CreateMerchantDto>,
- ) => {
+ createMerchantProfile = async (userId: string, body: CreateMerchantDto) => {
   const [existing] = await db
    .select()
    .from(merchant)
@@ -85,7 +88,7 @@ class MerchantService {
  updateMerchantProfile = async (
   userId: string,
   merchantId: string,
-  body: z.infer<typeof UpdateMerchantDto>,
+  body: z.infer<typeof UpdateMerchantSchema>,
  ) => {
   const updateData: { [k: string]: any } = {};
 
