@@ -171,10 +171,14 @@ onEvent<EventContract>(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
  next: async (payload) => {
   try {
    const { stripeData, userId, orderId } = payload.payload;
+   console.log("[...Stripe Initialization completed]:", { stripeData });
+
    const [paymentData] = await PaymentService.createPayment(userId, orderId, {
     ...stripeData,
     paymentProvider: "stripe",
    });
+
+   console.log("[...Paystack record created]:", { paymentData });
 
    if (!paymentData) {
     throw new InternalServerError(
@@ -184,14 +188,17 @@ onEvent<EventContract>(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
     );
    }
 
-   await db
+   const [updatedOrder] = await db
     .update(order)
     .set({
      orderStatus: "processing",
      paymentStatus: "processing",
      updatedAt: new Date(Date.now()),
     })
-    .where(eq(order.id, orderId));
+    .where(eq(order.id, orderId))
+    .returning();
+
+   console.log("[...Order record updated]:", { updatedOrder });
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);
    console.error("[Background Event Error Intercepted]:", formatted.body);
@@ -206,6 +213,7 @@ onEvent<EventContract>(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
  next: async (payload) => {
   try {
    const { orderId } = payload.payload;
+   console.log("[...Stripe verification started]:", { event });
 
    return await db.transaction(async (tx: Transaction) => {
     await tx
@@ -217,7 +225,7 @@ onEvent<EventContract>(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
      })
      .where(eq(order.id, orderId));
 
-    await tx
+    const [updatedPayment] = await tx
      .update(payment)
      .set({
       paidAt: new Date(Date.now()),
@@ -226,7 +234,12 @@ onEvent<EventContract>(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
      })
      .where(
       and(eq(payment.orderId, orderId), eq(payment.paymentProvider, "stripe")),
-     );
+     )
+     .returning();
+
+    await tx.delete(cartItem).where(eq(cartItem.userId, updatedPayment.userId));
+
+    console.log("[...Stripe verification completed]:", { event });
    });
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);

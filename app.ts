@@ -50,7 +50,7 @@ class App {
   this.app.use(
    express.json({
     verify: (req: Request, res, buf) => {
-     if (req.url?.includes("/webhook/paystack")) {
+     if (req.url?.includes("/paystack/webhook")) {
       req.rawBody = buf.toString("utf8");
      }
     },
