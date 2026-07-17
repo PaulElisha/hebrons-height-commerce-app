@@ -31,7 +31,7 @@ export const UpdateProductDto = z.object({
  quantity: z.number().positive().optional(),
  category: z.string().optional(),
  subCategory: z.string().optional(),
- additionalData: z.record(z.string(), z.string()),
+ additionalData: z.record(z.string(), z.string()).optional(),
 });
 
 class ProductService {
