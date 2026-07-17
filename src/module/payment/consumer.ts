@@ -37,7 +37,7 @@ onEvent<EventContract>(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
       status: "initialized",
       accessCode: paystackData?.access_code,
       paymentReference: paystackData?.reference,
-      authorizationUrl: paystackData?.authorization_url,
+      authorizationUrl: paystackData?.checkout_url,
       paymentProvider: "paystack",
       updatedAt: new Date(),
      })

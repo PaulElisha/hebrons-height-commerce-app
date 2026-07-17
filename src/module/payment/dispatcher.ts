@@ -63,23 +63,22 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
 
   const responseData = await response.json();
 
+  const res = {
+   checkout_url: responseData.data?.authorization_url,
+   reference: responseData.data?.reference,
+   access_code: responseData.data?.access_code,
+  };
+
   if (responseData?.data)
    PublishEvent({
     event_type: EventType.PAYSTACK_PAYMENT_INITIALIZED,
     payload: {
-     paystackData: responseData?.data,
+     paystackData: res,
      orderId,
     },
    });
 
-  return [
-   {
-    checkout_url: responseData.data?.authorization_url,
-    reference: responseData.data?.reference,
-    access_code: responseData.data?.access_code,
-   },
-   null,
-  ];
+  return [res, null];
  },
  initializeStripeCheckout: async (
   userId: string,
