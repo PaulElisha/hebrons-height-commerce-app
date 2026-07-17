@@ -15,7 +15,7 @@ import { product } from "@schema/product.ts";
 export const CreateProductDto = z.object({
  name: z.string(),
  description: z.string(),
- image: z.string(),
+ image: z.string().optional(),
  price: z.number(),
  quantity: z.number(),
  category: z.string(),
@@ -156,7 +156,7 @@ class ProductService {
     merchantId: targetMerchantId,
     name: body.name,
     description: body.description,
-    image: body.image,
+    image: body.image || "",
     price: body.price,
     quantity: body.quantity,
     category: body.category,

@@ -11,25 +11,19 @@ import BadRequestException from "@shared/error/bad-request.ts";
 import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
-export const CreateMerchantSchema = z.object({
+export const CreateMerchantDto = z.object({
  businessName: z.string(),
+ businessLogo: z.string().optional(),
  businessDescription: z.string(),
  address: z.string(),
 });
 
-export const UpdateMerchantSchema = z.object({
+export const UpdateMerchantDto = z.object({
  businessName: z.string().optional(),
  businessLogo: z.string().optional(),
  businessDescription: z.string().optional(),
  address: z.string().optional(),
 });
-
-interface CreateMerchantDto {
- businessName: string;
- businessLogo: string;
- businessDescription: string;
- address: string;
-}
 
 class MerchantService {
  getMerchantIdFromProductId = async (productId: string): Promise<any> => {
@@ -53,7 +47,10 @@ class MerchantService {
   return merchantProfile;
  };
 
- createMerchantProfile = async (userId: string, body: CreateMerchantDto) => {
+ createMerchantProfile = async (
+  userId: string,
+  body: z.infer<typeof CreateMerchantDto>,
+ ) => {
   const [existing] = await db
    .select()
    .from(merchant)
@@ -76,7 +73,7 @@ class MerchantService {
    .values({
     userId: userId,
     businessName: body.businessName,
-    businessLogo: body.businessLogo,
+    businessLogo: body.businessLogo || "",
     businessDescription: body.businessDescription,
     address: body.address,
    })
@@ -88,7 +85,7 @@ class MerchantService {
  updateMerchantProfile = async (
   userId: string,
   merchantId: string,
-  body: z.infer<typeof UpdateMerchantSchema>,
+  body: z.infer<typeof UpdateMerchantDto>,
  ) => {
   const updateData: { [k: string]: any } = {};
 
