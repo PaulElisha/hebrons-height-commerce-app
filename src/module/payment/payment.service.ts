@@ -149,44 +149,6 @@ class PaymentService {
 
   return [paymentCreated, null];
  };
-
- // verifyPaystack = async (paymentReference: string) => {
- //  const response = await fetch(
- //   `${Env.PAYSTACK_VERIFY_URL}/${paymentReference}`,
- //   {
- //    method: "GET",
- //    headers: {
- //     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
- //     "Content-Type": "application/json",
- //    },
- //   },
- //  );
-
- //  if (!response.ok)
- //   return [
- //    null,
- //    new BadRequestException(
- //     "Payment verification error",
- //     HttpStatus.BAD_REQUEST,
- //     ErrorCode.VALIDATION_ERROR,
- //    ),
- //   ];
-
- //  const responseData = await response.json();
-
- //  console.log("Verify data:", responseData.data);
-
- //  if (responseData.data)
- //   PublishEvent({
- //    event_type: EventType.PAYSTACK_PAYMENT_VERIFIED,
- //    payload: {
- //     data: responseData.data,
- //     provider: "paystack",
- //    },
- //   });
-
- //  return [responseData.data, null];
- // };
 }
 
 export default new PaymentService();

@@ -32,66 +32,60 @@ import paystackWebhookRouter from "@module/webhook/paystack/paystack.routes.ts";
 
 class App {
  app: Express;
- constructor() {
-  this.app = express();
-  this.app.disable("x-powered-by");
-  this.app.set("trust proxy", 1);
-  this.initializeWebhooks();
-  this.initializeMiddlewares();
-  this.initializeApiRoutes();
- }
+  constructor() {
+   this.app = express();
+   this.app.disable("x-powered-by");
+   this.app.set("trust proxy", 1);
+   this.initializeWebhooks();
+   this.initializeMiddlewares();
+   this.initializeApiRoutes();
+  }
 
- initializeMiddlewares() {
-  this.app.use(cors);
-  this.app.use(limiter);
-  this.app.use(helmet);
-  this.app.use(cookieParser());
-  this.initializeAuthRoutes();
-  this.app.use(
-   express.json({
-    verify: (req: Request, res, buf) => {
-     req.rawBody = buf.toString("utf8");
-    },
-   }),
-  );
-  this.app.use(express.urlencoded({ extended: true }));
- }
+  initializeMiddlewares() {
+   this.app.use(cors);
+   this.app.use(limiter);
+   this.app.use(helmet);
+   this.app.use(cookieParser());
+   this.initializeAuthRoutes();
+   this.app.use(express.json());
+   this.app.use(express.urlencoded({ extended: true }));
+  }
 
- initializeAuthRoutes() {
-  this.app.all("/api/auth/*splat", toNodeHandler(auth));
- }
+  initializeAuthRoutes() {
+   this.app.all("/api/auth/*splat", toNodeHandler(auth));
+  }
 
- initializeWebhooks() {
-  this.app.use("/api/stripe", stripeWebhookRouter);
- }
+  initializeWebhooks() {
+   this.app.use("/api/stripe", stripeWebhookRouter);
+   this.app.use("/api/paystack", paystackWebhookRouter);
+  }
 
- initializeApiRoutes() {
-  this.app.get("/health", (_req, res) => {
-   res.status(HttpStatus.OK).send("Welcome to Hebrons Height Commerce APP");
-  });
+  initializeApiRoutes() {
+   this.app.get("/health", (_req, res) => {
+    res.status(HttpStatus.OK).send("Welcome to Hebrons Height Commerce APP");
+   });
 
-  this.app.use("/api/user", userRouter);
-  this.app.use("/api/merchant", merchantRouter);
-  this.app.use("/api/product", productRouter);
-  this.app.use("/api/cart", cartRouter);
-  this.app.use("/api/order", orderRouter);
-  this.app.use("/api/payment", paymentRouter);
-  this.app.use("/api/paystack", paystackWebhookRouter);
-  this.app.use("/api/upload", uploadRouter);
+   this.app.use("/api/user", userRouter);
+   this.app.use("/api/merchant", merchantRouter);
+   this.app.use("/api/product", productRouter);
+   this.app.use("/api/cart", cartRouter);
+   this.app.use("/api/order", orderRouter);
+   this.app.use("/api/payment", paymentRouter);
+   this.app.use("/api/upload", uploadRouter);
 
-  this.app.use(
-   "/api/docs",
-   swaggerUi.serve,
-   swaggerUi.setup(spec, options as any),
-  );
+   this.app.use(
+    "/api/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(spec, options as any),
+   );
 
-  this.app.get("/api/docs.json", (_req, res) => {
-   res.setHeader("Content-Type", "application/json");
-   res.send(spec);
-  });
+   this.app.get("/api/docs.json", (_req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(spec);
+   });
 
-  this.app.use(errorHandler);
- }
+   this.app.use(errorHandler);
+  }
 
  startServer = async () => {
   this.app.listen(Env.PORT, () => {

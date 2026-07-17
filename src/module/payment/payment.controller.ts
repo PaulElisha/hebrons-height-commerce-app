@@ -49,26 +49,6 @@ class PaymentController {
    });
   },
  );
-
- // verifyPaystack = asyncHandler(
- //  async (
- //   req: Request<any, any, any, { reference: string }>,
- //   res: Response,
- //   next: NextFunction,
- //  ) => {
- //   const reference = req.query.reference;
-
- //   const [data, e] = await PaymentService.verifyPaystack(reference);
-
- //   if (e) return next(e);
-
- //   return res.status(HttpStatus.NO_CONTENT).send({
- //    status: "ok",
- //    message: "Payment verified",
- //    data,
- //   });
- //  },
- // );
 }
 
 export default new PaymentController();
