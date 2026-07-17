@@ -69,7 +69,7 @@ class CartBase {
 
     if (e) throw e;
 
-    await callback(tx)(userCart.id, productId, Number(price));
+     await callback(tx)(userCart.id, userId, productId, Number(price));
    } else if (typeof intent === "string" && intent == "increment") {
     const existingItem = await helper.checkItemExistsInCart(tx)(
      userCart.id,
@@ -85,9 +85,9 @@ class CartBase {
      if (e) throw e;
     }
 
-    await callback(tx)(userCart.id, productId);
-   } else {
-    await callback(tx)(userCart.id, productId);
+     await callback(tx)(userCart.id, userId, productId);
+    } else {
+     await callback(tx)(userCart.id, userId, productId);
    }
 
    await this.calculateTotalAmount(tx)(userCart.id, userId);
