@@ -22,9 +22,9 @@ class MerchantRouter {
   this.router.get("/profile", MerchantController.getMerchantProfile);
   this.router.post(
    "/",
-   validate(CreateMerchantDto),
-   // upload.single("file"),
-   // cloudinaryUploadStream("avatar"),
+   // validate(CreateMerchantDto),
+   upload.single("file"),
+   cloudinaryUploadStream("avatar"),
    MerchantController.createMerchantProfile,
   );
   this.router.put(

@@ -42,9 +42,9 @@ class ProductRouter {
    "/",
    authenticate,
    roleGuard("merchant"),
-   validate(CreateProductDto),
-   // upload.single("file"),
-   // cloudinaryUploadStream("product_images"),
+   // validate(CreateProductDto),
+   upload.single("file"),
+   cloudinaryUploadStream("product_images"),
    ProductController.createProduct,
   );
   this.router.put(
