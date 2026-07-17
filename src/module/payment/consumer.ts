@@ -116,8 +116,9 @@ onEvent<EventContract>(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
     }
 
     const paidAmount = Number(event.data?.amount) / Env.SCALER;
+    const recordedAmount = Number(paymentRecord.amount) / Env.SCALER;
 
-    if (paidAmount !== paymentRecord.amount) {
+    if (paidAmount !== recordedAmount) {
      throw new BadRequestException(
       "Payment amount mismatch",
       HttpStatus.BAD_REQUEST,
