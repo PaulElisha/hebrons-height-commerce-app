@@ -7,7 +7,12 @@ const paystackWebhookRouter = Router().post(
  "/webhook",
  verifyPaystackSignature,
  async (req: Request, res: Response) => {
-  await paystackWebhookHandler(req.body);
+  try {
+   await paystackWebhookHandler(req.body);
+   res.status(200).json({ status: "success" });
+  } catch {
+   res.status(200).json({ status: "success" });
+  }
  },
 );
 

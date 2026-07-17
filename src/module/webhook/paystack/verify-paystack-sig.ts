@@ -16,7 +16,7 @@ export const verifyPaystackSignature = async (
   const signature = req.headers["x-paystack-signature"];
 
   if (!signature) {
-   next(
+   return next(
     new BadRequestException(
      "Missing Paystack signature",
      HttpStatus.BAD_REQUEST,
@@ -31,7 +31,7 @@ export const verifyPaystackSignature = async (
    .digest("hex");
 
   if (hash !== signature) {
-   next(
+   return next(
     new BadRequestException(
      "Invalid Paystack signature verification failed",
      HttpStatus.BAD_REQUEST,
@@ -40,8 +40,8 @@ export const verifyPaystackSignature = async (
    );
   }
 
-  next();
+  return next();
  } catch (error) {
-  next(error);
+  return next(error);
  }
 };
