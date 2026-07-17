@@ -1,6 +1,7 @@
 /** @format */
 import { env as loadEnv } from "custom-env";
 import z from "zod";
+
 process.env.APP_STAGE = process.env.APP_STAGE || "dev";
 
 const isProduction = process.env.APP_STAGE === "prod";

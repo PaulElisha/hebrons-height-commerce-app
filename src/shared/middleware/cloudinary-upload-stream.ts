@@ -1,11 +1,10 @@
 /** @format */
+import cloudinary from "@app/cloudinary.ts";
+import { createPublicId } from "@shared/helper.ts";
+import { AssetType } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 import streamifier from "streamifier";
 
-import cloudinary from "@app/cloudinary.ts";
-
-import { createPublicId } from "@shared/helper.ts";
-import { AssetType } from "@shared/types.ts";
 export const cloudinaryUploadStream = (folder: AssetType) => {
  return (req: Request, res: Response, next: NextFunction) => {
   if (!req.file) {

@@ -3,9 +3,9 @@
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
+import crypto from "crypto";
 import Env from "env.ts";
 import { NextFunction, Request, Response } from "express";
-import crypto from "crypto";
 
 export const verifyPaystackSignature = async (
  req: Request,

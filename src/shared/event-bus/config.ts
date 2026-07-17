@@ -1,5 +1,6 @@
 /** @format */
 import { Subject } from "rxjs";
+
 export enum EventType {
  ORDER_PLACED = "order.placed",
  ORDER_ACCEPTED = "order.accepted",

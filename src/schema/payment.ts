@@ -4,7 +4,6 @@ import { sql } from "drizzle-orm";
 import {
  check,
  integer,
- jsonb,
  pgTable,
  text,
  timestamp,
@@ -13,6 +12,7 @@ import {
 
 import { user } from "./auth.ts";
 import { order } from "./order.ts";
+
 export const paymentStatuses: readonly [
  string,
  string,

@@ -1,16 +1,14 @@
 /** @format */
-import { and, eq, isNotNull } from "drizzle-orm";
-import z from "zod";
-
 import db from "@db/db.ts";
-
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
-
 import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import BadRequestException from "@shared/error/bad-request.ts";
+import { and, eq, isNotNull } from "drizzle-orm";
+import z from "zod";
+
 export const CreateMerchantDto = z.object({
  businessName: z.string(),
  businessLogo: z.string().optional(),

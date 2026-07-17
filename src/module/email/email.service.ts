@@ -1,9 +1,8 @@
 /** @format */
+import Env from "@/env.ts";
+import type { MailData, MailerCallback } from "@shared/types.ts";
 import nodemailer, { type Transporter } from "nodemailer";
 
-import type { MailData, MailerCallback } from "@shared/types.ts";
-
-import Env from "@/env.ts";
 export const MailHeading = () => ({
  welcomeUser:
   "Welcome to TheOtherWife – Your Comfort Food Journey Starts Here!",

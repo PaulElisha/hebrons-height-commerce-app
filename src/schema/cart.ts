@@ -4,6 +4,7 @@ import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.ts";
 import { product } from "./product.ts";
+
 export const cart = pgTable("cart", {
  id: text("id")
   .primaryKey()

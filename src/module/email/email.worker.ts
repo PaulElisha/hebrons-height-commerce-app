@@ -1,8 +1,8 @@
 /** @format */
 import { MailAction } from "@module/email/dispatcher.ts";
 import Mailer from "@module/email/email.service.ts";
-
 import type { MailData, TUser } from "@shared/types.ts";
+
 export async function EmailWorker<U extends TUser>(
  task: MailData<U>,
  max: number = 3,

@@ -1,5 +1,6 @@
 /** @format */
 import type { ErrorCodeType, HttpStatusCodeType } from "@shared/types.ts";
+
 export default class AppError extends Error {
  constructor(
   public message: string,

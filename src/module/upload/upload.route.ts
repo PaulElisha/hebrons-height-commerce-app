@@ -1,10 +1,10 @@
 /** @format */
-import { Router } from "express";
-
 import authenticate from "@middleware/authenticate.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
+import { Router } from "express";
 
 import UploadController from "./upload.controller.ts";
+
 class UploadRouter {
  router: Router;
  constructor() {

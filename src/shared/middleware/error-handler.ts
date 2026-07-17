@@ -1,9 +1,9 @@
 /** @format */
+import HttpStatus from "@enum/http.ts";
+import AppError from "@error/app-error.ts";
 import type { NextFunction, Request, Response } from "express";
 import z from "zod";
 
-import HttpStatus from "@enum/http.ts";
-import AppError from "@error/app-error.ts";
 const errorHandler = (
  err: Error,
  req: Request,

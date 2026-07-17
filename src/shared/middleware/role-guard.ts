@@ -1,9 +1,9 @@
 /** @format */
-import type { NextFunction, Request, Response } from "express";
-
 import ErrorCode from "@enum/error-code.ts";
 import HttpStatus from "@enum/http.ts";
 import UnauthorizedExceptionError from "@error/unauthorized.ts";
+import type { NextFunction, Request, Response } from "express";
+
 const roleGuard = (...roles: Array<string>) => {
  return (req: Request, res: Response, next: NextFunction) => {
   try {

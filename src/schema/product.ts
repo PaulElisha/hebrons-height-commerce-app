@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { merchant } from "./merchant.ts";
+
 export const productStatuses: [string, string] = [
  "available",
  "sold_out",

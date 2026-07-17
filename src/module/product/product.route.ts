@@ -1,15 +1,15 @@
 /** @format */
-import { Router } from "express";
-
 import roleGuard from "@middleware/role-guard.ts";
 import authenticate from "@shared/middleware/authenticate.ts";
 import { cloudinaryUploadBulkStream } from "@shared/middleware/cloudinary-upload-bulk-stream.ts";
 import { cloudinaryUploadStream } from "@shared/middleware/cloudinary-upload-stream.ts";
 import upload from "@shared/middleware/multer-upload.ts";
 import { validate } from "@shared/middleware/validate.ts";
+import { Router } from "express";
 
 import ProductController from "./product.controller.ts";
-import { CreateProductDto, UpdateProductDto } from "./product.service.ts";
+import { UpdateProductDto } from "./product.service.ts";
+
 class ProductRouter {
  router: Router;
  constructor() {

@@ -1,16 +1,13 @@
 /** @format */
-import { and, eq, isNotNull, sql } from "drizzle-orm";
-
 import db from "@db/db.ts";
-
 import InventoryService from "@module/inventory/inventory.service.ts";
-
+import { cart, cartItem } from "@schema/cart.ts";
 import * as helper from "@shared/helper.ts";
 import { type Transaction } from "@shared/types.ts";
-
-import { cart, cartItem } from "@schema/cart.ts";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 
 import CartActions from "./dispatcher.ts";
+
 interface Intent {
  userId: string;
  productId: string;
@@ -69,7 +66,7 @@ class CartBase {
 
     if (e) throw e;
 
-     await callback(tx)(userCart.id, userId, productId, Number(price));
+    await callback(tx)(userCart.id, userId, productId, Number(price));
    } else if (typeof intent === "string" && intent == "increment") {
     const existingItem = await helper.checkItemExistsInCart(tx)(
      userCart.id,
@@ -85,9 +82,9 @@ class CartBase {
      if (e) throw e;
     }
 
-     await callback(tx)(userCart.id, userId, productId);
-    } else {
-     await callback(tx)(userCart.id, userId, productId);
+    await callback(tx)(userCart.id, userId, productId);
+   } else {
+    await callback(tx)(userCart.id, userId, productId);
    }
 
    await this.calculateTotalAmount(tx)(userCart.id, userId);

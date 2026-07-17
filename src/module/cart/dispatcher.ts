@@ -1,11 +1,9 @@
 /** @format */
-import { and, eq, sql } from "drizzle-orm";
-
+import { cartItem } from "@schema/cart.ts";
 import * as helper from "@shared/helper.ts";
 import type { Transaction } from "@shared/types.ts";
+import { and, eq, sql } from "drizzle-orm";
 
-import { cartItem } from "@schema/cart.ts";
-import { user } from "@schema/auth.ts";
 export const CartActions: Record<
  string,
  (tx: Transaction) => (...args: any[]) => any

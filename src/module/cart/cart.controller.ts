@@ -1,12 +1,11 @@
 /** @format */
-import type { NextFunction, Request, Response } from "express";
-
-import CartService from "@module/cart/cart.service.ts";
-import { ProductParams } from "@module/product/product.controller.ts";
-
 import HttpStatus from "@enum/http.ts";
 import asyncHandler from "@middleware/async-handler.ts";
+import CartService from "@module/cart/cart.service.ts";
+import { ProductParams } from "@module/product/product.controller.ts";
 import { APIResponse, TCartAndItem } from "@shared/types.ts";
+import type { NextFunction, Request, Response } from "express";
+
 export interface CartParams {
  cartId?: string;
 }

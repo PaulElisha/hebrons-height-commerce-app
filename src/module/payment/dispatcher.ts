@@ -1,26 +1,23 @@
 /** @format */
-import { eq } from "drizzle-orm";
-import Env from "env.ts";
-import FA from "fasy";
-
 import stripeClient from "@app/stripe.ts";
 import db from "@db/db.ts";
-
 import OrderService from "@module/order/order.service.ts";
-
+import { product } from "@schema/product.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
+import InternalServerError from "@shared/error/internal-server.ts";
 import { EventType } from "@shared/event-bus/config.ts";
 import { PublishEvent } from "@shared/event-bus/publisher.ts";
 import { Result, TOrderItems } from "@shared/types.ts";
-
-import { product } from "@schema/product.ts";
+import { eq } from "drizzle-orm";
+import Env from "env.ts";
+import FA from "fasy";
+import z from "zod";
 
 import { CheckoutData, PaymentResponse } from "./payment.service.ts";
-import z from "zod";
-import AppError from "@shared/error/app-error.ts";
-import InternalServerError from "@shared/error/internal-server.ts";
+
 export const FetchRail: Record<string, (...any: any[]) => any> = {
  initializePaystackCheckout: async (
   userId: string,
@@ -30,7 +27,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
   const orderWithUser = await OrderService.getOrderWithUser(userId, orderId);
 
   const baseAmount = Math.round(Number(orderWithUser.subtotal) * Env.SCALER);
-  const subCharge = (baseAmount * 15) / 100; // paystack fee
+  const subCharge = (baseAmount * 15) / 1000; // paystack fee
   const totalAmount = baseAmount + subCharge;
 
   const response = await fetch(Env.PAYSTACK_INIT_URL, {
@@ -124,7 +121,10 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      }),
      orderData.order_items,
     ),
-    metadata: data.metadata,
+    metadata: {
+     orderId,
+     ...data.metadata,
+    },
     success_url: `${Env.BASE_URL}/success`,
     cancel_url: `${Env.BASE_URL}/failed`,
    })
@@ -147,6 +147,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      currency: data.currency,
      callbackUrl: data.callback_url,
      checkout_url: session.url,
+     reference: session.id,
     };
 
     PublishEvent({

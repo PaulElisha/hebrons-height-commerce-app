@@ -1,5 +1,6 @@
 /** @format */
 import Env from "@/env.ts";
+
 const spec = {
  openapi: "3.0.0",
  info: {
@@ -207,18 +208,18 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-    CartItem: {
-     type: "object",
-     properties: {
-      id: { type: "string" },
-      userId: { type: "string" },
-      cartId: { type: "string" },
-      productId: { type: "string" },
-      price: { type: "integer" },
-      quantity: { type: "integer" },
-      totalItemPrice: { type: "integer", nullable: true },
-     },
+   CartItem: {
+    type: "object",
+    properties: {
+     id: { type: "string" },
+     userId: { type: "string" },
+     cartId: { type: "string" },
+     productId: { type: "string" },
+     price: { type: "integer" },
+     quantity: { type: "integer" },
+     totalItemPrice: { type: "integer", nullable: true },
     },
+   },
    CartAndItems: {
     type: "object",
     properties: {
@@ -321,7 +322,14 @@ const spec = {
      currency: { type: "string", nullable: true },
      status: {
       type: "string",
-      enum: ["pending", "initialized", "paid", "failed", "cancelled", "refunded"],
+      enum: [
+       "pending",
+       "initialized",
+       "paid",
+       "failed",
+       "cancelled",
+       "refunded",
+      ],
       default: "pending",
      },
      attempts: { type: "integer", nullable: true },
@@ -363,17 +371,17 @@ const spec = {
      pageNumber: { type: "integer", minimum: 1 },
     },
    },
-    UploadResult: {
-     type: "object",
-     properties: {
-      public_id: { type: "string" },
-      url: { type: "string" },
-      folder: { type: "string" },
-      signature: { type: "string" },
-      timestamp: { type: "integer" },
-      apiKey: { type: "string" },
-     },
+   UploadResult: {
+    type: "object",
+    properties: {
+     public_id: { type: "string" },
+     url: { type: "string" },
+     folder: { type: "string" },
+     signature: { type: "string" },
+     timestamp: { type: "integer" },
+     apiKey: { type: "string" },
     },
+   },
   },
  },
  paths: {
@@ -1562,7 +1570,10 @@ const spec = {
          type: "object",
          properties: {
           status: { type: "string", example: "ok" },
-          message: { type: "string", example: "Checkout session created successfully" },
+          message: {
+           type: "string",
+           example: "Checkout session created successfully",
+          },
           data: {
            type: "object",
            properties: {

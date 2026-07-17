@@ -1,12 +1,11 @@
 /** @format */
-import FA from "fasy";
-
-import HttpStatus from "@shared/enum/http.ts";
-import AppError from "@shared/error/app-error.ts";
+import { formatErrorPayload } from "@shared/error/format-error.ts";
 import { EventContract, EventType } from "@shared/event-bus/config.ts";
 import { onEvent } from "@shared/event-bus/consumer.ts";
+import FA from "fasy";
 
 import InventoryService from "./inventory.service.ts";
+
 onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
   try {
@@ -62,21 +61,3 @@ onEvent<EventContract>(EventType.ORDER_CANCELLED).subscribe({
   console.error(error);
  },
 });
-
-export const formatErrorPayload = (err: Error) => {
- if (err instanceof AppError) {
-  return {
-   status: err.statusCode,
-   body: { message: err.message, error: err.errorCode, status: err.statusCode },
-  };
- }
-
- return {
-  status: HttpStatus.INTERNAL_SERVER_ERROR,
-  body: {
-   message: "Internal Server error",
-   error: err.message || "Unknown error occurred",
-   status: "error",
-  },
- };
-};

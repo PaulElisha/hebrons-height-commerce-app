@@ -1,24 +1,22 @@
 /** @format */
-import { and, eq } from "drizzle-orm";
-
 import db from "@db/db.ts";
-
-import { formatErrorPayload } from "@module/inventory/consumer.ts";
-
-import { EventContract, EventType } from "@shared/event-bus/config.ts";
-import { onEvent } from "@shared/event-bus/consumer.ts";
-
+import { formatErrorPayload } from "@error/format-error.ts";
+import { cartItem } from "@schema/cart.ts";
 import { order } from "@schema/order.ts";
 import { payment } from "@schema/payment.ts";
-import NotFoundException from "@shared/error/not-found.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
-import Env from "env.ts";
-import { cartItem } from "@schema/cart.ts";
-import { Transaction } from "@shared/types.ts";
-import PaymentService from "./payment.service.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
+import NotFoundException from "@shared/error/not-found.ts";
+import { EventContract, EventType } from "@shared/event-bus/config.ts";
+import { onEvent } from "@shared/event-bus/consumer.ts";
+import { Transaction } from "@shared/types.ts";
+import { and, eq } from "drizzle-orm";
+import Env from "env.ts";
+
+import PaymentService from "./payment.service.ts";
+
 onEvent<EventContract>(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
  next: async (payload) => {
   try {
@@ -212,35 +210,98 @@ onEvent<EventContract>(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
 
 onEvent<EventContract>(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
  next: async (payload) => {
-  try {
-   const { orderId } = payload.payload;
-   console.log("[...Stripe verification started]:", { event });
+  const { event: session, eventType } = payload.payload;
+  console.log("[...Stripe verification started]:", { session });
 
+  try {
    return await db.transaction(async (tx: Transaction) => {
-    await tx
-     .update(order)
-     .set({
-      orderStatus: "fulfilled",
-      paymentStatus: "paid",
-      updatedAt: new Date(),
-     })
-     .where(eq(order.id, orderId));
+    const [paymentRecord] = await tx
+     .select()
+     .from(payment)
+     .where(eq(payment.paymentReference, session.id))
+     .for("update");
+
+    if (!paymentRecord) {
+     throw new NotFoundException(
+      "Payment not found",
+      HttpStatus.NOT_FOUND,
+      ErrorCode.RESOURCE_NOT_FOUND,
+     );
+    }
+
+    if (paymentRecord.status === "paid" || paymentRecord.status === "failed") {
+     return { handled: true, payment: paymentRecord };
+    }
+
+    if (eventType === "checkout.session.expired") {
+     const [updatedPayment] = await tx
+      .update(payment)
+      .set({
+       status: "failed",
+       updatedAt: new Date(),
+       attempts: 1,
+      })
+      .where(
+       and(
+        eq(payment.id, paymentRecord.id),
+        eq(payment.orderId, paymentRecord.orderId),
+       ),
+      )
+      .returning();
+
+     const [updatedOrder] = await tx
+      .update(order)
+      .set({
+       orderStatus: "failed",
+       paymentStatus: "failed",
+       updatedAt: new Date(),
+      })
+      .where(eq(order.id, paymentRecord.orderId))
+      .returning();
+
+     return { handled: true, payment: updatedPayment, updatedOrder };
+    }
+
+    const paidAmount = Number(session.amount_total) / Env.SCALER;
+    const recordedAmount = Number(paymentRecord.amount) / Env.SCALER;
+
+    if (paidAmount !== recordedAmount) {
+     throw new BadRequestException(
+      "Payment amount mismatch",
+      HttpStatus.BAD_REQUEST,
+      ErrorCode.VALIDATION_ERROR,
+     );
+    }
+
+    const paidAtDate = session.payment_intent?.created
+     ? new Date(session.payment_intent.created * 1000)
+     : new Date();
 
     const [updatedPayment] = await tx
      .update(payment)
      .set({
-      paidAt: new Date(Date.now()),
       status: "paid",
-      updatedAt: new Date(Date.now()),
+      paidAt: paidAtDate,
+      updatedAt: new Date(),
      })
-     .where(
-      and(eq(payment.orderId, orderId), eq(payment.paymentProvider, "stripe")),
-     )
+     .where(eq(payment.orderId, paymentRecord.orderId))
      .returning();
 
-    await tx.delete(cartItem).where(eq(cartItem.userId, updatedPayment.userId));
+    const [updatedOrder] = await tx
+     .update(order)
+     .set({
+      paymentStatus: "paid",
+      orderStatus: "fulfilled",
+      updatedAt: new Date(),
+     })
+     .where(eq(order.id, paymentRecord.orderId))
+     .returning();
 
-    console.log("[...Stripe verification completed]:", { event });
+    await tx.delete(cartItem).where(eq(cartItem.userId, paymentRecord.userId));
+
+    console.log("[...Stripe verification completed]:", { session });
+
+    return { handled: true, payment: updatedPayment, order: updatedOrder };
    });
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);
