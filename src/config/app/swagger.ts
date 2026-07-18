@@ -1551,14 +1551,14 @@ const spec = {
            type: "string",
            example: "Checkout session created successfully",
           },
-           data: {
-            type: "object",
-            properties: {
-             checkout_url: { type: "string" },
-             reference: { type: "string" },
-             access_code: { type: "string" },
-            },
+          data: {
+           type: "object",
+           properties: {
+            checkout_url: { type: "string" },
+            reference: { type: "string" },
+            access_code: { type: "string" },
            },
+          },
          },
         },
        },
@@ -1640,83 +1640,82 @@ const spec = {
      },
      "400": { description: "Webhook signature verification failed" },
      "500": { description: "Webhook processing error" },
-     },
     },
    },
   },
-  "/api/paystack/webhook": {
-   post: {
-    tags: ["Webhook"],
-    summary: "Paystack webhook handler (charge.success/charge.failed)",
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: {
-        type: "object",
-        description: "Raw Paystack event object",
-       },
-      },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Webhook acknowledged",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "success" },
-         },
-        },
-       },
+ },
+ "/api/paystack/webhook": {
+  post: {
+   tags: ["Webhook"],
+   summary: "Paystack webhook handler (charge.success/charge.failed)",
+   requestBody: {
+    required: true,
+    content: {
+     "application/json": {
+      schema: {
+       type: "object",
+       description: "Raw Paystack event object",
       },
      },
     },
    },
-  },
-  "/api/upload/cloudinary-signature": {
-   post: {
-    tags: ["Upload"],
-    summary: "Generate a Cloudinary upload signature",
-    security: [{ bearerAuth: [] }],
-    requestBody: {
-     required: true,
+   responses: {
+    "200": {
+     description: "Webhook acknowledged",
      content: {
       "application/json": {
        schema: {
         type: "object",
-        required: ["folder"],
         properties: {
-         folder: {
-          type: "string",
-          enum: ["product_images", "avatar", "product_videos"],
-         },
+         status: { type: "string", example: "success" },
         },
        },
       },
      },
     },
-    responses: {
-     "201": {
-      description: "Upload signature created",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "signature created" },
-          uploadResult: { $ref: "#/components/schemas/UploadResult" },
-         },
+   },
+  },
+ },
+ "/api/upload/cloudinary-signature": {
+  post: {
+   tags: ["Upload"],
+   summary: "Generate a Cloudinary upload signature",
+   security: [{ bearerAuth: [] }],
+   requestBody: {
+    required: true,
+    content: {
+     "application/json": {
+      schema: {
+       type: "object",
+       required: ["folder"],
+       properties: {
+        folder: {
+         type: "string",
+         enum: ["product_images", "avatar", "product_videos"],
         },
        },
       },
      },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — user role not authorized" },
     },
+   },
+   responses: {
+    "201": {
+     description: "Upload signature created",
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        properties: {
+         status: { type: "string", example: "ok" },
+         message: { type: "string", example: "signature created" },
+         uploadResult: { $ref: "#/components/schemas/UploadResult" },
+        },
+       },
+      },
+     },
+    },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+    "403": { description: "Forbidden — user role not authorized" },
    },
   },
  },
