@@ -2,16 +2,13 @@
 import { verifyPaystackSignature } from "@module/webhook/paystack/verify-paystack-sig.ts";
 import express, { Request, Response, Router } from "express";
 
+import { parsePaystackBody } from "./parse-paystack-body.ts";
 import { paystackWebhookHandler } from "./paystack.webhook.ts";
 
 const paystackWebhookRouter = Router().post(
  "/webhook",
  express.raw({ type: "application/json" }),
- (req: Request, _res: Response, next) => {
-  req.rawBody = req.body.toString("utf8");
-  req.body = JSON.parse(req.rawBody);
-  next();
- },
+ parsePaystackBody,
  verifyPaystackSignature,
  async (req: Request, res: Response) => {
   try {

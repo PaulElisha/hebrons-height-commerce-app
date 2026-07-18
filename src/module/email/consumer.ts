@@ -17,14 +17,15 @@ onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
   try {
    const { userId, orderId } = payload.payload;
 
-   const orderDetails = await OrderService.getOrderWithUser(userId, orderId);
+    const [orderDetails, e] = await OrderService.getOrderWithUser(userId, orderId);
+    if (e || !orderDetails) throw e || new Error("Order not found");
 
-   const emailMessage = `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`;
+    const emailMessage = `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`;
 
-   await EmailWorker({
-    user: orderDetails.user,
-    message: emailMessage,
-   });
+    await EmailWorker({
+     user: orderDetails.user,
+     message: emailMessage,
+    });
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);
    console.error("[Background Event Error Intercepted]:", formatted.body);

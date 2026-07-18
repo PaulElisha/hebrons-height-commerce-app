@@ -50,6 +50,7 @@
     "rootDir": ".",
     "baseUrl": ".",
     "strict": true,
+    "experimentalDecorators": true,
     "noEmit": true,
     "target": "ES2022",
     "module": "Nodenext",

@@ -7,7 +7,7 @@ export const onSubscribe = <T extends EventContract>(
  userId: string,
 ): Observable<T> => {
  return (eventBus$.asObservable() as Observable<EventContract>).pipe(
-  filter((update) => update?.payload?.userId === Number(userId)),
+  filter((update) => update?.payload?.userId === userId),
   map(
    (update): T =>
     ({

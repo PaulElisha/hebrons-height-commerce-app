@@ -1,68 +1,64 @@
 /** @format */
 import db from "@db/db.ts";
 import { cart, cartItem } from "@schema/cart.ts";
-import { TCartAndItem } from "@shared/types.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import AppError from "@shared/error/app-error.ts";
+import NotFoundException from "@shared/error/not-found.ts";
+import { Result, TCartAndItem } from "@shared/types.ts";
 import { and, eq } from "drizzle-orm";
 
 import CartBase from "./base.ts";
 
 class CartService {
- addToCart = async (
-  userId: string,
-  productId: string,
- ): Promise<TCartAndItem> => {
-  const data = await CartBase.modifyCart({
-   userId,
-   productId,
-   intent: "add",
-  });
+  addToCart = async (
+   userId: string,
+   productId: string,
+  ): Promise<Result<TCartAndItem, AppError>> => {
+   return await CartBase.modifyCart({
+    userId,
+    productId,
+    intent: "add",
+   });
+  };
 
-  return data;
- };
+  removeFromCart = async (
+   userId: string,
+   productId: string,
+  ): Promise<Result<TCartAndItem, AppError>> => {
+   return await CartBase.modifyCart({
+    userId,
+    productId,
+    intent: "remove",
+   });
+  };
 
- removeFromCart = async (
-  userId: string,
-  productId: string,
- ): Promise<TCartAndItem> => {
-  const data = await CartBase.modifyCart({
-   userId,
-   productId,
-   intent: "remove",
-  });
+  incrementItem = async (
+   userId: string,
+   productId: string,
+  ): Promise<Result<TCartAndItem, AppError>> => {
+   return await CartBase.modifyCart({
+    userId,
+    productId,
+    intent: "increment",
+   });
+  };
 
-  return data;
- };
-
- incrementItem = async (
-  userId: string,
-  productId: string,
- ): Promise<TCartAndItem> => {
-  const data = await CartBase.modifyCart({
-   userId,
-   productId,
-   intent: "increment",
-  });
-
-  return data;
- };
-
- decrementItem = async (
-  userId: string,
-  productId: string,
- ): Promise<TCartAndItem> => {
-  const data = await CartBase.modifyCart({
-   userId,
-   productId,
-   intent: "decrement",
-  });
-
-  return data;
- };
+  decrementItem = async (
+   userId: string,
+   productId: string,
+  ): Promise<Result<TCartAndItem, AppError>> => {
+   return await CartBase.modifyCart({
+    userId,
+    productId,
+    intent: "decrement",
+   });
+  };
 
  getUserCart = async (
   userId: string,
   cartId: string,
- ): Promise<TCartAndItem> => {
+ ): Promise<Result<TCartAndItem, AppError>> => {
   const result = await db
    .select()
    .from(cart)
@@ -70,18 +66,32 @@ class CartService {
    .where(and(eq(cart.userId, userId), eq(cart.id, cartId)))
    .limit(1);
 
-  return {
-   cart: {
-    ...result[0].cart,
-    subtotal: result[0].cart.subtotal as number,
+  if (!result.length || !result[0].cart) {
+   return [
+    null,
+    new NotFoundException(
+     "Cart not found",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
+  return [
+   {
+    cart: {
+     ...result[0].cart,
+     subtotal: result[0].cart.subtotal as number,
+    },
+    cart_items: result
+     .filter((r) => r.cart_items)
+     .map((r) => ({
+      ...r.cart_items!,
+      totalItemPrice: r.cart_items!.totalItemPrice as number,
+     })),
    },
-   cart_items: result
-    .filter((r) => r.cart_items)
-    .map((r) => ({
-     ...r.cart_items!,
-     totalItemPrice: r.cart_items!.totalItemPrice as number,
-    })),
-  };
+   null,
+  ];
  };
 }
 

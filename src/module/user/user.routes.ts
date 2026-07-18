@@ -7,6 +7,7 @@ import { cloudinaryUploadStream } from "@shared/middleware/cloudinary-upload-str
 import upload from "@shared/middleware/multer-upload.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { APIResponse, TUser } from "@shared/types.ts";
+import asyncHandler from "@shared/middleware/async-handler.ts";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { Request, Response, Router } from "express";
 
@@ -20,32 +21,35 @@ class UserRouter {
  }
 
  initializeRoutes() {
-  this.router.get(
-   "/profile",
-   async (req: Request, res: Response<APIResponse<TUser>>) => {
-    const user = req.user;
-    res.json({
-     status: "ok",
-     message: "user profile fetched successfully",
-     data: user,
-    });
-   },
-  );
+   this.router.get(
+    "/profile",
+    asyncHandler(
+     async (req: Request, res: Response<APIResponse<TUser>>) => {
+      const user = req.user;
+      res.json({
+       status: "ok",
+       message: "user profile fetched successfully",
+       data: user,
+      });
+     },
+    ),
+   );
 
-  this.router.put(
-   "/update",
-   upload.single("file"),
-   cloudinaryUploadStream("avatar"),
-   async (req: Request, res: Response<APIResponse<TUser>>) => {
+   this.router.put(
+    "/update",
+    upload.single("file"),
+    cloudinaryUploadStream("avatar"),
+    asyncHandler(
+     async (req: Request, res: Response<APIResponse<TUser>>) => {
     const body = req.body;
     const userId = req.user.id;
     const image = req.upload_image.url;
 
     const updateData: { [k: string]: any } = {};
 
-    updateData.name = body.name && body.name;
-    updateData.email = body.email && body.email;
-    updateData.image = image && image;
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.email !== undefined) updateData.email = body.email;
+    if (image !== undefined) updateData.image = image;
     updateData.updatedAt = new Date();
 
     const [updatedUser] = await db
@@ -60,9 +64,10 @@ class UserRouter {
      data: updatedUser,
     });
    },
-  );
+    ),
+   );
+  }
  }
-}
 
 const userRouter = new UserRouter().router;
 export default userRouter;

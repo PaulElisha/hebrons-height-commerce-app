@@ -7,6 +7,7 @@ import {
  Pagination,
  TOrder,
  TOrderAndItems,
+ TOrderJoinRow,
 } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
@@ -45,7 +46,7 @@ class OrderController {
  getUserOrderByStatus = asyncHandler(
   async (
    req: Request<{}, {}, {}, { status: string }>,
-   res: Response<APIResponse<TOrderAndItems>>,
+   res: Response<APIResponse<TOrderJoinRow[] | null>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -147,16 +148,18 @@ class OrderController {
  );
 
  deleteOrderItem = asyncHandler(
-  async (req: Request<OrderParams>, res: Response, next: NextFunction) => {
-   const orderId = req.params.orderId as string;
+   async (req: Request<OrderParams>, res: Response, next: NextFunction) => {
+    const orderId = req.params.orderId as string;
 
-   await OrderService.deleteOrderItem(orderId);
+    const [, error] = await OrderService.deleteOrderItem(orderId);
 
-   return res.status(HttpStatus.OK).json({
-    status: "ok",
-    message: "order deleted",
-   });
-  },
- );
+    if (error) return next(error);
+
+    return res.status(HttpStatus.OK).json({
+     status: "ok",
+     message: "order deleted",
+    });
+   },
+  );
 }
 export default new OrderController();

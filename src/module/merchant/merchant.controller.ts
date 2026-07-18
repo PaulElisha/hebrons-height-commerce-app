@@ -11,18 +11,20 @@ export interface MerchantParams {
 }
 
 class MerchantController {
- getMerchantProfile = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-   const userId = req.user.id;
-   const data = await MerchantService.getMerchantProfile(userId);
+  getMerchantProfile = asyncHandler(
+   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const userId = req.user.id;
+    const [data, error] = await MerchantService.getMerchantProfile(userId);
 
-   return res.status(HttpStatus.OK).json({
-    status: "ok",
-    message: "fetched merchant profile",
-    data,
-   });
-  },
- );
+    if (error) throw error;
+
+    return res.status(HttpStatus.OK).json({
+     status: "ok",
+     message: "fetched merchant profile",
+     data,
+    });
+   },
+  );
 
  createMerchantProfile = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -30,10 +32,12 @@ class MerchantController {
    const body = req.body;
    const businessLogo = req.upload_image.url;
 
-   const data = await MerchantService.createMerchantProfile(userId, {
+   const [data, error] = await MerchantService.createMerchantProfile(userId, {
     ...body,
     businessLogo,
    });
+
+   if (error) throw error;
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -53,11 +57,13 @@ class MerchantController {
    const merchantId = req.params.merchantId as string;
    const body = req.body;
 
-   const data = await MerchantService.updateMerchantProfile(
+   const [data, error] = await MerchantService.updateMerchantProfile(
     userId,
     merchantId,
     body,
    );
+
+   if (error) throw error;
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -76,12 +82,14 @@ class MerchantController {
    const userId = req.user.id;
    const merchantId = req.params.merchantId as string;
 
-   await MerchantService.deleteMerchantProfile(userId, merchantId);
+   const [, error] = await MerchantService.deleteMerchantProfile(
+    userId,
+    merchantId,
+   );
 
-   return res.status(HttpStatus.NO_CONTENT).json({
-    status: "ok",
-    message: "merchant profile deleted",
-   });
+   if (error) throw error;
+
+   return res.status(HttpStatus.NO_CONTENT).send();
   },
  );
 }

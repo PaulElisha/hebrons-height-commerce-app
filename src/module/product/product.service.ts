@@ -4,9 +4,19 @@ import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import AppError from "@shared/error/app-error.ts";
+import BadRequestException from "@shared/error/bad-request.ts";
 import NotFoundException from "@shared/error/not-found.ts";
 import * as helper from "@shared/helper.ts";
-import { Pagination, UploadImages } from "@shared/types.ts";
+import {
+ Pagination,
+ Result,
+ TMerchantProducts,
+ TPaginatedProducts,
+ TProduct,
+ TProductWithMerchant,
+ UploadImages,
+} from "@shared/types.ts";
 import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
 import z from "zod";
 
@@ -33,29 +43,49 @@ export const UpdateProductDto = z.object({
 });
 
 class ProductService {
- getMerchantProducts = async (userId: string) => {
-  const merchantId = await helper.getMerchantIdFromUser(userId);
+ getMerchantProducts = async (
+  userId: string,
+ ): Promise<Result<TMerchantProducts, AppError>> => {
+  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+  if (e || !merchantId) return [null, e];
+
   const data = await helper.fetchMerchantProductsFromDb(merchantId);
-  return data;
+  return [data, null];
  };
 
- getSingleProduct = async (productId: string) => {
+ getSingleProduct = async (
+  productId: string,
+ ): Promise<Result<TProduct, AppError>> => {
   const [productDetails] = await db
    .select()
    .from(product)
    .where(eq(product.id, productId))
    .limit(1);
 
-  return productDetails;
+  if (!productDetails) {
+   return [
+    null,
+    new NotFoundException(
+     "Product not found",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
+  return [productDetails, null];
  };
 
- getProductForMerchant = async (merchantId: string) => {
+ getProductForMerchant = async (
+  merchantId: string,
+ ): Promise<Result<TMerchantProducts, AppError>> => {
   const data = await helper.fetchMerchantProductsFromDb(merchantId);
-
-  return data;
+  return [data, null];
  };
 
- getLatestProducts = async (pagination: Pagination) => {
+ getLatestProducts = async (
+  pagination: Pagination,
+ ): Promise<Result<TProductWithMerchant[], AppError>> => {
   const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
   const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
   const offset = (pageNumber - 1) * limit;
@@ -82,7 +112,7 @@ class ProductService {
      : null,
    })) || [];
 
-  return flattenedProducts;
+  return [flattenedProducts, null];
  };
 
  getProducts = async (
@@ -91,12 +121,12 @@ class ProductService {
    category?: string;
   },
   pagination: Pagination,
- ) => {
-  const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
-  const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
-  const offset = (pageNumber - 1) * limit;
+  ): Promise<Result<TPaginatedProducts, AppError>> => {
+   const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
+   const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
+   const offset = (pageNumber - 1) * limit;
 
-  const filters: SQL[] = [eq(product?.status, "available")];
+   const filters: SQL[] = [eq(product?.status, "available")];
 
   if (filter?.search) {
    filters?.push(
@@ -128,25 +158,29 @@ class ProductService {
   const totalProducts = Number(totalCountResult?.totalCount);
   const totalPages = Math.ceil(totalProducts / limit);
 
-  return {
-   data: {
-    products: result?.map((p) => p.product),
-    pagination: {
-     limit,
-     pageNumber,
-     totalProducts,
-     totalPages,
-     offset,
+  return [
+   {
+    data: {
+     products: result?.map((p) => p.product),
+     pagination: {
+      limit,
+      pageNumber,
+      totalProducts,
+      totalPages,
+      offset,
+     },
     },
    },
-  };
+   null,
+  ];
  };
 
  createProduct = async (
   userId: string,
   body: z.infer<typeof CreateProductDto>,
- ) => {
-  const targetMerchantId = await helper.getMerchantIdFromUser(userId);
+ ): Promise<Result<TProduct, AppError>> => {
+  const [targetMerchantId, e] = await helper.getMerchantIdFromUser(userId);
+  if (e || !targetMerchantId) return [null, e];
 
   const [newProduct] = await db
    .insert(product)
@@ -161,18 +195,18 @@ class ProductService {
     subCategory: body.subCategory,
     additionalData: body.additionalData,
    })
-   .onConflictDoNothing()
    .returning();
 
-  return newProduct;
+  return [newProduct, null];
  };
 
  uploadAdditionalMediaForProduct = async (
   userId: string,
   productId: string,
   uploadedImages: UploadImages,
- ) => {
-  const targetMerchantId = await helper.getMerchantIdFromUser(userId);
+ ): Promise<Result<TProduct, AppError>> => {
+  const [targetMerchantId, e] = await helper.getMerchantIdFromUser(userId);
+  if (e || !targetMerchantId) return [null, e];
 
   const [existingProduct] = await db
    .select()
@@ -183,11 +217,14 @@ class ProductService {
    .limit(1);
 
   if (!existingProduct) {
-   throw new NotFoundException(
-    "product not found",
-    HttpStatus.NOT_FOUND,
-    ErrorCode.RESOURCE_NOT_FOUND,
-   );
+   return [
+    null,
+    new NotFoundException(
+     "product not found",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
   }
 
   const imageLinks = uploadedImages.map((img) => img.url);
@@ -202,26 +239,38 @@ class ProductService {
    )
    .returning();
 
-  return updatedImages;
+  if (!updatedImages) {
+   return [
+    null,
+    new NotFoundException(
+     "Product not found or not owned by merchant",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
+  return [updatedImages, null];
  };
 
  updateProduct = async (
   userId: string,
   productId: string,
   body: z.infer<typeof UpdateProductDto>,
- ) => {
-  const targetMerchantId = await helper.getMerchantIdFromUser(userId);
+ ): Promise<Result<TProduct, AppError>> => {
+  const [targetMerchantId, e] = await helper.getMerchantIdFromUser(userId);
+  if (e || !targetMerchantId) return [null, e];
 
   const updateData: { [k: string]: any } = {};
 
-  updateData.name = body.name && body.name;
-  updateData.description = body.description ?? body.description;
-  updateData.image = body.image && body.image;
-  updateData.price = body.price && body.price;
-  updateData.quantity = body.quantity && body.quantity;
-  updateData.category = body.category && body.category;
-  updateData.subCategory = body.subCategory && body.subCategory;
-  updateData.additionalData = body.additionalData && body.additionalData;
+  if (body.name !== undefined) updateData.name = body.name;
+  if (body.description !== undefined) updateData.description = body.description;
+  if (body.image !== undefined) updateData.image = body.image;
+  if (body.price !== undefined) updateData.price = body.price;
+  if (body.quantity !== undefined) updateData.quantity = body.quantity;
+  if (body.category !== undefined) updateData.category = body.category;
+  if (body.subCategory !== undefined) updateData.subCategory = body.subCategory;
+  if (body.additionalData !== undefined) updateData.additionalData = body.additionalData;
   updateData.updatedAt = new Date();
 
   const [updatedProduct] = await db
@@ -232,17 +281,46 @@ class ProductService {
    )
    .returning();
 
-  return updatedProduct;
+  if (!updatedProduct) {
+   return [
+    null,
+    new NotFoundException(
+     "Product not found or not owned by merchant",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
+  return [updatedProduct, null];
  };
 
- deleteProduct = async (userId: string, productId: string) => {
-  const targetMerchantId = await helper.getMerchantIdFromUser(userId);
+ deleteProduct = async (
+  userId: string,
+  productId: string,
+ ): Promise<Result<void, AppError>> => {
+  const [targetMerchantId, e] = await helper.getMerchantIdFromUser(userId);
+  if (e || !targetMerchantId) return [null, e];
 
-  await db
+  const [deletedProduct] = await db
    .delete(product)
    .where(
     and(eq(product.merchantId, targetMerchantId), eq(product.id, productId)),
-   );
+   )
+   .returning();
+
+  if (!deletedProduct) {
+   return [
+    null,
+    new NotFoundException(
+     "Product not found or not owned by merchant",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
+  return [null, null];
  };
 }
 

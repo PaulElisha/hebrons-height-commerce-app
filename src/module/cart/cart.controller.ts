@@ -16,11 +16,13 @@ class CartController {
    req: Request<ProductParams>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
-  ): Promise<Response> => {
+  ) => {
    const userId = req.user.id;
    const productId = req.params.productId as string;
 
-   const data = await CartService.addToCart(userId, productId);
+   const [data, error] = await CartService.addToCart(userId, productId);
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -35,11 +37,13 @@ class CartController {
    req: Request<ProductParams>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
-  ): Promise<Response> => {
+  ) => {
    const userId = req.user.id;
    const productId = req.params.productId as string;
 
-   const data = await CartService.removeFromCart(userId, productId);
+   const [data, error] = await CartService.removeFromCart(userId, productId);
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -54,11 +58,13 @@ class CartController {
    req: Request<ProductParams>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
-  ): Promise<Response> => {
+  ) => {
    const userId = req.user.id;
    const productId = req.params.productId as string;
 
-   const data = await CartService.incrementItem(userId, productId);
+   const [data, error] = await CartService.incrementItem(userId, productId);
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -73,11 +79,13 @@ class CartController {
    req: Request<ProductParams>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
-  ): Promise<Response> => {
+  ) => {
    const userId = req.user.id;
    const productId = req.params.productId as string;
 
-   const data = await CartService.decrementItem(userId, productId);
+   const [data, error] = await CartService.decrementItem(userId, productId);
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -92,11 +100,13 @@ class CartController {
    req: Request<CartParams>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
-  ): Promise<Response> => {
+  ) => {
    const userId = req.user.id;
    const cartId = req.params.cartId as string;
 
-   const data = await CartService.getUserCart(userId, cartId);
+   const [data, error] = await CartService.getUserCart(userId, cartId);
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

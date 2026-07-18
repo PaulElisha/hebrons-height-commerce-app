@@ -19,15 +19,16 @@ import z from "zod";
 import { CheckoutData, PaymentResponse } from "./payment.service.ts";
 
 export const FetchRail: Record<string, (...any: any[]) => any> = {
- initializePaystackCheckout: async (
-  userId: string,
-  orderId: string,
-  data: z.infer<typeof CheckoutData>,
- ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
-  const orderWithUser = await OrderService.getOrderWithUser(userId, orderId);
+  initializePaystackCheckout: async (
+   userId: string,
+   orderId: string,
+   data: z.infer<typeof CheckoutData>,
+  ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
+   const [orderWithUser, e] = await OrderService.getOrderWithUser(userId, orderId);
+   if (e || !orderWithUser) return [null, e];
 
   const baseAmount = Math.round(Number(orderWithUser.subtotal) * Env.SCALER);
-  const subCharge = (baseAmount * 15) / 1000; // paystack fee
+  const subCharge = Math.round((baseAmount * 15) / 10000) + 100 * Env.SCALER; // 0.15% + 100 NGN
   const totalAmount = baseAmount + subCharge;
 
   const response = await fetch(Env.PAYSTACK_INIT_URL, {
@@ -112,6 +113,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
          .from(product)
          .where(eq(product.id, i.productId))
          .then((res) => {
+          if (!res[0]) return "Unknown product";
           return res[0].name;
          }),
        },

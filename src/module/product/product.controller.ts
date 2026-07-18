@@ -15,11 +15,13 @@ class ProductController {
  getMerchantProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
    const userId = req.user.id;
-   const data = await ProductService.getMerchantProducts(userId);
+   const [data, error] = await ProductService.getMerchantProducts(userId);
+
+   if (error) return next(error);
 
    res.status(HttpStatus.OK).json({
     status: "ok",
-    messsage: "fetched merchant products",
+    message: "fetched merchant products",
     data,
    });
   },
@@ -32,7 +34,9 @@ class ProductController {
    next: NextFunction,
   ): Promise<any> => {
    const productId = req.params.productId as string;
-   const data = await ProductService.getSingleProduct(productId);
+   const [data, error] = await ProductService.getSingleProduct(productId);
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -46,7 +50,9 @@ class ProductController {
   async (req: Request<MerchantParams>, res: Response, next: NextFunction) => {
    const merchantId = req.params.merchantId as string;
 
-   const data = await ProductService.getProductForMerchant(merchantId);
+   const [data, error] = await ProductService.getProductForMerchant(merchantId);
+
+   if (error) return next(error);
 
    res.status(HttpStatus.OK).json({
     status: "ok",
@@ -70,7 +76,9 @@ class ProductController {
     pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
    };
 
-   const data = await ProductService.getLatestProducts(pagination);
+   const [data, error] = await ProductService.getLatestProducts(pagination);
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -107,7 +115,9 @@ class ProductController {
     category: req.query.category,
    };
 
-   const data = await ProductService.getProducts(filters, pagination);
+   const [data, error] = await ProductService.getProducts(filters, pagination);
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -123,10 +133,12 @@ class ProductController {
    const body = req.body;
    const image = req.upload_image.url;
 
-   const data = await ProductService.createProduct(userId, {
+   const [data, error] = await ProductService.createProduct(userId, {
     ...body,
     image,
    });
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -146,7 +158,13 @@ class ProductController {
    const productId = req.params.productId as string;
    const body = req.body;
 
-   const data = await ProductService.updateProduct(userId, productId, body);
+   const [data, error] = await ProductService.updateProduct(
+    userId,
+    productId,
+    body,
+   );
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -166,11 +184,14 @@ class ProductController {
    const productId = req.params.productId as string;
    const imageUrls = req.upload_images as UploadImages;
 
-   const data = await ProductService.uploadAdditionalMediaForProduct(
-    userId,
-    productId,
-    imageUrls,
-   );
+   const [data, error] =
+    await ProductService.uploadAdditionalMediaForProduct(
+     userId,
+     productId,
+     imageUrls,
+    );
+
+   if (error) return next(error);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -189,8 +210,11 @@ class ProductController {
    const userId = req.user.id;
    const productId = req.params.productId as string;
 
-   await ProductService.deleteProduct(userId, productId);
-   return res.status(HttpStatus.NO_CONTENT).json({
+   const [, error] = await ProductService.deleteProduct(userId, productId);
+
+   if (error) return next(error);
+
+   return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "product deleted successfully",
    });

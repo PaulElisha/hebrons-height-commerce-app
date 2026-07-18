@@ -12,16 +12,21 @@ import NotFoundException from "@shared/error/not-found.ts";
 import { EventType } from "@shared/event-bus/config.ts";
 import { PublishEvent } from "@shared/event-bus/publisher.ts";
 import * as helper from "@shared/helper.ts";
+import { Mutex } from "async-mutex";
 import {
  Pagination,
  Result,
  TCartItem,
  TOrder,
  TOrderAndItems,
- Transaction,
+ TOrderJoinRow,
+ TOrderWithUser,
+ TMerchantPaginatedOrders,
 } from "@shared/types.ts";
-import { Mutex } from "async-mutex";
+
+const mutex = new Mutex();
 import { and, count, desc, eq, isNotNull, lt, ne, SQL, sql } from "drizzle-orm";
+import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
 
@@ -36,10 +41,11 @@ export const CreateOrderDto = z.object({
  }),
 });
 
-const mutex = new Mutex();
-
 class OrderService {
- getOrderWithUser = async (userId: string, orderId: string) => {
+ getOrderWithUser = async (
+  userId: string,
+  orderId: string,
+ ): Promise<Result<TOrderWithUser, AppError>> => {
   const result = await db
    .select({
     id: order.id,
@@ -57,107 +63,124 @@ class OrderService {
    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
   if (!(result.length > 0)) {
-   throw new Error(`Order with ID ${orderId} not found`);
+   return [
+    null,
+    new NotFoundException(
+     `Order with ID ${orderId} not found`,
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
   }
 
-  return result[0];
+  return [result[0], null];
  };
 
- placeOrder = async (
+ @Transactional()
+ async placeOrder(
   userId: string,
   cartId: string,
   body: z.infer<typeof CreateOrderDto>,
- ): Promise<Result<string, AppError>> => {
-  const data = await CartService.getUserCart(userId, cartId);
+ ): Promise<Result<string, AppError>> {
+  const [data, err] = await CartService.getUserCart(userId, cartId);
+  if (err || !data) return [null, err];
 
   const [orderExists] = await helper.validateOrderForCart(cartId, userId);
 
   if (orderExists) {
-   throw new BadRequestException(
-    "Order already created",
-    HttpStatus.UNPROCESSABLE_ENTITY,
-    ErrorCode.VALIDATION_ERROR,
-   );
+   return [
+    null,
+    new BadRequestException(
+     "Order already created",
+     HttpStatus.UNPROCESSABLE_ENTITY,
+     ErrorCode.VALIDATION_ERROR,
+    ),
+   ];
   }
 
-  const [returnData, e] = await mutex.runExclusive(async () => {
-   return await db.transaction(async (tx: Transaction) => {
-    const [newOrder] = await tx
-     .insert(order)
-     .values({
-      userId,
-      cartId,
-      subtotal: data?.cart?.subtotal as number,
-      deliveryAddress: {
-       label: "home",
-       address: body.deliveryAddress.address,
-       city: body.deliveryAddress.city,
-       state: body.deliveryAddress.state,
-       country: body.deliveryAddress.country,
-       line1: body.deliveryAddress.line1,
-       line2: body.deliveryAddress.line2,
-      } as any,
-     })
-     .returning();
+  const [result, e] = await mutex.runExclusive(async () => {
+   const [newOrder] = await db
+    .insert(order)
+    .values({
+     userId,
+     cartId,
+     subtotal: data.cart.subtotal as number,
+     deliveryAddress: {
+      label: "home",
+      address: body.deliveryAddress.address,
+      city: body.deliveryAddress.city,
+      state: body.deliveryAddress.state,
+      country: body.deliveryAddress.country,
+      line1: body.deliveryAddress.line1,
+      line2: body.deliveryAddress.line2,
+     } as any,
+    })
+    .returning();
 
-    const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {
-     const [productData, e] = await helper.getProductThreshold(tx, v.productId);
+   const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {
+    const [productData, e] = await helper.getProductThreshold(v.productId);
+    if (e || !productData) return null;
 
-     if (e || !productData) return [null, e];
+    const [merchantId, err] = await helper.getMerchantIdFromProductId(
+     v.productId,
+    );
+    if (err || !merchantId) return null;
 
-     const merchantId = await helper.getMerchantIdFromProductId(
-      tx,
-      v.productId,
-     );
+    return {
+     orderId: newOrder.id,
+     productId: v.productId,
+     merchantId,
+     quantity: v.quantity,
+     unitPrice: v.price,
+     lineTotal: v.quantity * v.price,
+    };
+   }, data.cart_items || []);
 
-     return {
-      orderId: newOrder?.id,
-      productId: v.productId,
-      merchantId,
-      quantity: v.quantity,
-      unitPrice: v.price,
-      lineTotal: v.quantity * v.price,
-     };
-    }, data?.cart_items || []);
+   const validItems = itemsToInsert.filter(Boolean);
 
-    const productIds = itemsToInsert.map((item: TCartItem) => item.productId);
+   if (validItems.length <= 0) {
+    return [
+     null,
+     new NotFoundException(
+      "Item not found in cart",
+      HttpStatus.NOT_FOUND,
+      ErrorCode.RESOURCE_NOT_FOUND,
+     ),
+    ];
+   }
 
-    if (itemsToInsert.length <= 0) {
-     return [
-      null,
-      new NotFoundException(
-       "Item not found in cart",
-       HttpStatus.NOT_FOUND,
-       ErrorCode.RESOURCE_NOT_FOUND,
-      ),
-     ];
-    }
+   await db.insert(orderItem).values(validItems);
 
-    await tx.insert(orderItem).values(itemsToInsert);
+   return [
+    {
+     orderId: newOrder.id,
+     productIds: validItems.map((i: any) => i.productId),
+    },
+    null,
+   ];
+  });
 
-    return [{ orderId: newOrder.id, productIds }, null];
+  if (e) return [null, e];
+
+  runOnTransactionCommit(() => {
+   PublishEvent({
+    event_type: EventType.ORDER_PLACED,
+    payload: {
+     userId,
+     cartId,
+     orderId: result?.orderId,
+     productIds: result?.productIds,
+    },
    });
   });
 
-  if (e) throw e;
-
-  PublishEvent({
-   event_type: EventType.ORDER_PLACED,
-   payload: {
-    userId,
-    cartId,
-    orderId: returnData?.orderId,
-    productIds: returnData?.productIds,
-   },
-  });
-
-  return [returnData.orderId, null];
- };
+  return [result?.orderId, null];
+ }
 
  getUserOrderByStatus = async (
   userId: string,
   status: string,
- ): Promise<Result<any, AppError>> => {
+ ): Promise<Result<TOrderJoinRow[], AppError>> => {
   const result = await db
    .select()
    .from(order)
@@ -216,8 +239,9 @@ class OrderService {
    status?: string;
   },
   pagination: Pagination,
- ): Promise<Result<any, AppError>> => {
-  const merchantId = await helper.getMerchantIdFromUser(userId);
+  ): Promise<Result<TMerchantPaginatedOrders, AppError>> => {
+   const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
+   if (err || !merchantId) return [null, err];
 
   const limit = Math.min(Math.max(pagination.pageSize ?? 10, 1), 50);
   const pageNumber = Math.max(pagination.pageNumber ?? 1, 1);
@@ -273,70 +297,105 @@ class OrderService {
    );
  };
 
- cancelOrder = async (orderId: string): Promise<Result<TOrder, AppError>> => {
-  return await db.transaction(async (tx: Transaction) => {
-   const [existingOrder] = await tx
+ @Transactional()
+ async cancelOrder(orderId: string): Promise<Result<TOrder, AppError>> {
+  const [cancelledOrder] = await db
+   .update(order)
+   .set({
+    orderStatus: "cancelled",
+    paymentStatus: "cancelled",
+   })
+   .where(
+    and(
+     eq(order.id, orderId),
+     ne(order.orderStatus, "cancelled"),
+     ne(order.paymentStatus, "paid"),
+    ),
+   )
+   .returning();
+
+  if (!cancelledOrder) {
+   const [existingOrder] = await db
     .select({ orderStatus: order.orderStatus })
     .from(order)
-    .where(eq(order.id, orderId));
+    .where(eq(order.id, orderId))
+    .limit(1);
 
-   if (existingOrder?.orderStatus === "cancelled") {
-    throw new BadRequestException(
-     "Order already cancelled",
-     HttpStatus.UNPROCESSABLE_ENTITY,
-     ErrorCode.VALIDATION_ERROR,
-    );
+   if (!existingOrder) {
+    return [
+     null,
+     new NotFoundException(
+      "Order not found",
+      HttpStatus.NOT_FOUND,
+      ErrorCode.RESOURCE_NOT_FOUND,
+     ),
+    ];
    }
 
-   const [cancelledOrder] = await tx
-    .update(order)
-    .set({
-     orderStatus: "cancelled",
-     paymentStatus: "cancelled",
-    })
-    .where(and(eq(order.id, orderId), ne(order.paymentStatus, "paid")))
-    .returning();
+   if (existingOrder.orderStatus === "cancelled") {
+    return [
+     null,
+     new BadRequestException(
+      "Order already cancelled",
+      HttpStatus.UNPROCESSABLE_ENTITY,
+      ErrorCode.VALIDATION_ERROR,
+     ),
+    ];
+   }
 
-   const items = await tx
-    .select({
-     productId: orderItem.productId,
-    })
+   return [
+    null,
+    new BadRequestException(
+     "Cannot cancel a paid order",
+     HttpStatus.UNPROCESSABLE_ENTITY,
+     ErrorCode.VALIDATION_ERROR,
+    ),
+   ];
+  }
+
+  const productIds = (
+   await db
+    .select({ productId: orderItem.productId })
     .from(orderItem)
-    .where(eq(orderItem.orderId, orderId));
+    .where(eq(orderItem.orderId, orderId))
+  ).map((item) => item.productId);
 
-   const productIds = items.map((item) => item.productId);
-
+  runOnTransactionCommit(() => {
    PublishEvent({
     event_type: EventType.ORDER_CANCELLED,
     payload: {
      productIds,
-     orderId: cancelledOrder?.id,
+     orderId: cancelledOrder.id,
     },
    });
-
-   return [cancelledOrder, null];
   });
- };
 
- deleteOrderItem = async (orderId: string) => {
+  return [cancelledOrder, null];
+ }
+
+ @Transactional()
+ async deleteOrderItem(orderId: string): Promise<Result<void, AppError>> {
   const [existingOrder] = await db
    .select()
    .from(order)
    .where(eq(order.id, orderId));
 
-  if (!existingOrder)
-   throw new BadRequestException(
-    "Invalid order",
-    HttpStatus.BAD_REQUEST,
-    ErrorCode.VALIDATION_ERROR,
-   );
+  if (!existingOrder) {
+   return [
+    null,
+    new BadRequestException(
+     "Invalid order",
+     HttpStatus.BAD_REQUEST,
+     ErrorCode.VALIDATION_ERROR,
+    ),
+   ];
+  }
 
-  await db.transaction(async (tx) => {
-   await tx.delete(orderItem).where(eq(orderItem.orderId, orderId));
+  await db.delete(orderItem).where(eq(orderItem.orderId, orderId));
+  await db.delete(order).where(eq(order.id, orderId));
 
-   await tx.delete(order).where(eq(order.id, orderId));
-  });
- };
+  return [null, null];
+ }
 }
 
 export default new OrderService();

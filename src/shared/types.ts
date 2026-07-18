@@ -85,6 +85,21 @@ export type TOrderAndItems = {
  order_items: TOrderItems[];
 };
 
+export type TOrderJoinRow = {
+ orders: any;
+ orderItem: any;
+};
+
+export type TMerchantProducts = {
+ merchant: any;
+ products: TProduct[];
+};
+
+export type TMerchantWithUser = {
+ merchant: TMerchant;
+ user: any;
+};
+
 export interface TUser {
  id: string;
  name: string;
@@ -103,3 +118,92 @@ export type AssetType =
  | "additional_images"
  | "avatar"
  | "product_videos";
+
+export interface TProductThreshold {
+ price: number;
+ quantity: number;
+}
+
+export interface TProduct {
+ id: string;
+ merchantId: string | null;
+ name: string;
+ description: string;
+ image: string;
+ additionalImages: string[] | null;
+ price: number;
+ quantity: number;
+ category: string;
+ subCategory: string;
+ status: string;
+ additionalData: Record<string, string> | null;
+ createdAt: Date;
+ updatedAt: Date;
+}
+
+export interface TProductWithMerchant extends TProduct {
+ merchant: {
+  id: string;
+  businessName: string;
+  businessLogo: string;
+  status: string;
+ } | null;
+}
+
+export interface TPaginatedProducts {
+ data: {
+  products: TProduct[];
+  pagination: {
+   limit: number;
+   pageNumber: number;
+   totalProducts: number;
+   totalPages: number;
+   offset: number;
+  };
+ };
+}
+
+export interface TMerchant {
+ id: string;
+ userId: string;
+ businessName: string;
+ businessLogo: string;
+ businessDescription: string;
+ address: string;
+ approvalStatus: string;
+ approvedAt: Date | null;
+ createdAt: Date;
+ updatedAt: Date;
+}
+
+export interface TOrderWithUser {
+ id: string;
+ subtotal: number;
+ deliveryAddress: Record<string, string>;
+ createdAt: Date;
+ user: {
+  id: string;
+  email: string;
+  name: string;
+ };
+}
+
+export interface TMerchantPaginatedOrders {
+ fetchedOrders: any[];
+ pagination: {
+  limit: number;
+  pageNumber: number;
+  totalOrders: number;
+  totalPages: number;
+  offset: number;
+ };
+}
+
+export interface TOrderItemInsert {
+ orderId: string;
+ productId: string;
+ merchantId: string;
+ quantity: number;
+ unitPrice: number;
+ lineTotal: number;
+}

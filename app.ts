@@ -9,6 +9,7 @@ import helmet from "@app/helmet.ts";
 import limiter from "@app/limiter.ts";
 import spec, { options } from "@app/swagger.ts";
 import { auth } from "@auth/auth.ts";
+import db from "@db/db.ts";
 import HttpStatus from "@enum/http.ts";
 import errorHandler from "@middleware/error-handler.ts";
 import cartRouter from "@module/cart/cart.route.ts";
@@ -20,6 +21,10 @@ import uploadRouter from "@module/upload/upload.route.ts";
 import userRouter from "@module/user/user.routes.ts";
 import paystackWebhookRouter from "@module/webhook/paystack/paystack.routes.ts";
 import stripeWebhookRouter from "@module/webhook/stripe/stripe.route.ts";
+import {
+ addTransactionalDrizzleDatabase,
+ initializeDrizzleTransactionalContext,
+} from "drizzle-transactional";
 import { toNodeHandler } from "better-auth/node";
 import cookieParser from "cookie-parser";
 import dns from "dns";
@@ -28,6 +33,9 @@ import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
 dns.setDefaultResultOrder("ipv4first");
+
+initializeDrizzleTransactionalContext();
+addTransactionalDrizzleDatabase(db as any);
 
 class App {
  app: Express;

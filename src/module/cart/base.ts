@@ -2,9 +2,14 @@
 import db from "@db/db.ts";
 import InventoryService from "@module/inventory/inventory.service.ts";
 import { cart, cartItem } from "@schema/cart.ts";
+import AppError from "@shared/error/app-error.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import BadRequestException from "@shared/error/bad-request.ts";
 import * as helper from "@shared/helper.ts";
-import { type Transaction } from "@shared/types.ts";
+import { Result, TCartAndItem } from "@shared/types.ts";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { Transactional } from "drizzle-transactional";
 
 import CartActions from "./dispatcher.ts";
 
@@ -15,83 +20,100 @@ interface Intent {
 }
 
 class CartBase {
- calculateTotalAmount =
-  (tx: Transaction) => async (cartId: string, userId: string) => {
-   const [result] = await tx
-    .select({
-     subtotal: sql<number>`COALESCE(SUM(${cartItem.totalItemPrice}), 0)`,
-    })
-    .from(cartItem)
-    .where(and(eq(cartItem.cartId, cartId), isNotNull(cartItem.id)));
+ @Transactional()
+ async calculateTotalAmount(cartId: string, userId: string) {
+  const [result] = await db
+   .select({
+    subtotal: sql<number>`COALESCE(SUM(${cartItem.totalItemPrice}), 0)`,
+   })
+   .from(cartItem)
+   .where(and(eq(cartItem.cartId, cartId), isNotNull(cartItem.id)));
 
-   await tx
-    .update(cart)
-    .set({
-     subtotal: result.subtotal,
-    })
-    .where(and(eq(cart.id, cartId), eq(cart.userId, userId)));
-  };
-
- modifyCart = async (userIntent: Intent) => {
-  const { userId, productId, intent } = userIntent;
-  return await db.transaction(async (tx: Transaction) => {
-   let [userCart] = await tx
-    .select()
-    .from(cart)
-    .where(eq(cart.userId, userId))
-    .limit(1);
-
-   if (!userCart) {
-    [userCart] = await tx.insert(cart).values({ userId }).returning();
-   }
-
-   const callback = CartActions[intent];
-
-   if (typeof intent === "string" && intent == "add") {
-    const existingItem = await helper.checkItemExistsInCart(tx)(
-     userCart.id,
-     productId,
-    );
-
-    if (existingItem)
-     return {
-      cart: userCart,
-      cart_items: [existingItem],
-     };
-
-    const [price, e] = await InventoryService.checkInventoryThreshold(
-     tx,
-     productId,
-    );
-
-    if (e) throw e;
-
-    await callback(tx)(userCart.id, userId, productId, Number(price));
-   } else if (typeof intent === "string" && intent == "increment") {
-    const existingItem = await helper.checkItemExistsInCart(tx)(
-     userCart.id,
-     productId,
-    );
-
-    if (existingItem) {
-     const [price, e] = await InventoryService.checkInventoryThreshold(
-      tx,
-      productId,
-     );
-
-     if (e) throw e;
-    }
-
-    await callback(tx)(userCart.id, userId, productId);
-   } else {
-    await callback(tx)(userCart.id, userId, productId);
-   }
-
-   await this.calculateTotalAmount(tx)(userCart.id, userId);
-
-   return await helper.getCartAndItems(tx)(userCart.id, userId);
-  });
+  await db
+   .update(cart)
+   .set({
+    subtotal: result.subtotal,
+   })
+   .where(and(eq(cart.id, cartId), eq(cart.userId, userId)));
  };
+
+ @Transactional()
+ async modifyCart(
+  userIntent: Intent,
+ ): Promise<Result<TCartAndItem, AppError>> {
+  const { userId, productId, intent } = userIntent;
+
+  let [userCart] = await db
+   .select()
+   .from(cart)
+   .where(eq(cart.userId, userId))
+   .limit(1);
+
+  if (!userCart) {
+   [userCart] = await db.insert(cart).values({ userId }).returning();
+  }
+
+  const callback = CartActions[intent];
+
+  if (typeof intent === "string" && intent == "add") {
+   const existingItem = await helper.checkItemExistsInCart(
+    userCart.id,
+    productId,
+   );
+
+   if (existingItem)
+    return [
+     { cart: userCart, cart_items: [existingItem] } as TCartAndItem,
+     null,
+    ];
+
+   const [price, e] = await InventoryService.checkInventoryThreshold(
+    productId,
+   );
+
+   if (e || !price)
+    return [
+     null,
+     e || new BadRequestException(
+      "Cannot add item to cart",
+      HttpStatus.UNPROCESSABLE_ENTITY,
+      ErrorCode.VALIDATION_ERROR,
+     ),
+    ];
+
+   await callback(userCart.id, userId, productId, Number(price));
+  } else if (typeof intent === "string" && intent == "increment") {
+   const existingItem = await helper.checkItemExistsInCart(
+    userCart.id,
+    productId,
+   );
+
+   if (existingItem) {
+    const [price, e] = await InventoryService.checkInventoryThreshold(
+     productId,
+    );
+
+    if (e || !price)
+     return [
+      null,
+      e || new BadRequestException(
+       "Cannot increment item",
+       HttpStatus.UNPROCESSABLE_ENTITY,
+       ErrorCode.VALIDATION_ERROR,
+      ),
+     ];
+   }
+
+   await callback(userCart.id, userId, productId);
+  } else {
+   await callback(userCart.id, userId, productId);
+  }
+
+  await this.calculateTotalAmount(userCart.id, userId);
+
+  const cartData = await helper.getCartAndItems(userCart.id, userId);
+  return [cartData, null];
+ }
 }
 
 export default new CartBase();

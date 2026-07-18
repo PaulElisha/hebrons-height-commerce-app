@@ -45,13 +45,19 @@ onEvent<EventContract>(EventType.ORDER_CANCELLED).subscribe({
     product_ids: productIds,
    });
 
-   await FA.concurrent.map(async (productId: string) => {
-    await InventoryService.updateProductThreshold(
+   const results = await FA.concurrent.map(async (productId: string) => {
+    return await InventoryService.updateProductThreshold(
      productId,
      orderId,
      "cancelOrder",
     );
    }, productIds);
+
+   for (const [_, error] of results) {
+    if (error) {
+     throw error;
+    }
+   }
   } catch (error) {
    const formatted = formatErrorPayload(error as Error);
    console.error("[Background Event Error Intercepted]:", formatted.body);

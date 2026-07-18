@@ -5,7 +5,10 @@ import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
+import NotFoundException from "@shared/error/not-found.ts";
+import { Result, TMerchant, TMerchantWithUser } from "@shared/types.ts";
 import { and, eq, isNotNull } from "drizzle-orm";
 import z from "zod";
 
@@ -34,21 +37,34 @@ class MerchantService {
   return productMerchant?.merchant;
  };
 
- getMerchantProfile = async (userId: string) => {
-  const [merchantProfile] = await db
-   .select()
-   .from(merchant)
-   .innerJoin(user, eq(merchant.userId, user.id))
-   .where(and(eq(merchant?.userId, userId), isNotNull(merchant?.id)))
-   .limit(1);
+  getMerchantProfile = async (
+   userId: string,
+  ): Promise<Result<TMerchantWithUser, AppError>> => {
+   const [merchantProfile] = await db
+    .select()
+    .from(merchant)
+    .innerJoin(user, eq(merchant.userId, user.id))
+    .where(and(eq(merchant?.userId, userId), isNotNull(merchant?.id)))
+    .limit(1);
 
-  return merchantProfile;
- };
+   if (!merchantProfile) {
+    return [
+     null,
+     new NotFoundException(
+      "Merchant profile not found",
+      HttpStatus.NOT_FOUND,
+      ErrorCode.RESOURCE_NOT_FOUND,
+     ),
+    ];
+   }
+
+   return [merchantProfile, null];
+  };
 
  createMerchantProfile = async (
   userId: string,
   body: z.infer<typeof CreateMerchantDto>,
- ) => {
+ ): Promise<Result<TMerchant, AppError>> => {
   const [existing] = await db
    .select()
    .from(merchant)
@@ -77,21 +93,21 @@ class MerchantService {
    })
    .returning();
 
-  return newMerchant;
+  return [newMerchant, null];
  };
 
  updateMerchantProfile = async (
   userId: string,
   merchantId: string,
   body: z.infer<typeof UpdateMerchantDto>,
- ) => {
+ ): Promise<Result<TMerchant, AppError>> => {
   const updateData: { [k: string]: any } = {};
 
-  updateData.businessName = body.businessName && body.businessName;
-  updateData.businessDescription =
-   body.businessDescription && body.businessDescription;
-  updateData.businessLogo = body.businessLogo && body.businessLogo;
-  updateData.address = body.address && body.address;
+   if (body.businessName !== undefined) updateData.businessName = body.businessName;
+   if (body.businessDescription !== undefined)
+    updateData.businessDescription = body.businessDescription;
+   if (body.businessLogo !== undefined) updateData.businessLogo = body.businessLogo;
+   if (body.address !== undefined) updateData.address = body.address;
   updateData.updatedAt = new Date();
 
   const [updatedMerchant] = await db
@@ -106,13 +122,41 @@ class MerchantService {
    )
    .returning();
 
-  return updatedMerchant;
+  if (!updatedMerchant) {
+   return [
+    null,
+    new NotFoundException(
+     "Merchant profile not found",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
+  return [updatedMerchant, null];
  };
 
- deleteMerchantProfile = async (userId: string, merchantId: string) => {
-  await db
+ deleteMerchantProfile = async (
+  userId: string,
+  merchantId: string,
+ ): Promise<Result<void, AppError>> => {
+  const [deletedMerchant] = await db
    .delete(merchant)
-   .where(and(eq(merchant.userId, userId), eq(merchant.id, merchantId)));
+   .where(and(eq(merchant.userId, userId), eq(merchant.id, merchantId)))
+   .returning();
+
+  if (!deletedMerchant) {
+   return [
+    null,
+    new NotFoundException(
+     "Merchant profile not found",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
+  return [null, null];
  };
 }
 

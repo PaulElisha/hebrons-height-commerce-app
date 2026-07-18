@@ -17,11 +17,11 @@ class PaymentRoutes {
  }
 
  initializeRoutes() {
-  this.router.get("/success", async (req, res) => {
+  this.router.get("/success", (_req, res) => {
    res.send("Payment successful");
   });
 
-  this.router.get("/failed", async (req, res) => {
+  this.router.get("/failed", (_req, res) => {
    res.send("Payment failed");
   });
 

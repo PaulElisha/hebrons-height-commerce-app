@@ -1,6 +1,9 @@
 /** @format */
 import cloudinary from "@app/cloudinary.ts";
 import { createPublicId } from "@shared/helper.ts";
+import BadRequestException from "@shared/error/bad-request.ts";
+import ErrorCode from "@shared/enum/error-code.ts";
+import HttpStatus from "@shared/enum/http.ts";
 import { AssetType } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 import streamifier from "streamifier";
@@ -8,7 +11,11 @@ import streamifier from "streamifier";
 export const cloudinaryUploadStream = (folder: AssetType) => {
  return (req: Request, res: Response, next: NextFunction) => {
   if (!req.file) {
-   return next(new Error("No file uploaded"));
+   return next(new BadRequestException(
+    "No file uploaded",
+    HttpStatus.BAD_REQUEST,
+    ErrorCode.VALIDATION_ERROR,
+   ));
   }
 
   try {
