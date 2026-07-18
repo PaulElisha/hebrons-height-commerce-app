@@ -1,7 +1,7 @@
 /** @format */
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
-import { cartItem } from "@schema/cart.ts";
+import { cart, cartItem } from "@schema/cart.ts";
 import { order } from "@schema/order.ts";
 import { payment } from "@schema/payment.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
@@ -18,6 +18,7 @@ import Stripe from "stripe";
 import z from "zod";
 
 import { FetchRail } from "./dispatcher.ts";
+import CartBase from "@module/cart/base.ts";
 
 export const PaymentData = z.object({
  email: z.string().email(),
@@ -159,7 +160,11 @@ class PaymentService {
   orderId: string,
   paymentData: z.infer<typeof PaymentData>,
  ): Promise<Result<TPayment, AppError>> {
-  const [paymentRecord, err] = await this.createPayment(userId, orderId, paymentData);
+  const [paymentRecord, err] = await this.createPayment(
+   userId,
+   orderId,
+   paymentData,
+  );
   if (err || !paymentRecord) return [null, err];
 
   await db
@@ -180,7 +185,7 @@ class PaymentService {
   paidAmount: number,
   paidAtDate: Date,
   isFailure: boolean,
-  ): Promise<Result<TPaymentVerificationResult, AppError>> {
+ ): Promise<Result<TPaymentVerificationResult, AppError>> {
   const [paymentRecord] = await db
    .select()
    .from(payment)
@@ -260,16 +265,22 @@ class PaymentService {
    .returning();
 
   await db.delete(cartItem).where(eq(cartItem.userId, paymentRecord.userId));
+  await CartBase.calculateTotalAmount(
+   updatedOrder.cartId,
+   paymentRecord.userId,
+  );
 
   return [{ payment: updatedPayment, order: updatedOrder }, null];
  }
 
  async handlePaystackPaymentVerified(
   event: any,
-  ): Promise<Result<TPaymentVerificationResult, AppError>> {
+ ): Promise<Result<TPaymentVerificationResult, AppError>> {
   const reference = event.data?.reference;
   const paidAmount = Number(event.data?.amount) / Env.SCALER;
-  const paidAtDate = event.data?.paid_at ? new Date(event.data.paid_at) : new Date();
+  const paidAtDate = event.data?.paid_at
+   ? new Date(event.data.paid_at)
+   : new Date();
   const isFailure = event.event === "charge.failed";
 
   return await this.verifyPayment(reference, paidAmount, paidAtDate, isFailure);
@@ -278,7 +289,7 @@ class PaymentService {
  async handleStripePaymentVerified(
   session: any,
   eventType: string,
-  ): Promise<Result<TPaymentVerificationResult, AppError>> {
+ ): Promise<Result<TPaymentVerificationResult, AppError>> {
   const reference = session.id;
   const paidAmount = Number(session.amount_total) / Env.SCALER;
   const paidAtDate = session.payment_intent?.created
