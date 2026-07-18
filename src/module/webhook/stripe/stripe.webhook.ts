@@ -41,7 +41,7 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
     break;
    }
    default:
-    console.log(`Unhandled event type: ${event.type}`);
+    console.log(`Event type not handled: ${event.type}`);
     break;
   }
 

@@ -1515,29 +1515,6 @@ const spec = {
     },
    },
   },
-  "/api/payment/paystack/verify": {
-   get: {
-    tags: ["Payment"],
-    summary: "Verify a Paystack payment by reference",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "reference",
-      in: "query",
-      required: true,
-      schema: { type: "string" },
-      description: "Paystack payment reference",
-     },
-    ],
-    responses: {
-     "204": {
-      description: "Payment verified, no content",
-     },
-     "400": { description: "Payment verification error" },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-    },
-   },
-  },
   "/api/payment/initialize/{orderId}": {
    post: {
     tags: ["Payment"],
@@ -1574,14 +1551,14 @@ const spec = {
            type: "string",
            example: "Checkout session created successfully",
           },
-          data: {
-           type: "object",
-           properties: {
-            checkoutUrl: { type: "string" },
-            reference: { type: "string" },
-            accessCode: { type: "string" },
+           data: {
+            type: "object",
+            properties: {
+             checkout_url: { type: "string" },
+             reference: { type: "string" },
+             access_code: { type: "string" },
+            },
            },
-          },
          },
         },
        },
@@ -1632,7 +1609,7 @@ const spec = {
     },
    },
   },
-  "/api/webhook/stripe": {
+  "/api/stripe/webhook": {
    post: {
     tags: ["Webhook"],
     summary: "Stripe webhook handler (checkout.session.completed/expired)",
@@ -1663,6 +1640,39 @@ const spec = {
      },
      "400": { description: "Webhook signature verification failed" },
      "500": { description: "Webhook processing error" },
+     },
+    },
+   },
+  },
+  "/api/paystack/webhook": {
+   post: {
+    tags: ["Webhook"],
+    summary: "Paystack webhook handler (charge.success/charge.failed)",
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        description: "Raw Paystack event object",
+       },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description: "Webhook acknowledged",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "success" },
+         },
+        },
+       },
+      },
+     },
     },
    },
   },
