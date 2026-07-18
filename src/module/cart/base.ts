@@ -8,10 +8,13 @@ import HttpStatus from "@shared/enum/http.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import * as helper from "@shared/helper.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
+import { Mutex } from "async-mutex";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 
 import CartActions from "./dispatcher.ts";
+
+const mutex = new Mutex();
 
 interface Intent {
  userId: string;
@@ -50,45 +53,24 @@ class CartBase {
    .limit(1);
 
   if (!userCart) {
-   [userCart] = await db.insert(cart).values({ userId }).returning();
+    [userCart] = await db.insert(cart).values({ userId }).returning();
   }
 
   const callback = CartActions[intent];
 
-  if (typeof intent === "string" && intent == "add") {
-   const existingItem = await helper.checkItemExistsInCart(
-    userCart.id,
-    productId,
-   );
-
-   if (existingItem)
-    return [
-      { cart: userCart, cart_items: [existingItem] },
-     null,
-    ];
-
-    const [price, err] = await InventoryService.checkInventoryThreshold(
+  const [result, e] = await mutex.runExclusive(async () => {
+   if (typeof intent === "string" && intent == "add") {
+    const existingItem = await helper.checkItemExistsInCart(
+     userCart.id,
      productId,
     );
 
-    if (err || !price)
+    if (existingItem)
      return [
+       { cart: userCart, cart_items: [existingItem] },
       null,
-      err || new BadRequestException(
-       "Cannot add item to cart",
-       HttpStatus.UNPROCESSABLE_ENTITY,
-       ErrorCode.VALIDATION_ERROR,
-      ),
      ];
 
-   await callback(userCart.id, userId, productId, Number(price));
-  } else if (typeof intent === "string" && intent == "increment") {
-   const existingItem = await helper.checkItemExistsInCart(
-    userCart.id,
-    productId,
-   );
-
-   if (existingItem) {
      const [price, err] = await InventoryService.checkInventoryThreshold(
       productId,
      );
@@ -97,17 +79,45 @@ class CartBase {
       return [
        null,
        err || new BadRequestException(
-        "Cannot increment item",
+        "Cannot add item to cart",
         HttpStatus.UNPROCESSABLE_ENTITY,
         ErrorCode.VALIDATION_ERROR,
        ),
       ];
+
+    await callback(userCart.id, userId, productId, Number(price));
+   } else if (typeof intent === "string" && intent == "increment") {
+    const existingItem = await helper.checkItemExistsInCart(
+     userCart.id,
+     productId,
+    );
+
+    if (existingItem) {
+      const [price, err] = await InventoryService.checkInventoryThreshold(
+       productId,
+      );
+
+      if (err || !price)
+       return [
+        null,
+        err || new BadRequestException(
+         "Cannot increment item",
+         HttpStatus.UNPROCESSABLE_ENTITY,
+         ErrorCode.VALIDATION_ERROR,
+        ),
+       ];
+    }
+
+    await callback(userCart.id, userId, productId);
+   } else {
+    await callback(userCart.id, userId, productId);
    }
 
-   await callback(userCart.id, userId, productId);
-  } else {
-   await callback(userCart.id, userId, productId);
-  }
+   return [null, null];
+  });
+
+  if (e) return [null, e];
+  if (result) return [result, null];
 
   await this.calculateTotalAmount(userCart.id, userId);
 

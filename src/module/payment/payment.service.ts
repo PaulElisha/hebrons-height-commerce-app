@@ -93,14 +93,17 @@ class PaymentService {
   return [paymentResponse, err];
  };
 
- createPayment = async (
-  userId: string,
-  orderId: string,
-  paymentData: z.infer<typeof PaymentData>,
- ): Promise<Result<TPayment, AppError>> => {
-  const [data, err] = await OrderService.getOrderDetails(userId, orderId);
+  @Transactional()
+  async createPayment(
+   userId: string,
+   orderId: string,
+   paymentData: z.infer<typeof PaymentData>,
+  ): Promise<Result<TPayment, AppError>> {
+   const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
-  if (err || !data) return [null, err];
+   if (err || !data) return [null, err];
+
+   await db.select().from(order).where(eq(order.id, orderId)).for("update");
 
   if (
    data.order.orderStatus !== "pending" &&

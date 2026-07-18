@@ -22,10 +22,22 @@ import {
  TOrderJoinRow,
  TOrderWithUser,
  TMerchantPaginatedOrders,
+ TOrderItems,
 } from "@shared/types.ts";
 
 const mutex = new Mutex();
-import { and, count, desc, eq, isNotNull, lt, ne, SQL, sql } from "drizzle-orm";
+import {
+ and,
+ count,
+ desc,
+ eq,
+ isNotNull,
+ lt,
+ ne,
+ SQL,
+ sql,
+ sum,
+} from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
@@ -93,38 +105,21 @@ class OrderService {
   const [data, err] = await CartService.getUserCart(userId, cartId);
   if (err || !data) return [null, err];
 
-  const [orderExists] = await helper.validateOrderForCart(cartId, userId);
-
-  if (orderExists) {
-   return [
-    null,
-    new BadRequestException(
-     "Order already created",
-     HttpStatus.UNPROCESSABLE_ENTITY,
-     ErrorCode.VALIDATION_ERROR,
-    ),
-   ];
-  }
-
   const [result, e] = await mutex.runExclusive(async () => {
-   const [newOrder] = await db
-    .insert(order)
-    .values({
-     userId,
-     cartId,
-      subtotal: Number(data.cart.subtotal),
-      deliveryAddress: {
-       label: "home",
-       address: body.deliveryAddress.address,
-       city: body.deliveryAddress.city,
-       state: body.deliveryAddress.state,
-       country: body.deliveryAddress.country,
-       line1: body.deliveryAddress.line1,
-       line2: body.deliveryAddress.line2 ?? "",
-      },    })
-    .returning();
+   const [orderExists] = await helper.validateOrderForCart(cartId, userId);
 
-   const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {
+   if (orderExists) {
+    return [
+     null,
+     new BadRequestException(
+      "Order already created",
+      HttpStatus.UNPROCESSABLE_ENTITY,
+      ErrorCode.VALIDATION_ERROR,
+     ),
+    ];
+   }
+
+   const itemResults = await FA.concurrent.map(async (v: TCartItem) => {
     const [productData, e] = await helper.getProductThreshold(v.productId);
     if (e || !productData) return null;
 
@@ -134,7 +129,6 @@ class OrderService {
     if (err || !merchantId) return null;
 
     return {
-     orderId: newOrder.id,
      productId: v.productId,
      merchantId,
      quantity: v.quantity,
@@ -143,7 +137,7 @@ class OrderService {
     };
    }, data.cart_items || []);
 
-   const validItems = itemsToInsert.filter(Boolean);
+   const validItems = itemResults.filter(Boolean);
 
    if (validItems.length <= 0) {
     return [
@@ -156,7 +150,27 @@ class OrderService {
     ];
    }
 
-   await db.insert(orderItem).values(validItems);
+   const [newOrder] = await db
+    .insert(order)
+    .values({
+     userId,
+     cartId,
+     subtotal: Number(data.cart.subtotal),
+     deliveryAddress: {
+      label: "home",
+      address: body.deliveryAddress.address,
+      city: body.deliveryAddress.city,
+      state: body.deliveryAddress.state,
+      country: body.deliveryAddress.country,
+      line1: body.deliveryAddress.line1,
+      line2: body.deliveryAddress.line2 ?? "",
+     },
+    })
+    .returning();
+
+   await db
+    .insert(orderItem)
+    .values(validItems.map((i: any) => ({ ...i, orderId: newOrder.id })));
 
    return [
     {

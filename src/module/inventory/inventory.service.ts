@@ -1,7 +1,7 @@
 /** @format */
 import db from "@db/db.ts";
 import { cartItem } from "@schema/cart.ts";
-import { orderItem } from "@schema/order.ts";
+import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
@@ -10,7 +10,7 @@ import BadRequestException from "@shared/error/bad-request.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
 import NotFoundException from "@shared/error/not-found.ts";
 import { Result, TProductThreshold } from "@shared/types.ts";
-import { and, eq, isNotNull, sum } from "drizzle-orm";
+import { and, eq, isNotNull, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 
 class InventoryService {
@@ -88,60 +88,63 @@ class InventoryService {
   action: "placeOrder" | "cancelOrder",
  ): Promise<Result<void, AppError>> {
   try {
-    const [productData, err] = await this.getProductThreshold(productId);
+    const [_, err] = await this.getProductThreshold(productId);
 
     if (err) return [null, err];
 
-   const currentQuantity = Number(productData?.quantity);
+    const [ItemQuantityPurchased] = await db
+     .select({ quantityPurchased: orderItem.quantity })
+     .from(orderItem)
+     .innerJoin(order, eq(orderItem.orderId, order.id))
+     .where(
+      and(
+       eq(orderItem.orderId, orderId),
+       eq(orderItem.productId, productId),
+       action === "placeOrder"
+        ? and(ne(order.orderStatus, "cancelled"), ne(order.paymentStatus, "paid"))
+        : eq(order.orderStatus, "cancelled"),
+      ),
+     );
 
-   const [ItemQuantityPurchased] = await db
-    .select({ quantityPurchased: orderItem.quantity })
-    .from(orderItem)
-    .where(
-     and(eq(orderItem.orderId, orderId), eq(orderItem.productId, productId)),
-    );
+    if (!ItemQuantityPurchased) {
+     return [
+      null,
+      new BadRequestException(
+       "This product was not part of the original order.",
+       HttpStatus.BAD_REQUEST,
+       ErrorCode.VALIDATION_ERROR,
+      ),
+     ];
+    }
 
-   if (!ItemQuantityPurchased) {
-    return [
-     null,
-     new BadRequestException(
-      "This product was not part of the original order.",
-      HttpStatus.BAD_REQUEST,
-      ErrorCode.VALIDATION_ERROR,
-     ),
-    ];
-   }
-
-   const newQuantity =
-    action === "cancelOrder"
-     ? currentQuantity + ItemQuantityPurchased.quantityPurchased
-     : currentQuantity - ItemQuantityPurchased.quantityPurchased;
-
-   if (action === "placeOrder") {
-    await db
-     .update(product)
-     .set({
-      quantity: newQuantity,
-      status: newQuantity <= 0 ? "sold_out" : "available",
-     })
-     .where(and(eq(product.id, productId), isNotNull(product.quantity)));
-   } else if (action === "cancelOrder") {
-    await db
-     .update(product)
-     .set({
-      quantity: newQuantity,
-      status: "available",
-     })
-     .where(eq(product.id, productId));
-   }
+    if (action === "placeOrder") {
+     await db
+      .update(product)
+      .set({
+       quantity: sql`${product.quantity} - ${ItemQuantityPurchased.quantityPurchased}`,
+       status: sql`CASE WHEN ${product.quantity} - ${ItemQuantityPurchased.quantityPurchased} <= 0 THEN 'sold_out' ELSE 'available' END`,
+      })
+      .where(and(eq(product.id, productId), isNotNull(product.quantity)));
+    } else if (action === "cancelOrder") {
+     await db
+      .update(product)
+      .set({
+       quantity: sql`${product.quantity} + ${ItemQuantityPurchased.quantityPurchased}`,
+       status: "available",
+      })
+      .where(eq(product.id, productId));
+    }
 
    return [null, null];
-   } catch (err) {
-     return [null, new InternalServerError(
-      err instanceof Error ? err.message : "Unknown error",
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      ErrorCode.INTERNAL_SERVER_ERROR,
-     )];
+  } catch (err) {
+   return [
+    null,
+    new InternalServerError(
+     err instanceof Error ? err.message : "Unknown error",
+     HttpStatus.INTERNAL_SERVER_ERROR,
+     ErrorCode.INTERNAL_SERVER_ERROR,
+    ),
+   ];
   }
  }
 }
