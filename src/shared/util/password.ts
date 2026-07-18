@@ -13,7 +13,12 @@ export async function hashPassword(password: string) {
  const result = await hash(password, opts);
  return result;
 }
-export async function verifyPassword(data: { password: string; hash: string }) {
+export interface TVerifyPasswordData {
+ password: string;
+ hash: string;
+}
+
+export async function verifyPassword(data: TVerifyPasswordData) {
  const { password, hash } = data;
  const result = await verify(hash, password, opts);
  return result;

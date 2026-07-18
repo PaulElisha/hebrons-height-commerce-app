@@ -63,23 +63,23 @@ class CartBase {
 
    if (existingItem)
     return [
-     { cart: userCart, cart_items: [existingItem] } as TCartAndItem,
+      { cart: userCart, cart_items: [existingItem] },
      null,
     ];
 
-   const [price, e] = await InventoryService.checkInventoryThreshold(
-    productId,
-   );
+    const [price, err] = await InventoryService.checkInventoryThreshold(
+     productId,
+    );
 
-   if (e || !price)
-    return [
-     null,
-     e || new BadRequestException(
-      "Cannot add item to cart",
-      HttpStatus.UNPROCESSABLE_ENTITY,
-      ErrorCode.VALIDATION_ERROR,
-     ),
-    ];
+    if (err || !price)
+     return [
+      null,
+      err || new BadRequestException(
+       "Cannot add item to cart",
+       HttpStatus.UNPROCESSABLE_ENTITY,
+       ErrorCode.VALIDATION_ERROR,
+      ),
+     ];
 
    await callback(userCart.id, userId, productId, Number(price));
   } else if (typeof intent === "string" && intent == "increment") {
@@ -89,19 +89,19 @@ class CartBase {
    );
 
    if (existingItem) {
-    const [price, e] = await InventoryService.checkInventoryThreshold(
-     productId,
-    );
+     const [price, err] = await InventoryService.checkInventoryThreshold(
+      productId,
+     );
 
-    if (e || !price)
-     return [
-      null,
-      e || new BadRequestException(
-       "Cannot increment item",
-       HttpStatus.UNPROCESSABLE_ENTITY,
-       ErrorCode.VALIDATION_ERROR,
-      ),
-     ];
+     if (err || !price)
+      return [
+       null,
+       err || new BadRequestException(
+        "Cannot increment item",
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        ErrorCode.VALIDATION_ERROR,
+       ),
+      ];
    }
 
    await callback(userCart.id, userId, productId);

@@ -300,14 +300,15 @@ const spec = {
     properties: {
      deliveryAddress: {
       type: "object",
-      properties: {
-       address: { type: "string" },
-       city: { type: "string" },
-       state: { type: "string" },
-       country: { type: "string" },
-       line1: { type: "string" },
-       line2: { type: "string" },
-      },
+       properties: {
+        address: { type: "string" },
+        city: { type: "string" },
+        state: { type: "string" },
+        country: { type: "string" },
+        line1: { type: "string" },
+        line2: { type: "string", description: "Optional second address line" },
+       },
+       required: ["address", "city", "state", "country", "line1"],
      },
     },
    },
@@ -345,25 +346,29 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-   CheckoutData: {
-    type: "object",
-    required: ["email", "amount", "currency", "rail"],
-    properties: {
-     email: { type: "string", format: "email" },
-     amount: { type: "integer" },
-     currency: { type: "string" },
-     rail: { type: "string" },
-     callback_url: {
-      type: "string",
-      format: "uri",
-      description: "URL to redirect back to after payment",
-     },
-     mode: {
-      type: "string",
-      enum: ["payment", "subscription", "setup"],
+    CheckoutData: {
+     type: "object",
+     required: ["email", "currency", "rail"],
+     properties: {
+      email: { type: "string", format: "email" },
+      currency: { type: "string" },
+      rail: { type: "string" },
+      callback_url: {
+       type: "string",
+       format: "uri",
+       description: "URL to redirect back to after payment",
+      },
+      mode: {
+       type: "string",
+       enum: ["payment", "subscription", "setup"],
+      },
+      metadata: {
+       type: "object",
+       description: "Optional metadata key-value pairs",
+       additionalProperties: { type: "string" },
+      },
      },
     },
-   },
    Pagination: {
     type: "object",
     properties: {
@@ -1699,21 +1704,21 @@ const spec = {
     },
    },
    responses: {
-    "201": {
-     description: "Upload signature created",
-     content: {
-      "application/json": {
-       schema: {
-        type: "object",
-        properties: {
-         status: { type: "string", example: "ok" },
-         message: { type: "string", example: "signature created" },
-         uploadResult: { $ref: "#/components/schemas/UploadResult" },
+     "201": {
+      description: "Upload signature created",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "signature created" },
+          data: { $ref: "#/components/schemas/UploadResult" },
+         },
         },
        },
       },
      },
-    },
     "401": { description: "Unauthorized — invalid or missing session token" },
     "403": { description: "Forbidden — user role not authorized" },
    },

@@ -12,7 +12,7 @@ import {
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
 
-import OrderService, { CreateOrderDto } from "./order.service.ts";
+import OrderService, { CreateOrderDto, TOrderStatusQuery, TOrderFilter } from "./order.service.ts";
 
 export interface OrderParams {
  orderId?: string;
@@ -26,12 +26,12 @@ class OrderController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const cartId = req.params.cartId as string;
+   const cartId = String(req.params.cartId);
    const body = req.body;
 
-   const [orderId, e] = await OrderService.placeOrder(userId, cartId, body);
+    const [orderId, err] = await OrderService.placeOrder(userId, cartId, body);
 
-   if (e) return next(e);
+    if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -45,16 +45,16 @@ class OrderController {
 
  getUserOrderByStatus = asyncHandler(
   async (
-   req: Request<{}, {}, {}, { status: string }>,
+    req: Request<{}, {}, {}, TOrderStatusQuery>,
    res: Response<APIResponse<TOrderJoinRow[] | null>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
    const status = req.query.status;
 
-   const [data, e] = await OrderService.getUserOrderByStatus(userId, status);
+    const [data, err] = await OrderService.getUserOrderByStatus(userId, status);
 
-   if (e) return next(e);
+    if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -71,11 +71,11 @@ class OrderController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const orderId = req.params.orderId as string;
+   const orderId = String(req.params.orderId);
 
-   const [data, e] = await OrderService.getOrderDetails(userId, orderId);
+    const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
-   if (e) return next(e);
+    if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -91,9 +91,7 @@ class OrderController {
     any,
     any,
     any,
-    Pagination & {
-     status?: string;
-    }
+ Pagination & TOrderFilter
    >,
    res: Response<APIResponse<TOrderAndItems & any>>,
    next: NextFunction,
@@ -112,13 +110,13 @@ class OrderController {
     status: req.query.status,
    };
 
-   const [data, e] = await OrderService.getMerchantOrders(
+    const [data, err] = await OrderService.getMerchantOrders(
     userId,
     filters,
     pagination,
    );
 
-   if (e) return next(e);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -134,10 +132,10 @@ class OrderController {
    res: Response<APIResponse<TOrder | null>>,
    next: NextFunction,
   ): Promise<any> => {
-   const orderId = req.params.orderId as string;
-   const [data, e] = await OrderService.cancelOrder(orderId);
+   const orderId = String(req.params.orderId);
+    const [data, err] = await OrderService.cancelOrder(orderId);
 
-   if (e) return next(e);
+    if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -149,11 +147,11 @@ class OrderController {
 
  deleteOrderItem = asyncHandler(
    async (req: Request<OrderParams>, res: Response, next: NextFunction) => {
-    const orderId = req.params.orderId as string;
+    const orderId = String(req.params.orderId);
 
-    const [, error] = await OrderService.deleteOrderItem(orderId);
+    const [, err] = await OrderService.deleteOrderItem(orderId);
 
-    if (error) return next(error);
+    if (err) return next(err);
 
     return res.status(HttpStatus.OK).json({
      status: "ok",

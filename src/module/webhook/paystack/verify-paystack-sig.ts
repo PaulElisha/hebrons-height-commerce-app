@@ -41,7 +41,7 @@ export const verifyPaystackSignature = async (
   }
 
   return next();
- } catch (error) {
-  return next(error);
+  } catch (err) {
+   return next(err);
  }
 };

@@ -24,8 +24,8 @@ class UploadController {
    return res.status(HttpStatus.CREATED).json({
     status: "ok",
     message: "signature created",
-    uploadResult,
-   } as APIResponse<UploadResult>);
+    data: uploadResult,
+   });
   },
  );
 }

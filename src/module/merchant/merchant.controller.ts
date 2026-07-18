@@ -14,9 +14,9 @@ class MerchantController {
   getMerchantProfile = asyncHandler(
    async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const userId = req.user.id;
-    const [data, error] = await MerchantService.getMerchantProfile(userId);
+    const [data, err] = await MerchantService.getMerchantProfile(userId);
 
-    if (error) throw error;
+    if (err) throw err;
 
     return res.status(HttpStatus.OK).json({
      status: "ok",
@@ -32,12 +32,12 @@ class MerchantController {
    const body = req.body;
    const businessLogo = req.upload_image.url;
 
-   const [data, error] = await MerchantService.createMerchantProfile(userId, {
+   const [data, err] = await MerchantService.createMerchantProfile(userId, {
     ...body,
     businessLogo,
    });
 
-   if (error) throw error;
+   if (err) throw err;
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -54,16 +54,16 @@ class MerchantController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = req.params.merchantId as string;
+   const merchantId = String(req.params.merchantId);
    const body = req.body;
 
-   const [data, error] = await MerchantService.updateMerchantProfile(
+   const [data, err] = await MerchantService.updateMerchantProfile(
     userId,
     merchantId,
     body,
    );
 
-   if (error) throw error;
+   if (err) throw err;
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -80,14 +80,14 @@ class MerchantController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = req.params.merchantId as string;
+   const merchantId = String(req.params.merchantId);
 
-   const [, error] = await MerchantService.deleteMerchantProfile(
+   const [, err] = await MerchantService.deleteMerchantProfile(
     userId,
     merchantId,
    );
 
-   if (error) throw error;
+   if (err) throw err;
 
    return res.status(HttpStatus.NO_CONTENT).send();
   },

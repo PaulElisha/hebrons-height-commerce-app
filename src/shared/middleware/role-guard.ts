@@ -16,8 +16,8 @@ const roleGuard = (...roles: Array<string>) => {
     );
    }
    next();
-  } catch (error) {
-   next(error);
+  } catch (err) {
+    next(err);
   }
  };
 };

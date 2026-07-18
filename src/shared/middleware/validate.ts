@@ -8,8 +8,8 @@ export const validate = (schema: ZodType) => {
    const body = schema.parse(req.body);
    Object.assign(req.body, body);
    next();
-  } catch (error) {
-   next(error);
+  } catch (err) {
+    next(err);
   }
  };
 };

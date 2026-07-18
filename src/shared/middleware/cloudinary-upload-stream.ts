@@ -40,8 +40,8 @@ export const cloudinaryUploadStream = (folder: AssetType) => {
     },
    );
    streamifier.createReadStream(req.file.buffer).pipe(stream);
-  } catch (error) {
-   next(error);
+  } catch (err) {
+    next(err);
   }
  };
 };

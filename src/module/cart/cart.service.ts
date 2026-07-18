@@ -81,13 +81,13 @@ class CartService {
    {
     cart: {
      ...result[0].cart,
-     subtotal: result[0].cart.subtotal as number,
+      subtotal: Number(result[0].cart.subtotal),
     },
     cart_items: result
      .filter((r) => r.cart_items)
      .map((r) => ({
       ...r.cart_items!,
-      totalItemPrice: r.cart_items!.totalItemPrice as number,
+       totalItemPrice: Number(r.cart_items!.totalItemPrice),
      })),
    },
    null,

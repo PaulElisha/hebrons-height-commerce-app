@@ -24,8 +24,8 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    orderId: string,
    data: z.infer<typeof CheckoutData>,
   ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
-   const [orderWithUser, e] = await OrderService.getOrderWithUser(userId, orderId);
-   if (e || !orderWithUser) return [null, e];
+   const [orderWithUser, err] = await OrderService.getOrderWithUser(userId, orderId);
+    if (err || !orderWithUser) return [null, err];
 
   const baseAmount = Math.round(Number(orderWithUser.subtotal) * Env.SCALER);
   const subCharge = Math.round((baseAmount * 15) / 10000) + 100 * Env.SCALER; // 0.15% + 100 NGN
@@ -95,9 +95,9 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
   orderId: string,
   data: z.infer<typeof CheckoutData>,
  ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
-  const [orderData, e] = await OrderService.getOrderDetails(userId, orderId);
+  const [orderData, err] = await OrderService.getOrderDetails(userId, orderId);
 
-  if (e || !orderData) return [null, e];
+  if (err || !orderData) return [null, err];
 
   return await stripeClient.checkout.sessions
    .create({

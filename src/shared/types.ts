@@ -141,26 +141,35 @@ export interface TProduct {
  updatedAt: Date;
 }
 
+export interface TMerchantInfo {
+ id: string;
+ businessName: string;
+ businessLogo: string;
+ status: string;
+}
+
 export interface TProductWithMerchant extends TProduct {
- merchant: {
-  id: string;
-  businessName: string;
-  businessLogo: string;
-  status: string;
- } | null;
+ merchant: TMerchantInfo | null;
+}
+
+export interface TPaginationMeta {
+ limit: number;
+ pageNumber: number;
+ totalPages: number;
+ offset: number;
+}
+
+export interface TProductPagination extends TPaginationMeta {
+ totalProducts: number;
+}
+
+export interface TProductPageData {
+ products: TProduct[];
+ pagination: TProductPagination;
 }
 
 export interface TPaginatedProducts {
- data: {
-  products: TProduct[];
-  pagination: {
-   limit: number;
-   pageNumber: number;
-   totalProducts: number;
-   totalPages: number;
-   offset: number;
-  };
- };
+ data: TProductPageData;
 }
 
 export interface TMerchant {
@@ -176,27 +185,27 @@ export interface TMerchant {
  updatedAt: Date;
 }
 
+export interface TOrderUser {
+ id: string;
+ email: string;
+ name: string;
+}
+
 export interface TOrderWithUser {
  id: string;
  subtotal: number;
  deliveryAddress: Record<string, string>;
  createdAt: Date;
- user: {
-  id: string;
-  email: string;
-  name: string;
- };
+ user: TOrderUser;
+}
+
+export interface TMerchantOrdersPagination extends TPaginationMeta {
+ totalOrders: number;
 }
 
 export interface TMerchantPaginatedOrders {
  fetchedOrders: any[];
- pagination: {
-  limit: number;
-  pageNumber: number;
-  totalOrders: number;
-  totalPages: number;
-  offset: number;
- };
+ pagination: TMerchantOrdersPagination;
 }
 
 export interface TOrderItemInsert {

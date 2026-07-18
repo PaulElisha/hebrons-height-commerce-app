@@ -14,105 +14,105 @@ class CartController {
  addToCart = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TCartAndItem>>,
+   res: Response<APIResponse<TCartAndItem | null>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = req.params.productId as string;
+   const productId = String(req.params.productId);
 
-   const [data, error] = await CartService.addToCart(userId, productId);
+   const [data, err] = await CartService.addToCart(userId, productId);
 
-   if (error) return next(error);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "product added to cart",
     data,
-   } as APIResponse<TCartAndItem>);
+   });
   },
  );
 
  removeFromCart = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TCartAndItem>>,
+   res: Response<APIResponse<TCartAndItem | null>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = req.params.productId as string;
+   const productId = String(req.params.productId);
 
-   const [data, error] = await CartService.removeFromCart(userId, productId);
+   const [data, err] = await CartService.removeFromCart(userId, productId);
 
-   if (error) return next(error);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "product removed from cart",
     data,
-   } as APIResponse<TCartAndItem>);
+   });
   },
  );
 
  incrementCartItem = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TCartAndItem>>,
+   res: Response<APIResponse<TCartAndItem | null>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = req.params.productId as string;
+   const productId = String(req.params.productId);
 
-   const [data, error] = await CartService.incrementItem(userId, productId);
+   const [data, err] = await CartService.incrementItem(userId, productId);
 
-   if (error) return next(error);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "product quantity incremented",
     data,
-   } as APIResponse<TCartAndItem>);
+   });
   },
  );
 
  decrementCartItem = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TCartAndItem>>,
+   res: Response<APIResponse<TCartAndItem | null>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = req.params.productId as string;
+   const productId = String(req.params.productId);
 
-   const [data, error] = await CartService.decrementItem(userId, productId);
+   const [data, err] = await CartService.decrementItem(userId, productId);
 
-   if (error) return next(error);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "product quantity decremented",
     data,
-   } as APIResponse<TCartAndItem>);
+   });
   },
  );
 
  getUserCart = asyncHandler(
   async (
    req: Request<CartParams>,
-   res: Response<APIResponse<TCartAndItem>>,
+   res: Response<APIResponse<TCartAndItem | null>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const cartId = req.params.cartId as string;
+   const cartId = String(req.params.cartId);
 
-   const [data, error] = await CartService.getUserCart(userId, cartId);
+   const [data, err] = await CartService.getUserCart(userId, cartId);
 
-   if (error) return next(error);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "user cart fetched successfully",
     data,
-   } as APIResponse<TCartAndItem>);
+   });
   },
  );
 }

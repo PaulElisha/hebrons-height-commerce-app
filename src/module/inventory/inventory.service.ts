@@ -51,9 +51,9 @@ class InventoryService {
  checkInventoryThreshold = async (
   productId: string,
  ): Promise<Result<number, AppError>> => {
-  const [productData, e] = await this.getProductThreshold(productId);
+  const [productData, err] = await this.getProductThreshold(productId);
 
-  if (e || !productData) return [null, e];
+  if (err || !productData) return [null, err];
 
   const { price, quantity: currentQuantity } = productData;
 
@@ -88,9 +88,9 @@ class InventoryService {
   action: "placeOrder" | "cancelOrder",
  ): Promise<Result<void, AppError>> {
   try {
-   const [productData, e] = await this.getProductThreshold(productId);
+    const [productData, err] = await this.getProductThreshold(productId);
 
-   if (e) return [null, e];
+    if (err) return [null, err];
 
    const currentQuantity = Number(productData?.quantity);
 
@@ -136,8 +136,12 @@ class InventoryService {
    }
 
    return [null, null];
-  } catch (error) {
-   return [null, error as AppError];
+   } catch (err) {
+     return [null, new InternalServerError(
+      err instanceof Error ? err.message : "Unknown error",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      ErrorCode.INTERNAL_SERVER_ERROR,
+     )];
   }
  }
 }

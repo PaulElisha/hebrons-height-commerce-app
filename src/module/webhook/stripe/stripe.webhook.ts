@@ -24,13 +24,13 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
    .send(`Webhook Error: ${error.message}`);
  }
 
- try {
-  switch (event.type) {
-   case "checkout.session.completed":
-   case "checkout.session.expired": {
-    const session = event.data.object as Stripe.Checkout.Session;
+  try {
+   switch (event.type) {
+    case "checkout.session.completed":
+    case "checkout.session.expired": {
+     const session = event.data.object;
 
-    PublishEvent({
+     PublishEvent({
      event_type: EventType.STRIPE_PAYMENT_VERIFIED,
      payload: {
       event: session,

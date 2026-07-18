@@ -45,7 +45,7 @@ class UserRouter {
     const userId = req.user.id;
     const image = req.upload_image.url;
 
-    const updateData: { [k: string]: any } = {};
+    const updateData: Record<string, any> = {};
 
     if (body.name !== undefined) updateData.name = body.name;
     if (body.email !== undefined) updateData.email = body.email;

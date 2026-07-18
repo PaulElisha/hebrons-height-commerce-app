@@ -20,6 +20,11 @@ import {
 import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
 import z from "zod";
 
+export interface TProductFilter {
+ search?: string;
+ category?: string;
+}
+
 export const CreateProductDto = z.object({
  name: z.string(),
  description: z.string(),
@@ -46,8 +51,8 @@ class ProductService {
  getMerchantProducts = async (
   userId: string,
  ): Promise<Result<TMerchantProducts, AppError>> => {
-  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
-  if (e || !merchantId) return [null, e];
+  const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
+  if (err || !merchantId) return [null, err];
 
   const data = await helper.fetchMerchantProductsFromDb(merchantId);
   return [data, null];
@@ -116,10 +121,7 @@ class ProductService {
  };
 
  getProducts = async (
-  filter: {
-   search?: string;
-   category?: string;
-  },
+  filter: TProductFilter,
   pagination: Pagination,
   ): Promise<Result<TPaginatedProducts, AppError>> => {
    const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
@@ -179,8 +181,8 @@ class ProductService {
   userId: string,
   body: z.infer<typeof CreateProductDto>,
  ): Promise<Result<TProduct, AppError>> => {
-  const [targetMerchantId, e] = await helper.getMerchantIdFromUser(userId);
-  if (e || !targetMerchantId) return [null, e];
+  const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
+  if (err || !targetMerchantId) return [null, err];
 
   const [newProduct] = await db
    .insert(product)
@@ -205,8 +207,8 @@ class ProductService {
   productId: string,
   uploadedImages: UploadImages,
  ): Promise<Result<TProduct, AppError>> => {
-  const [targetMerchantId, e] = await helper.getMerchantIdFromUser(userId);
-  if (e || !targetMerchantId) return [null, e];
+  const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
+  if (err || !targetMerchantId) return [null, err];
 
   const [existingProduct] = await db
    .select()
@@ -258,10 +260,10 @@ class ProductService {
   productId: string,
   body: z.infer<typeof UpdateProductDto>,
  ): Promise<Result<TProduct, AppError>> => {
-  const [targetMerchantId, e] = await helper.getMerchantIdFromUser(userId);
-  if (e || !targetMerchantId) return [null, e];
+  const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
+  if (err || !targetMerchantId) return [null, err];
 
-  const updateData: { [k: string]: any } = {};
+  const updateData: Record<string, any> = {};
 
   if (body.name !== undefined) updateData.name = body.name;
   if (body.description !== undefined) updateData.description = body.description;
@@ -299,8 +301,8 @@ class ProductService {
   userId: string,
   productId: string,
  ): Promise<Result<void, AppError>> => {
-  const [targetMerchantId, e] = await helper.getMerchantIdFromUser(userId);
-  if (e || !targetMerchantId) return [null, e];
+  const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
+  if (err || !targetMerchantId) return [null, err];
 
   const [deletedProduct] = await db
    .delete(product)

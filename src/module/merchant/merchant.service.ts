@@ -101,7 +101,7 @@ class MerchantService {
   merchantId: string,
   body: z.infer<typeof UpdateMerchantDto>,
  ): Promise<Result<TMerchant, AppError>> => {
-  const updateData: { [k: string]: any } = {};
+  const updateData: Record<string, any> = {};
 
    if (body.businessName !== undefined) updateData.businessName = body.businessName;
    if (body.businessDescription !== undefined)

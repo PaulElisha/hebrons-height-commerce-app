@@ -17,10 +17,10 @@ class PaymentController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const orderId = req.params.orderId as string;
+   const orderId = String(req.params.orderId);
    const body = req.body;
 
-   const [paymentRes, e] = await PaymentService.fetchPaymentForOrderByRail(
+   const [paymentRes, err] = await PaymentService.fetchPaymentForOrderByRail(
     userId,
     orderId,
     {
@@ -31,7 +31,7 @@ class PaymentController {
     },
    );
 
-   if (e || !paymentRes) return next(e);
+    if (err || !paymentRes) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

@@ -30,6 +30,14 @@ import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
 
+export interface TOrderStatusQuery {
+ status: string;
+}
+
+export interface TOrderFilter {
+ status?: string;
+}
+
 export const CreateOrderDto = z.object({
  deliveryAddress: z.object({
   address: z.string(),
@@ -104,17 +112,16 @@ class OrderService {
     .values({
      userId,
      cartId,
-     subtotal: data.cart.subtotal as number,
-     deliveryAddress: {
-      label: "home",
-      address: body.deliveryAddress.address,
-      city: body.deliveryAddress.city,
-      state: body.deliveryAddress.state,
-      country: body.deliveryAddress.country,
-      line1: body.deliveryAddress.line1,
-      line2: body.deliveryAddress.line2,
-     } as any,
-    })
+      subtotal: Number(data.cart.subtotal),
+      deliveryAddress: {
+       label: "home",
+       address: body.deliveryAddress.address,
+       city: body.deliveryAddress.city,
+       state: body.deliveryAddress.state,
+       country: body.deliveryAddress.country,
+       line1: body.deliveryAddress.line1,
+       line2: body.deliveryAddress.line2 ?? "",
+      },    })
     .returning();
 
    const itemsToInsert = await FA.concurrent.map(async (v: TCartItem) => {
@@ -235,13 +242,11 @@ class OrderService {
 
  getMerchantOrders = async (
   userId: string,
-  filter: {
-   status?: string;
-  },
+  filter: TOrderFilter,
   pagination: Pagination,
-  ): Promise<Result<TMerchantPaginatedOrders, AppError>> => {
-   const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
-   if (err || !merchantId) return [null, err];
+ ): Promise<Result<TMerchantPaginatedOrders, AppError>> => {
+  const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
+  if (err || !merchantId) return [null, err];
 
   const limit = Math.min(Math.max(pagination.pageSize ?? 10, 1), 50);
   const pageNumber = Math.max(pagination.pageNumber ?? 1, 1);

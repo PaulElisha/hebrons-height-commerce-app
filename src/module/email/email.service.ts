@@ -24,22 +24,24 @@ class EmailService<T> {
   return (data: MailData<U>) => {
    try {
     return callback(this.transporter, data);
-   } catch (error) {
-    throw error;
+    } catch (err) {
+     throw err;
    }
   };
  };
 }
 
+const transporterConfig = {
+ host: Env.EMAIL_HOST,
+ port: Env.EMAIL_PORT,
+ secure: true,
+ family: 4,
+ auth: {
+  user: Env.EMAIL_USER,
+  pass: Env.EMAIL_PASS,
+ },
+};
+
 export default new EmailService<Transporter>(
-  nodemailer.createTransport({
-   host: Env.EMAIL_HOST,
-   port: Env.EMAIL_PORT,
-   secure: true,
-   family: 4,
-   auth: {
-    user: Env.EMAIL_USER,
-    pass: Env.EMAIL_PASS,
-   },
-  } as any),
+  nodemailer.createTransport(transporterConfig),
 );

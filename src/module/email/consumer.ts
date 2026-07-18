@@ -5,20 +5,20 @@ import MerchantService from "@module/merchant/merchant.service.ts";
 import OrderService from "@module/order/order.service.ts";
 import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
-import { EventContract, EventType } from "@shared/event-bus/config.ts";
+import { EventType } from "@shared/event-bus/config.ts";
 import { onEvent } from "@shared/event-bus/consumer.ts";
 import { eq } from "drizzle-orm";
 import FA from "fasy";
 
 import EmailWorker from "./email.worker.ts";
 
-onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
+onEvent(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
   try {
    const { userId, orderId } = payload.payload;
 
-    const [orderDetails, e] = await OrderService.getOrderWithUser(userId, orderId);
-    if (e || !orderDetails) throw e || new Error("Order not found");
+    const [orderDetails, err] = await OrderService.getOrderWithUser(userId, orderId);
+    if (err || !orderDetails) throw err || new Error("Order not found");
 
     const emailMessage = `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`;
 
@@ -26,20 +26,20 @@ onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
      user: orderDetails.user,
      message: emailMessage,
     });
-  } catch (error) {
-   const formatted = formatErrorPayload(error as Error);
-   console.error("[Background Event Error Intercepted]:", formatted.body);
-  }
- },
- error: (error) => {
-  console.error(error);
- },
-});
+   } catch (err) {
+    const formatted = formatErrorPayload(err instanceof Error ? err : new Error(String(err)));
+    console.error("[Background Event Error Intercepted]:", formatted.body);
+   }
+  },
+  error: (err) => {
+   console.error(err);
+  },
+ });
 
-onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
- next: async (payload) => {
-  try {
-   const { orderId, productIds } = payload.payload;
+onEvent(EventType.ORDER_PLACED).subscribe({
+  next: async (payload) => {
+   try {
+    const { orderId, productIds } = payload.payload;
 
    await FA.concurrent.map(async (productId: string) => {
     const merchantForProduct =
@@ -65,12 +65,12 @@ onEvent<EventContract>(EventType.ORDER_PLACED).subscribe({
      message: emailMessage,
     });
    }, productIds);
-  } catch (error) {
-   const formatted = formatErrorPayload(error as Error);
-   console.error("[Background Event Error Intercepted]:", formatted.body);
-  }
- },
- error: (error) => {
-  console.error(error);
- },
-});
+   } catch (err) {
+    const formatted = formatErrorPayload(err instanceof Error ? err : new Error(String(err)));
+    console.error("[Background Event Error Intercepted]:", formatted.body);
+   }
+  },
+  error: (err) => {
+   console.error(err);
+  },
+ });

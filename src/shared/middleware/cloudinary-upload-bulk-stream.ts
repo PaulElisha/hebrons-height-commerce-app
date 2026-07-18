@@ -44,8 +44,8 @@ export const cloudinaryUploadBulkStream = (folder: AssetType) => {
    req.upload_images = results;
 
    next();
-  } catch (error) {
-   next(error);
+  } catch (err) {
+    next(err);
   }
  };
 };

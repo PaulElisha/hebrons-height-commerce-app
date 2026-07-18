@@ -80,11 +80,11 @@ export const getCartAndItems = async (
   .leftJoin(cartItem, eq(cartItem.cartId, cartId))
   .where(and(eq(cart.userId, userId), eq(cartItem.cartId, cartId)));
 
- return {
-  cart: cartAndItems[0]?.cart,
-  cart_items: cartAndItems?.map((i) => i?.cart_items),
- } as TCartAndItem;
-};
+  return {
+   cart: cartAndItems[0]!.cart,
+   cart_items: cartAndItems!.map((i) => i.cart_items!),
+  };
+ };
 
 export const checkItemExistsInCart = async (
  cartId: string,
