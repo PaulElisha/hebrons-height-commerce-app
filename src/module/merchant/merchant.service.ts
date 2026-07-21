@@ -9,13 +9,18 @@ import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import NotFoundException from "@shared/error/not-found.ts";
-import { Result, TAnalyticsResult, TMerchant, TMerchantWithUser } from "@shared/types.ts";
+import {
+ Result,
+ TAnalyticsResult,
+ TMerchant,
+ TMerchantWithUser,
+} from "@shared/types.ts";
 import { and, count, desc, eq, isNotNull, SQL, sql, sum } from "drizzle-orm";
 import z from "zod";
 
 export const CreateMerchantDto = z.object({
  businessName: z.string(),
- businessLogo: z.string().optional(),
+ businessLogo: z.string(),
  businessDescription: z.string(),
  address: z.string(),
 });
@@ -38,29 +43,29 @@ class MerchantService {
   return productMerchant?.merchant;
  };
 
-  getMerchantProfile = async (
-   userId: string,
-  ): Promise<Result<TMerchantWithUser, AppError>> => {
-   const [merchantProfile] = await db
-    .select()
-    .from(merchant)
-    .innerJoin(user, eq(merchant.userId, user.id))
-    .where(and(eq(merchant?.userId, userId), isNotNull(merchant?.id)))
-    .limit(1);
+ getMerchantProfile = async (
+  userId: string,
+ ): Promise<Result<TMerchantWithUser, AppError>> => {
+  const [merchantProfile] = await db
+   .select()
+   .from(merchant)
+   .innerJoin(user, eq(merchant.userId, user.id))
+   .where(and(eq(merchant?.userId, userId), isNotNull(merchant?.id)))
+   .limit(1);
 
-   if (!merchantProfile) {
-    return [
-     null,
-     new NotFoundException(
-      "Merchant profile not found",
-      HttpStatus.NOT_FOUND,
-      ErrorCode.RESOURCE_NOT_FOUND,
-     ),
-    ];
-   }
+  if (!merchantProfile) {
+   return [
+    null,
+    new NotFoundException(
+     "Merchant profile not found",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
 
-   return [merchantProfile, null];
-  };
+  return [merchantProfile, null];
+ };
 
  createMerchantProfile = async (
   userId: string,
@@ -104,11 +109,13 @@ class MerchantService {
  ): Promise<Result<TMerchant, AppError>> => {
   const updateData: Record<string, any> = {};
 
-   if (body.businessName !== undefined) updateData.businessName = body.businessName;
-   if (body.businessDescription !== undefined)
-    updateData.businessDescription = body.businessDescription;
-   if (body.businessLogo !== undefined) updateData.businessLogo = body.businessLogo;
-   if (body.address !== undefined) updateData.address = body.address;
+  if (body.businessName !== undefined)
+   updateData.businessName = body.businessName;
+  if (body.businessDescription !== undefined)
+   updateData.businessDescription = body.businessDescription;
+  if (body.businessLogo !== undefined)
+   updateData.businessLogo = body.businessLogo;
+  if (body.address !== undefined) updateData.address = body.address;
   updateData.updatedAt = new Date();
 
   const [updatedMerchant] = await db
@@ -163,9 +170,9 @@ class MerchantService {
  getAnalytics = async (
   userId: string,
  ): Promise<Result<TAnalyticsResult, AppError>> => {
-  const [merchantId, err] = await import(
-   "@shared/helper.ts"
-  ).then((m) => m.getMerchantIdFromUser(userId));
+  const [merchantId, err] = await import("@shared/helper.ts").then((m) =>
+   m.getMerchantIdFromUser(userId),
+  );
   if (err || !merchantId) return [null, err];
 
   const [totalResult] = await db

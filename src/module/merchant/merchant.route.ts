@@ -6,7 +6,9 @@ import roleGuard from "@middleware/role-guard.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
-import MerchantController from "./merchant.controller.ts";
+import MerchantController, {
+ CreateMerchantSchema,
+} from "./merchant.controller.ts";
 import { UpdateMerchantDto } from "./merchant.service.ts";
 
 class MerchantRouter {
@@ -23,7 +25,7 @@ class MerchantRouter {
   this.router.get("/analytics", MerchantController.getAnalytics);
   this.router.post(
    "/",
-   // validate(CreateMerchantDto),
+   validate(CreateMerchantSchema),
    upload.single("file"),
    cloudinaryUploadStream("avatar"),
    MerchantController.createMerchantProfile,

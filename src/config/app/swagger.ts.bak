@@ -737,21 +737,14 @@ const spec = {
       schema: { type: "string" },
       description: "Search products by name or description",
      },
-      {
-       name: "category",
-       in: "query",
-       required: false,
-       schema: { type: "string" },
-       description: "Filter by category",
-      },
-      {
-       name: "subCategory",
-       in: "query",
-       required: false,
-       schema: { type: "string" },
-       description: "Filter by subcategory",
-      },
-     ],
+     {
+      name: "category",
+      in: "query",
+      required: false,
+      schema: { type: "string" },
+      description: "Filter by category",
+     },
+    ],
     responses: {
      "200": {
       description: "Products fetched successfully",
@@ -816,8 +809,10 @@ const spec = {
          name: { type: "string" },
          description: { type: "string" },
          price: { type: "integer" },
-          quantity: { type: "integer" },
-       category: { type: "string" },
+         quantity: { type: "integer" },
+      categoryId: { type: "string", nullable: true },
+      subCategoryId: { type: "string", nullable: true },
+      category: { type: "string" },
       subCategory: { type: "string" },
          additionalData: {
           type: "object",
@@ -1782,30 +1777,29 @@ const spec = {
    },
   },
  },
-   "/api/category": {
-    get: {
-     tags: ["Category"],
-     summary: "Get all categories with subcategories",
-     responses: {
-      "200": {
-       description: "Categories fetched successfully",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "categories fetched successfully" },
-           data: {
-            type: "array",
-            items: {
-             type: "object",
-             properties: {
-              category: { $ref: "#/components/schemas/Category" },
-              subcategories: {
-               type: "array",
-               items: { $ref: "#/components/schemas/Subcategory" },
-              },
+  "/api/category": {
+   get: {
+    tags: ["Category"],
+    summary: "Get all categories with subcategories",
+    responses: {
+     "200": {
+      description: "Categories fetched successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "categories fetched successfully" },
+          data: {
+           type: "array",
+           items: {
+            type: "object",
+            properties: {
+             category: { $ref: "#/components/schemas/Category" },
+             subcategories: {
+              type: "array",
+              items: { $ref: "#/components/schemas/Subcategory" },
              },
             },
            },
@@ -1817,28 +1811,27 @@ const spec = {
      },
     },
    },
-   "/api/category/{categoryId}": {
-    delete: {
-     tags: ["Category"],
-     summary: "Delete a category (admin only)",
-     security: [{ bearerAuth: [] }],
-     parameters: [
-      {
-       name: "categoryId",
-       in: "path",
-       required: true,
-       schema: { type: "string" },
-       description: "Category ID to delete",
-      },
-     ],
-     responses: {
-      "204": { description: "Category deleted, no content" },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-      "403": { description: "Forbidden — admin only" },
-      "404": { description: "Category not found" },
+   delete: {
+    tags: ["Category"],
+    summary: "Delete a category (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "categoryId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Category ID to delete",
      },
+    ],
+    responses: {
+     "204": { description: "Category deleted, no content" },
+     "401": { description: "Unauthorized — invalid or missing session token" },
+     "403": { description: "Forbidden — admin only" },
+     "404": { description: "Category not found" },
     },
    },
+  },
   "/api/product/by-categories": {
    get: {
     tags: ["Product"],
