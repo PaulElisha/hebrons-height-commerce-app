@@ -36,6 +36,7 @@ import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
 import webpushRouter from "@module/webpush/webpush.route.ts";
+const vapidConfigured = !!(Env.VAPID_PRIVATE_KEY && Env.VAPID_PUBLIC_KEY);
 dns.setDefaultResultOrder("ipv4first");
 
 initializeDrizzleTransactionalContext();
@@ -80,7 +81,7 @@ class App {
   this.app.use("/api/merchant", merchantRouter);
   this.app.use("/api/category", categoryRouter);
   this.app.use("/api/notification", notificationRouter);
-  this.app.use("/api/notification", webpushRouter);
+  if (vapidConfigured) this.app.use("/api/notification", webpushRouter);
   this.app.use("/api/product", productRouter);
   this.app.use("/api/cart", cartRouter);
   this.app.use("/api/order", orderRouter);

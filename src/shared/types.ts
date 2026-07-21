@@ -257,6 +257,6 @@ export interface TAnalyticsResult {
 
 export interface TPusher {
  email: string;
- privKey: string;
  pubKey: string;
+ privKey: string;
 }

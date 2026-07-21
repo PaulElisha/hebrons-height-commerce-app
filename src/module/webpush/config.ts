@@ -40,7 +40,7 @@ class Pusher<T extends TPusher> {
 }
 
 export default new Pusher<TPusher>({
- email: "mailto:Env.EMAIL_USER",
- privKey: Env.VAPID_PRIVATE_KEY,
+ email: `mailto:${Env.EMAIL_USER}`,
  pubKey: Env.VAPID_PUBLIC_KEY,
+ privKey: Env.VAPID_PRIVATE_KEY,
 });
