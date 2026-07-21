@@ -284,38 +284,38 @@ const spec = {
      lineTotal: { type: "integer", nullable: true },
     },
    },
-    OrderAndItems: {
-     type: "object",
-     properties: {
-      order: { $ref: "#/components/schemas/Order" },
-      order_items: {
-       type: "array",
-       items: { $ref: "#/components/schemas/OrderItem" },
-      },
+   OrderAndItems: {
+    type: "object",
+    properties: {
+     order: { $ref: "#/components/schemas/Order" },
+     order_items: {
+      type: "array",
+      items: { $ref: "#/components/schemas/OrderItem" },
      },
     },
-    OrderJoinRow: {
-     type: "object",
-     properties: {
-      orders: { $ref: "#/components/schemas/Order" },
-      orderItem: { $ref: "#/components/schemas/OrderItem" },
-     },
+   },
+   OrderJoinRow: {
+    type: "object",
+    properties: {
+     orders: { $ref: "#/components/schemas/Order" },
+     orderItem: { $ref: "#/components/schemas/OrderItem" },
     },
-    CreateOrderDto: {
+   },
+   CreateOrderDto: {
     type: "object",
     required: ["deliveryAddress"],
     properties: {
      deliveryAddress: {
       type: "object",
-       properties: {
-        address: { type: "string" },
-        city: { type: "string" },
-        state: { type: "string" },
-        country: { type: "string" },
-        line1: { type: "string" },
-        line2: { type: "string", description: "Optional second address line" },
-       },
-       required: ["address", "city", "state", "country", "line1"],
+      properties: {
+       address: { type: "string" },
+       city: { type: "string" },
+       state: { type: "string" },
+       country: { type: "string" },
+       line1: { type: "string" },
+       line2: { type: "string", description: "Optional second address line" },
+      },
+      required: ["address", "city", "state", "country", "line1"],
      },
     },
    },
@@ -353,61 +353,61 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-    CheckoutData: {
-     type: "object",
-     required: ["email", "currency", "rail"],
-     properties: {
-      email: { type: "string", format: "email" },
-      currency: { type: "string" },
-      rail: { type: "string" },
-      callback_url: {
-       type: "string",
-       format: "uri",
-       description: "URL to redirect back to after payment",
-      },
-      mode: {
-       type: "string",
-       enum: ["payment", "subscription", "setup"],
-      },
-      metadata: {
-       type: "object",
-       description: "Optional metadata key-value pairs",
-       additionalProperties: { type: "string" },
-      },
+   CheckoutData: {
+    type: "object",
+    required: ["email", "currency", "rail"],
+    properties: {
+     email: { type: "string", format: "email" },
+     currency: { type: "string" },
+     rail: { type: "string" },
+     callback_url: {
+      type: "string",
+      format: "uri",
+      description: "URL to redirect back to after payment",
+     },
+     mode: {
+      type: "string",
+      enum: ["payment", "subscription", "setup"],
+     },
+     metadata: {
+      type: "object",
+      description: "Optional metadata key-value pairs",
+      additionalProperties: { type: "string" },
      },
     },
-    Category: {
-     type: "object",
-     properties: {
-      id: { type: "string" },
-      name: { type: "string" },
-      description: { type: "string", nullable: true },
-      createdAt: { type: "string", format: "date-time" },
-      updatedAt: { type: "string", format: "date-time" },
-     },
+   },
+   Category: {
+    type: "object",
+    properties: {
+     id: { type: "string" },
+     name: { type: "string" },
+     description: { type: "string", nullable: true },
+     createdAt: { type: "string", format: "date-time" },
+     updatedAt: { type: "string", format: "date-time" },
     },
-    Subcategory: {
-     type: "object",
-     properties: {
-      id: { type: "string" },
-      categoryId: { type: "string" },
-      name: { type: "string" },
-      createdAt: { type: "string", format: "date-time" },
-     },
+   },
+   Subcategory: {
+    type: "object",
+    properties: {
+     id: { type: "string" },
+     categoryId: { type: "string" },
+     name: { type: "string" },
+     createdAt: { type: "string", format: "date-time" },
     },
-    Notification: {
-     type: "object",
-     properties: {
-      id: { type: "string" },
-      userId: { type: "string" },
-      title: { type: "string" },
-      message: { type: "string" },
-      type: { type: "string", enum: ["order_update", "stock_alert", "system"] },
-      read: { type: "string", enum: ["read", "unread"] },
-      createdAt: { type: "string", format: "date-time" },
-     },
+   },
+   Notification: {
+    type: "object",
+    properties: {
+     id: { type: "string" },
+     userId: { type: "string" },
+     title: { type: "string" },
+     message: { type: "string" },
+     type: { type: "string", enum: ["order_update", "stock_alert", "system"] },
+     read: { type: "string", enum: ["read", "unread"] },
+     createdAt: { type: "string", format: "date-time" },
     },
-    Pagination: {
+   },
+   Pagination: {
     type: "object",
     properties: {
      pageSize: { type: "integer", minimum: 1, maximum: 50 },
@@ -737,21 +737,21 @@ const spec = {
       schema: { type: "string" },
       description: "Search products by name or description",
      },
-      {
-       name: "category",
-       in: "query",
-       required: false,
-       schema: { type: "string" },
-       description: "Filter by category",
-      },
-      {
-       name: "subCategory",
-       in: "query",
-       required: false,
-       schema: { type: "string" },
-       description: "Filter by subcategory",
-      },
-     ],
+     {
+      name: "category",
+      in: "query",
+      required: false,
+      schema: { type: "string" },
+      description: "Filter by category",
+     },
+     {
+      name: "subCategory",
+      in: "query",
+      required: false,
+      schema: { type: "string" },
+      description: "Filter by subcategory",
+     },
+    ],
     responses: {
      "200": {
       description: "Products fetched successfully",
@@ -816,9 +816,9 @@ const spec = {
          name: { type: "string" },
          description: { type: "string" },
          price: { type: "integer" },
-          quantity: { type: "integer" },
-       category: { type: "string" },
-      subCategory: { type: "string" },
+         quantity: { type: "integer" },
+         category: { type: "string" },
+         subCategory: { type: "string" },
          additionalData: {
           type: "object",
           additionalProperties: { type: "string" },
@@ -966,39 +966,39 @@ const spec = {
      "404": { description: "Product not found" },
     },
    },
-    delete: {
-     tags: ["Product"],
-     summary: "Delete a product",
-     security: [{ bearerAuth: [] }],
-     parameters: [
-      {
-       name: "productId",
-       in: "path",
-       required: true,
-       schema: { type: "string" },
-       description: "Product ID",
-      },
-     ],
-     responses: {
-      "200": {
-       description: "Product deleted successfully",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "product deleted successfully" },
-          },
+   delete: {
+    tags: ["Product"],
+    summary: "Delete a product",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "productId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Product ID",
+     },
+    ],
+    responses: {
+     "200": {
+      description: "Product deleted successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "product deleted successfully" },
          },
         },
        },
       },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-      "403": { description: "Forbidden — user is not a merchant" },
-      "404": { description: "Product not found" },
      },
+     "401": { description: "Unauthorized — invalid or missing session token" },
+     "403": { description: "Forbidden — user is not a merchant" },
+     "404": { description: "Product not found" },
     },
+   },
   },
   "/api/product/{merchantId}/merchant": {
    get: {
@@ -1376,55 +1376,55 @@ const spec = {
     },
    },
   },
-   "/api/order/status": {
-    get: {
-     tags: ["Order"],
-     summary: "Get user's orders filtered by status",
-     security: [{ bearerAuth: [] }],
-     parameters: [
-      {
-       name: "status",
-       in: "query",
-       required: false,
-       schema: {
-        type: "string",
-        enum: [
-         "pending",
-         "processing",
-         "fulfilled",
-         "failed",
-         "out_for_delivery",
-         "delivered",
-         "cancelled",
-        ],
-       },
-       description: "Order status to filter by",
+  "/api/order/status": {
+   get: {
+    tags: ["Order"],
+    summary: "Get user's orders filtered by status",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "status",
+      in: "query",
+      required: false,
+      schema: {
+       type: "string",
+       enum: [
+        "pending",
+        "processing",
+        "fulfilled",
+        "failed",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+       ],
       },
-     ],
-     responses: {
-      "200": {
-       description: "Fetched orders by status",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "fetched order status" },
-           data: {
-            type: "array",
-            items: { $ref: "#/components/schemas/OrderJoinRow" },
-           },
+      description: "Order status to filter by",
+     },
+    ],
+    responses: {
+     "200": {
+      description: "Fetched orders by status",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "fetched order status" },
+          data: {
+           type: "array",
+           items: { $ref: "#/components/schemas/OrderJoinRow" },
           },
          },
         },
        },
       },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-      "403": { description: "Forbidden — user is not a user" },
      },
+     "401": { description: "Unauthorized — invalid or missing session token" },
+     "403": { description: "Forbidden — user is not a user" },
     },
    },
+  },
   "/api/order/{orderId}": {
    get: {
     tags: ["Order"],
@@ -1762,51 +1762,52 @@ const spec = {
     },
    },
    responses: {
-     "201": {
-      description: "Upload signature created",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "signature created" },
-          data: { $ref: "#/components/schemas/UploadResult" },
-         },
+    "201": {
+     description: "Upload signature created",
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        properties: {
+         status: { type: "string", example: "ok" },
+         message: { type: "string", example: "signature created" },
+         data: { $ref: "#/components/schemas/UploadResult" },
         },
        },
       },
      },
+    },
     "401": { description: "Unauthorized — invalid or missing session token" },
     "403": { description: "Forbidden — user role not authorized" },
    },
   },
  },
-   "/api/category": {
-    get: {
-     tags: ["Category"],
-     summary: "Get all categories with subcategories",
-     responses: {
-      "200": {
-       description: "Categories fetched successfully",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "categories fetched successfully" },
-           data: {
-            type: "array",
-            items: {
-             type: "object",
-             properties: {
-              category: { $ref: "#/components/schemas/Category" },
-              subcategories: {
-               type: "array",
-               items: { $ref: "#/components/schemas/Subcategory" },
-              },
-             },
+ "/api/category": {
+  get: {
+   tags: ["Category"],
+   summary: "Get all categories with subcategories",
+   responses: {
+    "200": {
+     description: "Categories fetched successfully",
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        properties: {
+         status: { type: "string", example: "ok" },
+         message: {
+          type: "string",
+          example: "categories fetched successfully",
+         },
+         data: {
+          type: "array",
+          items: {
+           type: "object",
+           properties: {
+            category: { $ref: "#/components/schemas/Category" },
+            subcategories: {
+             type: "array",
+             items: { $ref: "#/components/schemas/Subcategory" },
             },
            },
           },
@@ -1817,61 +1818,62 @@ const spec = {
      },
     },
    },
-   "/api/category/{categoryId}": {
-    delete: {
-     tags: ["Category"],
-     summary: "Delete a category (admin only)",
-     security: [{ bearerAuth: [] }],
-     parameters: [
-      {
-       name: "categoryId",
-       in: "path",
-       required: true,
-       schema: { type: "string" },
-       description: "Category ID to delete",
-      },
-     ],
-     responses: {
-      "204": { description: "Category deleted, no content" },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-      "403": { description: "Forbidden — admin only" },
-      "404": { description: "Category not found" },
-     },
+  },
+ },
+ "/api/category/{categoryId}": {
+  delete: {
+   tags: ["Category"],
+   summary: "Delete a category (admin only)",
+   security: [{ bearerAuth: [] }],
+   parameters: [
+    {
+     name: "categoryId",
+     in: "path",
+     required: true,
+     schema: { type: "string" },
+     description: "Category ID to delete",
     },
+   ],
+   responses: {
+    "204": { description: "Category deleted, no content" },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+    "403": { description: "Forbidden — admin only" },
+    "404": { description: "Category not found" },
    },
-  "/api/product/by-categories": {
-   get: {
-    tags: ["Product"],
-    summary: "Get products grouped by category with subcategories",
-    responses: {
-     "200": {
-      description: "Products by categories fetched successfully",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: {
-           type: "string",
-           example: "products by categories fetched successfully",
-          },
-          data: {
-           type: "array",
-           items: {
-            type: "object",
-            properties: {
-             category: { $ref: "#/components/schemas/Category" },
-             subcategories: {
-              type: "array",
-              items: {
-               type: "object",
-               properties: {
-                subcategory: { $ref: "#/components/schemas/Subcategory" },
-                products: {
-                 type: "array",
-                 items: { $ref: "#/components/schemas/Product" },
-                },
+  },
+ },
+ "/api/product/by-categories": {
+  get: {
+   tags: ["Product"],
+   summary: "Get products grouped by category with subcategories",
+   responses: {
+    "200": {
+     description: "Products by categories fetched successfully",
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        properties: {
+         status: { type: "string", example: "ok" },
+         message: {
+          type: "string",
+          example: "products by categories fetched successfully",
+         },
+         data: {
+          type: "array",
+          items: {
+           type: "object",
+           properties: {
+            category: { $ref: "#/components/schemas/Category" },
+            subcategories: {
+             type: "array",
+             items: {
+              type: "object",
+              properties: {
+               subcategory: { $ref: "#/components/schemas/Subcategory" },
+               products: {
+                type: "array",
+                items: { $ref: "#/components/schemas/Product" },
                },
               },
              },
@@ -1886,252 +1888,92 @@ const spec = {
     },
    },
   },
-  "/api/product/primary-image/{productId}": {
-   put: {
-    tags: ["Product"],
-    summary: "Update the primary image of a product",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "productId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Product ID",
-     },
-    ],
-    requestBody: {
+ },
+ "/api/product/primary-image/{productId}": {
+  put: {
+   tags: ["Product"],
+   summary: "Update the primary image of a product",
+   security: [{ bearerAuth: [] }],
+   parameters: [
+    {
+     name: "productId",
+     in: "path",
      required: true,
-     content: {
-      "multipart/form-data": {
-       schema: {
-        type: "object",
-        required: ["file"],
-        properties: {
-         file: {
-          type: "string",
-          format: "binary",
-          description: "New primary image file",
-         },
+     schema: { type: "string" },
+     description: "Product ID",
+    },
+   ],
+   requestBody: {
+    required: true,
+    content: {
+     "multipart/form-data": {
+      schema: {
+       type: "object",
+       required: ["file"],
+       properties: {
+        file: {
+         type: "string",
+         format: "binary",
+         description: "New primary image file",
         },
        },
       },
      },
     },
-    responses: {
-     "200": {
-      description: "Primary image updated",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "primary image updated" },
-          data: { $ref: "#/components/schemas/Product" },
-         },
-        },
-       },
-      },
-     },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — merchant only" },
-     "404": { description: "Product not found" },
-    },
    },
-  },
-  "/api/merchant/analytics": {
-   get: {
-    tags: ["Merchant"],
-    summary: "Get merchant analytics (orders, revenue, top products)",
-    security: [{ bearerAuth: [] }],
-    responses: {
-     "200": {
-      description: "Analytics fetched successfully",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "analytics fetched" },
-          data: {
-           type: "object",
-           properties: {
-            totalOrders: { type: "integer" },
-            totalRevenue: { type: "integer" },
-            statusBreakdown: {
-             type: "object",
-             additionalProperties: { type: "integer" },
-            },
-            topProducts: {
-             type: "array",
-             items: { type: "object" },
-            },
-            periodCounts: {
-             type: "object",
-             additionalProperties: { type: "integer" },
-            },
-           },
-          },
-         },
-        },
-       },
-      },
-     },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — merchant only" },
-    },
-   },
-  },
-  "/api/notification/stream": {
-   get: {
-    tags: ["Notification"],
-    summary: "SSE stream for real-time notification events",
-    security: [{ bearerAuth: [] }],
-    responses: {
-     "200": {
-      description: "SSE stream connected",
-      content: {
-       "text/event-stream": {
-        schema: { type: "string" },
-       },
-      },
-     },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-    },
-   },
-  },
-  "/api/notification/subscribe": {
-   post: {
-    tags: ["Notification"],
-    summary: "Subscribe browser to push notifications",
-    security: [{ bearerAuth: [] }],
-    requestBody: {
-     required: true,
+   responses: {
+    "200": {
+     description: "Primary image updated",
      content: {
       "application/json": {
        schema: {
         type: "object",
-        required: ["endpoint", "keys"],
         properties: {
-         endpoint: { type: "string" },
-         keys: {
+         status: { type: "string", example: "ok" },
+         message: { type: "string", example: "primary image updated" },
+         data: { $ref: "#/components/schemas/Product" },
+        },
+       },
+      },
+     },
+    },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+    "403": { description: "Forbidden — merchant only" },
+    "404": { description: "Product not found" },
+   },
+  },
+ },
+ "/api/merchant/analytics": {
+  get: {
+   tags: ["Merchant"],
+   summary: "Get merchant analytics (orders, revenue, top products)",
+   security: [{ bearerAuth: [] }],
+   responses: {
+    "200": {
+     description: "Analytics fetched successfully",
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        properties: {
+         status: { type: "string", example: "ok" },
+         message: { type: "string", example: "analytics fetched" },
+         data: {
           type: "object",
           properties: {
-           auth: { type: "string" },
-           p256dh: { type: "string" },
-          },
-         },
-        },
-       },
-      },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Subscribed successfully",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "subscribed successfully" },
-         },
-        },
-       },
-      },
-     },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-    },
-   },
-  },
-  "/api/notification/unsubscribe": {
-   post: {
-    tags: ["Notification"],
-    summary: "Unsubscribe browser from push notifications",
-    security: [{ bearerAuth: [] }],
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: {
-        type: "object",
-        required: ["endpoint"],
-        properties: {
-         endpoint: { type: "string" },
-        },
-       },
-      },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Unsubscribed successfully",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "unsubscribed successfully" },
-         },
-        },
-       },
-      },
-     },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-    },
-   },
-  },
-  "/api/notification": {
-   get: {
-    tags: ["Notification"],
-    summary: "Get authenticated user's notifications",
-    security: [{ bearerAuth: [] }],
-    responses: {
-     "200": {
-      description: "Notifications fetched successfully",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "notifications fetched successfully" },
-          data: {
-           type: "array",
-           items: { $ref: "#/components/schemas/Notification" },
-          },
-         },
-        },
-       },
-      },
-     },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-    },
-   },
-  },
-  "/api/notification/unread-count": {
-   get: {
-    tags: ["Notification"],
-    summary: "Get unread notification count",
-    security: [{ bearerAuth: [] }],
-    responses: {
-     "200": {
-      description: "Unread count fetched",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "unread count fetched" },
-          data: {
-           type: "object",
-           properties: {
-            unread: { type: "integer" },
+           totalOrders: { type: "integer" },
+           totalRevenue: { type: "integer" },
+           statusBreakdown: {
+            type: "object",
+            additionalProperties: { type: "integer" },
+           },
+           topProducts: {
+            type: "array",
+            items: { type: "object" },
+           },
+           periodCounts: {
+            type: "object",
+            additionalProperties: { type: "integer" },
            },
           },
          },
@@ -2139,181 +1981,347 @@ const spec = {
        },
       },
      },
-     "401": { description: "Unauthorized — invalid or missing session token" },
     },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+    "403": { description: "Forbidden — merchant only" },
    },
   },
-  "/api/notification/{notificationId}/read": {
-   put: {
-    tags: ["Notification"],
-    summary: "Mark a single notification as read",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "notificationId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Notification ID",
+ },
+ "/api/notification/stream": {
+  get: {
+   tags: ["Notification"],
+   summary: "SSE stream for real-time notification events",
+   security: [{ bearerAuth: [] }],
+   responses: {
+    "200": {
+     description: "SSE stream connected",
+     content: {
+      "text/event-stream": {
+       schema: { type: "string" },
+      },
      },
-    ],
-    responses: {
-     "200": {
-      description: "Notification marked as read",
-      content: {
-       "application/json": {
-        schema: {
+    },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+   },
+  },
+ },
+ "/api/notification/subscribe": {
+  post: {
+   tags: ["Notification"],
+   summary: "Subscribe browser to push notifications",
+   security: [{ bearerAuth: [] }],
+   requestBody: {
+    required: true,
+    content: {
+     "application/json": {
+      schema: {
+       type: "object",
+       required: ["endpoint", "keys"],
+       properties: {
+        endpoint: { type: "string" },
+        keys: {
          type: "object",
          properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "notification marked as read" },
-          data: { $ref: "#/components/schemas/Notification" },
+          auth: { type: "string" },
+          p256dh: { type: "string" },
          },
         },
        },
       },
      },
-     "401": { description: "Unauthorized — invalid or missing session token" },
     },
    },
-  },
-  "/api/notification/read-all": {
-   put: {
-    tags: ["Notification"],
-    summary: "Mark all notifications as read",
-    security: [{ bearerAuth: [] }],
-    responses: {
-     "200": {
-      description: "All notifications marked as read",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "all notifications marked as read" },
-         },
-        },
-       },
-      },
-     },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-    },
-   },
-  },
-  "/api/order/{orderId}/status": {
-   put: {
-    tags: ["Order"],
-    summary: "Update order status (merchant only)",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "orderId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Order ID",
-     },
-    ],
-    requestBody: {
-     required: true,
+   responses: {
+    "200": {
+     description: "Subscribed successfully",
      content: {
       "application/json": {
        schema: {
         type: "object",
-        required: ["status"],
         properties: {
-         status: {
+         status: { type: "string", example: "ok" },
+         message: { type: "string", example: "subscribed successfully" },
+        },
+       },
+      },
+     },
+    },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+   },
+  },
+ },
+ "/api/notification/unsubscribe": {
+  post: {
+   tags: ["Notification"],
+   summary: "Unsubscribe browser from push notifications",
+   security: [{ bearerAuth: [] }],
+   requestBody: {
+    required: true,
+    content: {
+     "application/json": {
+      schema: {
+       type: "object",
+       required: ["endpoint"],
+       properties: {
+        endpoint: { type: "string" },
+       },
+      },
+     },
+    },
+   },
+   responses: {
+    "200": {
+     description: "Unsubscribed successfully",
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        properties: {
+         status: { type: "string", example: "ok" },
+         message: { type: "string", example: "unsubscribed successfully" },
+        },
+       },
+      },
+     },
+    },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+   },
+  },
+ },
+ "/api/notification": {
+  get: {
+   tags: ["Notification"],
+   summary: "Get authenticated user's notifications",
+   security: [{ bearerAuth: [] }],
+   responses: {
+    "200": {
+     description: "Notifications fetched successfully",
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        properties: {
+         status: { type: "string", example: "ok" },
+         message: {
           type: "string",
-          enum: [
-           "pending",
-           "processing",
-           "fulfilled",
-           "failed",
-           "out_for_delivery",
-           "delivered",
-           "cancelled",
-          ],
-          description: "New order status",
+          example: "notifications fetched successfully",
+         },
+         data: {
+          type: "array",
+          items: { $ref: "#/components/schemas/Notification" },
          },
         },
        },
       },
      },
     },
-    responses: {
-     "200": {
-      description: "Order status updated",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "order status updated" },
-          data: { $ref: "#/components/schemas/Order" },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+   },
+  },
+ },
+ "/api/notification/unread-count": {
+  get: {
+   tags: ["Notification"],
+   summary: "Get unread notification count",
+   security: [{ bearerAuth: [] }],
+   responses: {
+    "200": {
+     description: "Unread count fetched",
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        properties: {
+         status: { type: "string", example: "ok" },
+         message: { type: "string", example: "unread count fetched" },
+         data: {
+          type: "object",
+          properties: {
+           unread: { type: "integer" },
+          },
          },
         },
        },
       },
      },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — merchant only" },
-     "404": { description: "Order not found" },
-     "422": { description: "Invalid status transition" },
     },
+    "401": { description: "Unauthorized — invalid or missing session token" },
    },
   },
-  "/api/auth/register": {
-   post: {
-    tags: ["Authentication"],
-    summary: "Register a new user",
-    requestBody: {
+ },
+ "/api/notification/{notificationId}/read": {
+  put: {
+   tags: ["Notification"],
+   summary: "Mark a single notification as read",
+   security: [{ bearerAuth: [] }],
+   parameters: [
+    {
+     name: "notificationId",
+     in: "path",
      required: true,
+     schema: { type: "string" },
+     description: "Notification ID",
+    },
+   ],
+   responses: {
+    "200": {
+     description: "Notification marked as read",
      content: {
       "application/json": {
        schema: {
         type: "object",
-        required: ["name", "email", "password"],
         properties: {
-         name: { type: "string" },
-         email: { type: "string", format: "email" },
-         password: { type: "string", minLength: 8 },
+         status: { type: "string", example: "ok" },
+         message: { type: "string", example: "notification marked as read" },
+         data: { $ref: "#/components/schemas/Notification" },
         },
        },
       },
      },
     },
-    responses: {
-     "200": { description: "User registered successfully" },
-     "400": { description: "Validation error" },
-     "409": { description: "Email already exists" },
-    },
+    "401": { description: "Unauthorized — invalid or missing session token" },
    },
   },
-  "/api/auth/login": {
-   post: {
-    tags: ["Authentication"],
-    summary: "Login with email and password",
-    requestBody: {
-     required: true,
+ },
+ "/api/notification/read-all": {
+  put: {
+   tags: ["Notification"],
+   summary: "Mark all notifications as read",
+   security: [{ bearerAuth: [] }],
+   responses: {
+    "200": {
+     description: "All notifications marked as read",
      content: {
       "application/json": {
        schema: {
         type: "object",
-        required: ["email", "password"],
         properties: {
-         email: { type: "string", format: "email" },
-         password: { type: "string" },
+         status: { type: "string", example: "ok" },
+         message: {
+          type: "string",
+          example: "all notifications marked as read",
+         },
         },
        },
       },
      },
     },
-    responses: {
-     "200": { description: "Login successful" },
-     "401": { description: "Invalid credentials" },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+   },
+  },
+ },
+ "/api/order/{orderId}/status": {
+  put: {
+   tags: ["Order"],
+   summary: "Update order status (merchant only)",
+   security: [{ bearerAuth: [] }],
+   parameters: [
+    {
+     name: "orderId",
+     in: "path",
+     required: true,
+     schema: { type: "string" },
+     description: "Order ID",
     },
+   ],
+   requestBody: {
+    required: true,
+    content: {
+     "application/json": {
+      schema: {
+       type: "object",
+       required: ["status"],
+       properties: {
+        status: {
+         type: "string",
+         enum: [
+          "pending",
+          "processing",
+          "fulfilled",
+          "failed",
+          "out_for_delivery",
+          "delivered",
+          "cancelled",
+         ],
+         description: "New order status",
+        },
+       },
+      },
+     },
+    },
+   },
+   responses: {
+    "200": {
+     description: "Order status updated",
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        properties: {
+         status: { type: "string", example: "ok" },
+         message: { type: "string", example: "order status updated" },
+         data: { $ref: "#/components/schemas/Order" },
+        },
+       },
+      },
+     },
+    },
+    "401": { description: "Unauthorized — invalid or missing session token" },
+    "403": { description: "Forbidden — merchant only" },
+    "404": { description: "Order not found" },
+    "422": { description: "Invalid status transition" },
+   },
+  },
+ },
+ "/api/auth/register": {
+  post: {
+   tags: ["Authentication"],
+   summary: "Register a new user",
+   requestBody: {
+    required: true,
+    content: {
+     "application/json": {
+      schema: {
+       type: "object",
+       required: ["name", "email", "password"],
+       properties: {
+        name: { type: "string" },
+        email: { type: "string", format: "email" },
+        password: { type: "string", minLength: 8 },
+       },
+      },
+     },
+    },
+   },
+   responses: {
+    "200": { description: "User registered successfully" },
+    "400": { description: "Validation error" },
+    "409": { description: "Email already exists" },
+   },
+  },
+ },
+ "/api/auth/login": {
+  post: {
+   tags: ["Authentication"],
+   summary: "Login with email and password",
+   requestBody: {
+    required: true,
+    content: {
+     "application/json": {
+      schema: {
+       type: "object",
+       required: ["email", "password"],
+       properties: {
+        email: { type: "string", format: "email" },
+        password: { type: "string" },
+       },
+      },
+     },
+    },
+   },
+   responses: {
+    "200": { description: "Login successful" },
+    "401": { description: "Invalid credentials" },
    },
   },
  },
