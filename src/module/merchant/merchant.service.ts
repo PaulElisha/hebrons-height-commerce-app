@@ -2,14 +2,15 @@
 import db from "@db/db.ts";
 import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
+import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import NotFoundException from "@shared/error/not-found.ts";
-import { Result, TMerchant, TMerchantWithUser } from "@shared/types.ts";
-import { and, eq, isNotNull } from "drizzle-orm";
+import { Result, TAnalyticsResult, TMerchant, TMerchantWithUser } from "@shared/types.ts";
+import { and, count, desc, eq, isNotNull, SQL, sql, sum } from "drizzle-orm";
 import z from "zod";
 
 export const CreateMerchantDto = z.object({
@@ -157,6 +158,87 @@ class MerchantService {
   }
 
   return [null, null];
+ };
+
+ getAnalytics = async (
+  userId: string,
+ ): Promise<Result<TAnalyticsResult, AppError>> => {
+  const [merchantId, err] = await import(
+   "@shared/helper.ts"
+  ).then((m) => m.getMerchantIdFromUser(userId));
+  if (err || !merchantId) return [null, err];
+
+  const [totalResult] = await db
+   .select({
+    totalOrders: count(),
+    totalRevenue: sum(orderItem.lineTotal),
+   })
+   .from(orderItem)
+   .where(eq(orderItem.merchantId, merchantId));
+
+  const statusBreakdown = await db
+   .select({
+    status: order.orderStatus,
+    count: count(),
+   })
+   .from(order)
+   .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+   .where(eq(orderItem.merchantId, merchantId))
+   .groupBy(order.orderStatus);
+
+  const topProducts = await db
+   .select({
+    productId: orderItem.productId,
+    name: product.name,
+    quantity: sql<number>`COALESCE(SUM(${orderItem.quantity}), 0)`,
+    revenue: sql<number>`COALESCE(SUM(${orderItem.lineTotal}), 0)`,
+   })
+   .from(orderItem)
+   .innerJoin(product, eq(orderItem.productId, product.id))
+   .where(eq(orderItem.merchantId, merchantId))
+   .groupBy(orderItem.productId, product.name)
+   .orderBy(desc(sql`COALESCE(SUM(${orderItem.lineTotal}), 0)`))
+   .limit(10);
+
+  const periodCounts = await db
+   .select({
+    date: sql<string>`DATE(${order.createdAt})`,
+    count: count(),
+    revenue: sql<number>`COALESCE(SUM(${orderItem.lineTotal}), 0)`,
+   })
+   .from(order)
+   .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+   .where(
+    and(
+     eq(orderItem.merchantId, merchantId),
+     sql`${order.createdAt} >= NOW() - INTERVAL '30 days'`,
+    ),
+   )
+   .groupBy(sql`DATE(${order.createdAt})`)
+   .orderBy(sql`DATE(${order.createdAt})`);
+
+  return [
+   {
+    totalOrders: Number(totalResult?.totalOrders ?? 0),
+    totalRevenue: Number(totalResult?.totalRevenue ?? 0),
+    statusBreakdown: statusBreakdown.map((s) => ({
+     status: s.status,
+     count: Number(s.count),
+    })),
+    topProducts: topProducts.map((p) => ({
+     productId: p.productId,
+     name: p.name,
+     quantity: Number(p.quantity),
+     revenue: Number(p.revenue),
+    })),
+    periodCounts: periodCounts.map((p) => ({
+     date: String(p.date),
+     count: Number(p.count),
+     revenue: Number(p.revenue),
+    })),
+   },
+   null,
+  ];
  };
 }
 

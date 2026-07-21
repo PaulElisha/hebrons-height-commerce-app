@@ -11,49 +11,49 @@ import { and, eq } from "drizzle-orm";
 import CartBase from "./base.ts";
 
 class CartService {
-  addToCart = async (
-   userId: string,
-   productId: string,
-  ): Promise<Result<TCartAndItem, AppError>> => {
-   return await CartBase.modifyCart({
-    userId,
-    productId,
-    intent: "add",
-   });
-  };
+ addToCart = async (
+  userId: string,
+  productId: string,
+ ): Promise<Result<TCartAndItem, AppError>> => {
+  return await CartBase.modifyCart({
+   userId,
+   productId,
+   intent: "add",
+  });
+ };
 
-  removeFromCart = async (
-   userId: string,
-   productId: string,
-  ): Promise<Result<TCartAndItem, AppError>> => {
-   return await CartBase.modifyCart({
-    userId,
-    productId,
-    intent: "remove",
-   });
-  };
+ removeFromCart = async (
+  userId: string,
+  productId: string,
+ ): Promise<Result<TCartAndItem | null, AppError>> => {
+  return await CartBase.modifyCart({
+   userId,
+   productId,
+   intent: "remove",
+  });
+ };
 
-  incrementItem = async (
-   userId: string,
-   productId: string,
-  ): Promise<Result<TCartAndItem, AppError>> => {
-   return await CartBase.modifyCart({
-    userId,
-    productId,
-    intent: "increment",
-   });
-  };
+ incrementItem = async (
+  userId: string,
+  productId: string,
+ ): Promise<Result<TCartAndItem | null, AppError>> => {
+  return await CartBase.modifyCart({
+   userId,
+   productId,
+   intent: "increment",
+  });
+ };
 
-  decrementItem = async (
-   userId: string,
-   productId: string,
-  ): Promise<Result<TCartAndItem, AppError>> => {
-   return await CartBase.modifyCart({
-    userId,
-    productId,
-    intent: "decrement",
-   });
-  };
+ decrementItem = async (
+  userId: string,
+  productId: string,
+ ): Promise<Result<TCartAndItem, AppError>> => {
+  return await CartBase.modifyCart({
+   userId,
+   productId,
+   intent: "decrement",
+  });
+ };
 
  getUserCart = async (
   userId: string,
@@ -81,13 +81,13 @@ class CartService {
    {
     cart: {
      ...result[0].cart,
-      subtotal: Number(result[0].cart.subtotal),
+     subtotal: Number(result[0].cart.subtotal),
     },
     cart_items: result
      .filter((r) => r.cart_items)
      .map((r) => ({
       ...r.cart_items!,
-       totalItemPrice: Number(r.cart_items!.totalItemPrice),
+      totalItemPrice: Number(r.cart_items!.totalItemPrice),
      })),
    },
    null,

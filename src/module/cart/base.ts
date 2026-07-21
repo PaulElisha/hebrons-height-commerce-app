@@ -58,7 +58,7 @@ class CartBase {
 
   const callback = CartActions[intent];
 
-  const [result, e] = await mutex.runExclusive(async () => {
+  const [result, err] = await mutex.runExclusive(async () => {
    if (typeof intent === "string" && intent == "add") {
     const existingItem = await helper.checkItemExistsInCart(
      userCart.id,
@@ -116,7 +116,7 @@ class CartBase {
    return [null, null];
   });
 
-  if (e) return [null, e];
+  if (err) return [null, err];
   if (result) return [result, null];
 
   await this.calculateTotalAmount(userCart.id, userId);

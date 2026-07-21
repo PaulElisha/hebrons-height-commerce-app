@@ -10,6 +10,7 @@ import {
  timestamp,
 } from "drizzle-orm/pg-core";
 
+import { category, subcategory } from "./category.ts";
 import { merchant } from "./merchant.ts";
 
 export const productStatuses: [string, string] = [
@@ -31,6 +32,8 @@ export const product = pgTable(
   additionalImages: jsonb("additional_images").$type<string[]>(),
   price: integer("price").notNull(),
   quantity: integer("quantity").notNull(),
+  categoryId: text("category_id").references(() => category.id),
+  subCategoryId: text("sub_category_id").references(() => subcategory.id),
   category: text("category").notNull(),
   subCategory: text("sub_category").notNull(),
   status: text("product_status")

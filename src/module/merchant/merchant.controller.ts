@@ -73,25 +73,39 @@ class MerchantController {
   },
  );
 
- deleteMerchantProfile = asyncHandler(
-  async (
-   req: Request<MerchantParams>,
-   res: Response,
-   next: NextFunction,
-  ): Promise<any> => {
-   const userId = req.user.id;
-   const merchantId = String(req.params.merchantId);
+  getAnalytics = asyncHandler(
+   async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user.id;
+    const [data, err] = await MerchantService.getAnalytics(userId);
+    if (err) return next(err);
 
-   const [, err] = await MerchantService.deleteMerchantProfile(
-    userId,
-    merchantId,
-   );
+    return res.status(HttpStatus.OK).json({
+     status: "ok",
+     message: "analytics fetched successfully",
+     data,
+    });
+   },
+  );
 
-   if (err) throw err;
+  deleteMerchantProfile = asyncHandler(
+   async (
+    req: Request<MerchantParams>,
+    res: Response,
+    next: NextFunction,
+   ): Promise<any> => {
+    const userId = req.user.id;
+    const merchantId = String(req.params.merchantId);
 
-   return res.status(HttpStatus.NO_CONTENT).send();
-  },
- );
+    const [, err] = await MerchantService.deleteMerchantProfile(
+     userId,
+     merchantId,
+    );
+
+    if (err) throw err;
+
+    return res.status(HttpStatus.NO_CONTENT).send();
+   },
+  );
 }
 
 export default new MerchantController();

@@ -7,7 +7,11 @@ export const onSubscribe = (
  userId: string,
 ): Observable<EventContract> => {
  return eventBus$.asObservable().pipe(
-  filter((update) => update?.payload?.userId === userId),
+  filter(
+   (update) =>
+    update?.payload?.userId === userId ||
+    update?.payload?.merchantId === userId,
+  ),
   map((update): EventContract => ({
    event_type: update.event_type,
    payload: update.payload,

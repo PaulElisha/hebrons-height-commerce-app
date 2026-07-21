@@ -2,14 +2,31 @@
 import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { Pagination, UploadImages } from "@shared/types.ts";
+import {
+ APIResponse,
+ Pagination,
+ TProduct,
+ UploadImages,
+} from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 
 import ProductService, { TProductFilter } from "./product.service.ts";
+import z from "zod";
+import { product } from "@schema/product.ts";
 
 export interface ProductParams {
  productId?: string;
 }
+
+export const CreateProductSchema = z.object({
+ name: z.string(),
+ description: z.string(),
+ price: z.number(),
+ quantity: z.number(),
+ category: z.string(),
+ subCategory: z.string(),
+ additionalData: z.record(z.string(), z.string()),
+});
 
 class ProductController {
  getMerchantProduct = asyncHandler(
@@ -62,6 +79,19 @@ class ProductController {
   },
  );
 
+ getProductsByCategories = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+   const [data, err] = await ProductService.getProductsByCategories();
+   if (err) return next(err);
+
+   return res.status(HttpStatus.OK).json({
+    status: "ok",
+    message: "products by categories fetched successfully",
+    data,
+   });
+  },
+ );
+
  getLatestProducts = asyncHandler(
   async (
    req: Request<{}, {}, {}, Pagination>,
@@ -90,12 +120,7 @@ class ProductController {
 
  getProducts = asyncHandler(
   async (
-   req: Request<
-    any,
-    any,
-    any,
-    Pagination & TProductFilter
-   >,
+   req: Request<any, any, any, Pagination & TProductFilter>,
    res: Response,
    next: NextFunction,
   ): Promise<any> => {
@@ -110,6 +135,7 @@ class ProductController {
    const filters = {
     search: req.query.search,
     category: req.query.category,
+    subCategory: req.query.subCategory,
    };
 
    const [data, err] = await ProductService.getProducts(filters, pagination);
@@ -125,7 +151,11 @@ class ProductController {
  );
 
  createProduct = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  async (
+   req: Request<any, any, z.infer<typeof CreateProductSchema>>,
+   res: Response<APIResponse<TProduct>>,
+   next: NextFunction,
+  ): Promise<any> => {
    const userId = req.user.id;
    const body = req.body;
    const image = req.upload_image.url;
@@ -135,7 +165,7 @@ class ProductController {
     image,
    });
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -148,7 +178,7 @@ class ProductController {
  updateProduct = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response,
+   res: Response<APIResponse<TProduct>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -161,7 +191,7 @@ class ProductController {
     body,
    );
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -174,21 +204,42 @@ class ProductController {
  uploadAdditionalMediaForProduct = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response,
+   res: Response<APIResponse<TProduct>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
    const productId = String(req.params.productId);
-    const imageUrls = req.upload_images;
+   const imageUrls = req.upload_images;
 
-   const [data, err] =
-    await ProductService.uploadAdditionalMediaForProduct(
-     userId,
-     productId,
-     imageUrls,
-    );
+   const [data, err] = await ProductService.uploadAdditionalMediaForProduct(
+    userId,
+    productId,
+    imageUrls,
+   );
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
+
+   return res.status(HttpStatus.OK).json({
+    status: "ok",
+    message: "product updated successfully",
+    data,
+   });
+  },
+ );
+
+ updatePrimaryImage = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+   const userId = req.user.id;
+   const productId = String(req.params.productId);
+   const primaryImageUrl = req.upload_image.url;
+
+   const [data, e] = await ProductService.updatePrimaryImage(
+    userId,
+    productId,
+    primaryImageUrl,
+   );
+
+   if (e || !data) return next(e);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

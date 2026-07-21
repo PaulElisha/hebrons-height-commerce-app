@@ -52,6 +52,9 @@ const EnvSchema = z.object({
  STRIPE_SECRET_KEY: z.string(),
  STRIPE_WEBHOOK_SECRET: z.string(),
 
+ VAPID_PUBLIC_KEY: z.string(),
+ VAPID_PRIVATE_KEY: z.string(),
+
  SCALER: z.coerce.number().default(100),
 });
 

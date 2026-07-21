@@ -9,9 +9,13 @@ import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
 import NotFoundException from "@shared/error/not-found.ts";
-import { Result, TProductThreshold } from "@shared/types.ts";
+import { EventType } from "@shared/event-bus/config.ts";
+import { PublishEvent } from "@shared/event-bus/publisher.ts";
+import { Result, TProduct, TProductThreshold } from "@shared/types.ts";
 import { and, eq, isNotNull, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
+
+const STOCK_THRESHOLDS = [10, 5, 3, 1] as const;
 
 class InventoryService {
  getProductThreshold = async (
@@ -81,61 +85,99 @@ class InventoryService {
   return [price, null];
  };
 
+ checkLowStock = async (productId: string) => {
+  const [current] = await db
+   .select({
+    quantity: product.quantity,
+    name: product.name,
+    merchantId: product.merchantId,
+   })
+   .from(product)
+   .where(eq(product.id, productId))
+   .limit(1);
+
+  if (!current) return;
+
+  for (const threshold of STOCK_THRESHOLDS) {
+   if (current.quantity === threshold) {
+    PublishEvent({
+     event_type: EventType.LOW_STOCK_ALERT,
+     payload: {
+      productId,
+      productName: current.name,
+      quantity: current.quantity,
+      merchantId: current.merchantId,
+     },
+    });
+    return;
+   }
+  }
+ };
+
  @Transactional()
  async updateProductThreshold(
   productId: string,
   orderId: string,
   action: "placeOrder" | "cancelOrder",
- ): Promise<Result<void, AppError>> {
+ ): Promise<Result<TProduct, AppError>> {
   try {
-    const [_, err] = await this.getProductThreshold(productId);
+   const [_, err] = await this.getProductThreshold(productId);
 
-    if (err) return [null, err];
+   if (err) return [null, err];
 
-    const [ItemQuantityPurchased] = await db
-     .select({ quantityPurchased: orderItem.quantity })
-     .from(orderItem)
-     .innerJoin(order, eq(orderItem.orderId, order.id))
-     .where(
-      and(
-       eq(orderItem.orderId, orderId),
-       eq(orderItem.productId, productId),
-       action === "placeOrder"
-        ? and(ne(order.orderStatus, "cancelled"), ne(order.paymentStatus, "paid"))
-        : eq(order.orderStatus, "cancelled"),
-      ),
-     );
+   const [ItemQuantityPurchased] = await db
+    .select({ quantityPurchased: orderItem.quantity })
+    .from(orderItem)
+    .innerJoin(order, eq(orderItem.orderId, order.id))
+    .where(
+     and(
+      eq(orderItem.orderId, orderId),
+      eq(orderItem.productId, productId),
+      action === "placeOrder"
+       ? and(
+          ne(order.orderStatus, "cancelled"),
+          ne(order.paymentStatus, "paid"),
+         )
+       : eq(order.orderStatus, "cancelled"),
+     ),
+    );
 
-    if (!ItemQuantityPurchased) {
-     return [
-      null,
-      new BadRequestException(
-       "This product was not part of the original order.",
-       HttpStatus.BAD_REQUEST,
-       ErrorCode.VALIDATION_ERROR,
-      ),
-     ];
-    }
+   if (!ItemQuantityPurchased) {
+    return [
+     null,
+     new BadRequestException(
+      "This product was not part of the original order.",
+      HttpStatus.BAD_REQUEST,
+      ErrorCode.VALIDATION_ERROR,
+     ),
+    ];
+   }
 
-    if (action === "placeOrder") {
-     await db
-      .update(product)
-      .set({
-       quantity: sql`${product.quantity} - ${ItemQuantityPurchased.quantityPurchased}`,
-       status: sql`CASE WHEN ${product.quantity} - ${ItemQuantityPurchased.quantityPurchased} <= 0 THEN 'sold_out' ELSE 'available' END`,
-      })
-      .where(and(eq(product.id, productId), isNotNull(product.quantity)));
-    } else if (action === "cancelOrder") {
-     await db
-      .update(product)
-      .set({
-       quantity: sql`${product.quantity} + ${ItemQuantityPurchased.quantityPurchased}`,
-       status: "available",
-      })
-      .where(eq(product.id, productId));
-    }
+   let updatedProduct: TProduct | undefined;
 
-   return [null, null];
+   if (action === "placeOrder") {
+    [updatedProduct] = await db
+     .update(product)
+     .set({
+      quantity: sql`${product.quantity} - ${ItemQuantityPurchased.quantityPurchased}`,
+      status: sql`CASE WHEN ${product.quantity} - ${ItemQuantityPurchased.quantityPurchased} <= 0 THEN 'sold_out' ELSE 'available' END`,
+     })
+     .where(and(eq(product.id, productId), isNotNull(product.quantity)))
+     .returning();
+   } else if (action === "cancelOrder") {
+    [updatedProduct] = await db
+     .update(product)
+     .set({
+      quantity: sql`${product.quantity} + ${ItemQuantityPurchased.quantityPurchased}`,
+      status: "available",
+     })
+     .where(eq(product.id, productId))
+     .returning();
+   }
+
+   await this.checkLowStock(productId);
+
+   return [updatedProduct ?? null, null];
   } catch (err) {
    return [
     null,

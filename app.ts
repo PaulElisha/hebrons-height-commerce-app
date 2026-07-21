@@ -2,6 +2,7 @@
 import "@module/email/consumer.ts";
 import "@module/inventory/consumer.ts";
 import "@module/merchant/consumer.ts";
+import "@module/notification/consumer.ts";
 import "@module/payment/consumer.ts";
 
 import cors from "@app/cors.ts";
@@ -13,7 +14,9 @@ import db from "@db/db.ts";
 import HttpStatus from "@enum/http.ts";
 import errorHandler from "@middleware/error-handler.ts";
 import cartRouter from "@module/cart/cart.route.ts";
+import categoryRouter from "@module/category/category.route.ts";
 import merchantRouter from "@module/merchant/merchant.route.ts";
+import notificationRouter from "@module/notification/notification.route.ts";
 import orderRouter from "@module/order/order.route.ts";
 import paymentRouter from "@module/payment/payment.routes.ts";
 import productRouter from "@module/product/product.route.ts";
@@ -32,6 +35,7 @@ import express, { Express } from "express";
 import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
+import webpushRouter from "@module/webpush/webpush.route.ts";
 dns.setDefaultResultOrder("ipv4first");
 
 initializeDrizzleTransactionalContext();
@@ -74,6 +78,9 @@ class App {
 
   this.app.use("/api/user", userRouter);
   this.app.use("/api/merchant", merchantRouter);
+  this.app.use("/api/category", categoryRouter);
+  this.app.use("/api/notification", notificationRouter);
+  this.app.use("/api/notification", webpushRouter);
   this.app.use("/api/product", productRouter);
   this.app.use("/api/cart", cartRouter);
   this.app.use("/api/order", orderRouter);

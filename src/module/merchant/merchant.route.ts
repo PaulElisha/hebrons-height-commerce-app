@@ -20,6 +20,7 @@ class MerchantRouter {
 
  initializeRoutes() {
   this.router.get("/profile", MerchantController.getMerchantProfile);
+  this.router.get("/analytics", MerchantController.getAnalytics);
   this.router.post(
    "/",
    // validate(CreateMerchantDto),

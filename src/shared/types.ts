@@ -86,18 +86,18 @@ export type TOrderAndItems = {
 };
 
 export type TOrderJoinRow = {
- orders: any;
- orderItem: any;
+ orders: TOrder;
+ orderItem: TOrderItems;
 };
 
 export type TMerchantProducts = {
- merchant: any;
+ merchant: TMerchant;
  products: TProduct[];
 };
 
 export type TMerchantWithUser = {
  merchant: TMerchant;
- user: any;
+ user: TUser;
 };
 
 export interface TUser {
@@ -204,7 +204,7 @@ export interface TMerchantOrdersPagination extends TPaginationMeta {
 }
 
 export interface TMerchantPaginatedOrders {
- fetchedOrders: any[];
+ fetchedOrders: TOrderJoinRow[];
  pagination: TMerchantOrdersPagination;
 }
 
@@ -215,4 +215,48 @@ export interface TOrderItemInsert {
  quantity: number;
  unitPrice: number;
  lineTotal: number;
+}
+
+export interface TCategory {
+ id: string;
+ name: string;
+ description: string | null;
+ createdAt: Date;
+ updatedAt: Date;
+}
+
+export interface TSubcategory {
+ id: string;
+ categoryId: string;
+ name: string;
+ createdAt: Date;
+}
+
+export interface TNotification {
+ id: string;
+ userId: string;
+ title: string;
+ message: string;
+ type: string;
+ read: string;
+ createdAt: Date;
+}
+
+export interface TAnalyticsResult {
+ totalOrders: number;
+ totalRevenue: number;
+ statusBreakdown: { status: string; count: number }[];
+ topProducts: {
+  productId: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+ }[];
+ periodCounts: { date: string; count: number; revenue: number }[];
+}
+
+export interface TPusher {
+ email: string;
+ privKey: string;
+ pubKey: string;
 }

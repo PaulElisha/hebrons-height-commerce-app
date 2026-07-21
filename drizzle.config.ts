@@ -10,6 +10,9 @@ export default defineConfig({
   "./src/schema/order.ts",
   "./src/schema/product.ts",
   "./src/schema/payment.ts",
+  "./src/schema/category.ts",
+  "./src/schema/notification.ts",
+  "./src/schema/push-subscription.ts",
  ],
  dialect: "postgresql",
  dbCredentials: {

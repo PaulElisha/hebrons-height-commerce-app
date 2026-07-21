@@ -12,21 +12,28 @@ class OrderRouter {
  constructor() {
   this.router = Router();
   this.router.use(authenticate);
-  this.router.use(roleGuard("user"));
   this.initializeRoutes();
  }
 
  initializeRoutes() {
-  this.router.get("/merchant", OrderController.getMerchantOrders);
-  this.router.get("/status", OrderController.getUserOrderByStatus);
-  this.router.get("/:orderId", OrderController.getOrderDetails);
-  this.router.post(
+  const userRoutes = Router();
+  userRoutes.use(roleGuard("user"));
+  userRoutes.get("/status", OrderController.getUserOrderByStatus);
+  userRoutes.get("/:orderId", OrderController.getOrderDetails);
+  userRoutes.post(
    "/:cartId",
    validate(CreateOrderDto),
    OrderController.placeOrder,
   );
-  this.router.put("/:orderId", OrderController.cancelOrder);
-  this.router.delete("/:orderId", OrderController.deleteOrderItem);
+  userRoutes.put("/:orderId", OrderController.cancelOrder);
+  userRoutes.delete("/:orderId", OrderController.deleteOrderItem);
+  this.router.use(userRoutes);
+
+  const merchantRoutes = Router();
+  merchantRoutes.use(roleGuard("merchant"));
+  merchantRoutes.get("/merchant", OrderController.getMerchantOrders);
+  merchantRoutes.put("/:orderId/status", OrderController.updateOrderStatus);
+  this.router.use(merchantRoutes);
  }
 }
 

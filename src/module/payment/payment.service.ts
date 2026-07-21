@@ -93,17 +93,17 @@ class PaymentService {
   return [paymentResponse, err];
  };
 
-  @Transactional()
-  async createPayment(
-   userId: string,
-   orderId: string,
-   paymentData: z.infer<typeof PaymentData>,
-  ): Promise<Result<TPayment, AppError>> {
-   const [data, err] = await OrderService.getOrderDetails(userId, orderId);
+ @Transactional()
+ async createPayment(
+  userId: string,
+  orderId: string,
+  paymentData: z.infer<typeof PaymentData>,
+ ): Promise<Result<TPayment | null, AppError>> {
+  const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
-   if (err || !data) return [null, err];
+  if (err || !data) return [null, err];
 
-   await db.select().from(order).where(eq(order.id, orderId)).for("update");
+  await db.select().from(order).where(eq(order.id, orderId)).for("update");
 
   if (
    data.order.orderStatus !== "pending" &&
@@ -155,14 +155,14 @@ class PaymentService {
    .returning();
 
   return [paymentCreated, null];
- };
+ }
 
  @Transactional()
  async handlePaymentInitialized(
   userId: string,
   orderId: string,
   paymentData: z.infer<typeof PaymentData>,
- ): Promise<Result<TPayment, AppError>> {
+ ): Promise<Result<TPayment | null, AppError>> {
   const [paymentRecord, err] = await this.createPayment(
    userId,
    orderId,
@@ -188,7 +188,7 @@ class PaymentService {
   paidAmount: number,
   paidAtDate: Date,
   isFailure: boolean,
- ): Promise<Result<TPaymentVerificationResult, AppError>> {
+ ): Promise<Result<TPaymentVerificationResult | null, AppError>> {
   const [paymentRecord] = await db
    .select()
    .from(payment)
@@ -278,7 +278,7 @@ class PaymentService {
 
  async handlePaystackPaymentVerified(
   event: any,
- ): Promise<Result<TPaymentVerificationResult, AppError>> {
+ ): Promise<Result<TPaymentVerificationResult | null, AppError>> {
   const reference = event.data?.reference;
   const paidAmount = Number(event.data?.amount) / Env.SCALER;
   const paidAtDate = event.data?.paid_at
@@ -292,7 +292,7 @@ class PaymentService {
  async handleStripePaymentVerified(
   session: any,
   eventType: string,
- ): Promise<Result<TPaymentVerificationResult, AppError>> {
+ ): Promise<Result<TPaymentVerificationResult | null, AppError>> {
   const reference = session.id;
   const paidAmount = Number(session.amount_total) / Env.SCALER;
   const paidAtDate = session.payment_intent?.created

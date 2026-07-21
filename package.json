@@ -30,6 +30,7 @@
     "@types/streamifier": "^0.1.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/web-push": "^3.6.4",
     "custom-env": "^2.0.6",
     "drizzle-kit": "^0.31.10",
     "ts-node": "^10.0.0",
@@ -43,6 +44,7 @@
     "@stripe/cli": "^1.43.2",
     "async-mutex": "^0.5.0",
     "better-auth": "^1.6.22",
+    "better-sse": "^0.16.1",
     "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -62,6 +64,7 @@
     "stripe": "^22.3.0",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
+    "web-push": "^3.6.7",
     "zod": "^4.4.3"
   }
 }

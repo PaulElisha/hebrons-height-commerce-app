@@ -51,7 +51,7 @@ class OrderController {
  getUserOrderByStatus = asyncHandler(
   async (
    req: Request<{}, {}, {}, TOrderStatusQuery>,
-   res: Response<APIResponse<TOrderJoinRow[] | null>>,
+   res: Response<APIResponse<TOrderJoinRow[]>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -59,7 +59,7 @@ class OrderController {
 
    const [data, err] = await OrderService.getUserOrderByStatus(userId, status);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -72,7 +72,7 @@ class OrderController {
  getOrderDetails = asyncHandler(
   async (
    req: Request<OrderParams>,
-   res: Response<APIResponse<TOrderAndItems | null>>,
+   res: Response<APIResponse<TOrderAndItems>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -80,7 +80,7 @@ class OrderController {
 
    const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -126,16 +126,41 @@ class OrderController {
   },
  );
 
+ updateOrderStatus = asyncHandler(
+  async (
+   req: Request<OrderParams, {}, { status: "out_for_delivery" | "delivered" }>,
+   res: Response<APIResponse<TOrder>>,
+   next: NextFunction,
+  ): Promise<any> => {
+   const userId = req.user.id;
+   const orderId = String(req.params.orderId);
+   const { status } = req.body;
+
+   const [data, err] = await OrderService.updateOrderStatus(
+    userId,
+    orderId,
+    status,
+   );
+   if (err || !data) return next(err);
+
+   return res.status(HttpStatus.OK).json({
+    status: "ok",
+    message: `order ${status.replace("_", " ")}`,
+    data,
+   });
+  },
+ );
+
  cancelOrder = asyncHandler(
   async (
    req: Request<OrderParams>,
-    res: Response<APIResponse<TOrder | null>>,
+   res: Response<APIResponse<TOrder>>,
    next: NextFunction,
   ): Promise<any> => {
    const orderId = String(req.params.orderId);
    const [data, err] = await OrderService.cancelOrder(orderId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

@@ -65,7 +65,7 @@ class OrderService {
  getOrderWithUser = async (
   userId: string,
   orderId: string,
- ): Promise<Result<TOrderWithUser, AppError>> => {
+ ): Promise<Result<TOrderWithUser | null, AppError | null>> => {
   const result = await db
    .select({
     id: order.id,
@@ -101,11 +101,11 @@ class OrderService {
   userId: string,
   cartId: string,
   body: z.infer<typeof CreateOrderDto>,
- ): Promise<Result<string, AppError>> {
-  const [data, err] = await CartService.getUserCart(userId, cartId);
-  if (err || !data) return [null, err];
+ ): Promise<Result<string | null, AppError>> {
+  const [data, e] = await CartService.getUserCart(userId, cartId);
+  if (e || !data) return [null, e];
 
-  const [result, e] = await mutex.runExclusive(async () => {
+  const [result, err] = await mutex.runExclusive(async () => {
    const [orderExists] = await helper.validateOrderForCart(cartId, userId);
 
    if (orderExists) {
@@ -181,7 +181,7 @@ class OrderService {
    ];
   });
 
-  if (e) return [null, e];
+  if (err) return [null, err];
 
   runOnTransactionCommit(() => {
    PublishEvent({
@@ -201,7 +201,7 @@ class OrderService {
  getUserOrderByStatus = async (
   userId: string,
   status: string,
- ): Promise<Result<TOrderJoinRow[], AppError>> => {
+ ): Promise<Result<TOrderJoinRow[] | null, AppError>> => {
   const result = await db
    .select()
    .from(order)
@@ -227,7 +227,7 @@ class OrderService {
  getOrderDetails = async (
   userId: string,
   orderId: string,
- ): Promise<Result<TOrderAndItems, AppError>> => {
+ ): Promise<Result<TOrderAndItems | null, AppError>> => {
   const result = await db
    .select()
    .from(order)
@@ -258,7 +258,7 @@ class OrderService {
   userId: string,
   filter: TOrderFilter,
   pagination: Pagination,
- ): Promise<Result<TMerchantPaginatedOrders, AppError>> => {
+ ): Promise<Result<TMerchantPaginatedOrders | null, AppError>> => {
   const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
   if (err || !merchantId) return [null, err];
 
@@ -317,7 +317,79 @@ class OrderService {
  };
 
  @Transactional()
- async cancelOrder(orderId: string): Promise<Result<TOrder, AppError>> {
+ async updateOrderStatus(
+  userId: string,
+  orderId: string,
+  status: "out_for_delivery" | "delivered",
+ ): Promise<Result<TOrder | null, AppError>> {
+  const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
+  if (err || !merchantId) return [null, err];
+
+  const [orderItemForMerchant] = await db
+   .select()
+   .from(orderItem)
+   .where(
+    and(eq(orderItem.orderId, orderId), eq(orderItem.merchantId, merchantId)),
+   )
+   .limit(1);
+
+  if (!orderItemForMerchant) {
+   return [
+    null,
+    new NotFoundException(
+     "Order not found for this merchant",
+     HttpStatus.NOT_FOUND,
+     ErrorCode.RESOURCE_NOT_FOUND,
+    ),
+   ];
+  }
+
+  const [updatedOrder] = await db
+   .update(order)
+   .set({
+    orderStatus: status,
+    updatedAt: new Date(),
+   })
+   .where(
+    and(
+     eq(order.id, orderId),
+     status === "out_for_delivery"
+      ? eq(order.orderStatus, "processing")
+      : eq(order.orderStatus, "out_for_delivery"),
+    ),
+   )
+   .returning();
+
+  if (!updatedOrder) {
+   return [
+    null,
+    new BadRequestException(
+     status === "out_for_delivery"
+      ? "Order must be in processing status to mark as out for delivery"
+      : "Order must be out for delivery to mark as delivered",
+     HttpStatus.UNPROCESSABLE_ENTITY,
+     ErrorCode.VALIDATION_ERROR,
+    ),
+   ];
+  }
+
+  runOnTransactionCommit(() => {
+   PublishEvent({
+    event_type: EventType.ORDER_STATUS_UPDATED,
+    payload: {
+     userId: updatedOrder.userId,
+     orderId,
+     status,
+     message: `Your order is now ${status.replace("_", " ")}`,
+    },
+   });
+  });
+
+  return [updatedOrder, null];
+ }
+
+ @Transactional()
+ async cancelOrder(orderId: string): Promise<Result<TOrder | null, AppError>> {
   const [cancelledOrder] = await db
    .update(order)
    .set({
@@ -393,7 +465,9 @@ class OrderService {
  }
 
  @Transactional()
- async deleteOrderItem(orderId: string): Promise<Result<void, AppError>> {
+ async deleteOrderItem(
+  orderId: string,
+ ): Promise<Result<void | null, AppError>> {
   const [existingOrder] = await db
    .select()
    .from(order)

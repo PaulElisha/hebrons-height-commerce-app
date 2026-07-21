@@ -284,17 +284,24 @@ const spec = {
      lineTotal: { type: "integer", nullable: true },
     },
    },
-   OrderAndItems: {
-    type: "object",
-    properties: {
-     order: { $ref: "#/components/schemas/Order" },
-     order_items: {
-      type: "array",
-      items: { $ref: "#/components/schemas/OrderItem" },
+    OrderAndItems: {
+     type: "object",
+     properties: {
+      order: { $ref: "#/components/schemas/Order" },
+      order_items: {
+       type: "array",
+       items: { $ref: "#/components/schemas/OrderItem" },
+      },
      },
     },
-   },
-   CreateOrderDto: {
+    OrderJoinRow: {
+     type: "object",
+     properties: {
+      orders: { $ref: "#/components/schemas/Order" },
+      orderItem: { $ref: "#/components/schemas/OrderItem" },
+     },
+    },
+    CreateOrderDto: {
     type: "object",
     required: ["deliveryAddress"],
     properties: {
@@ -921,26 +928,39 @@ const spec = {
      "404": { description: "Product not found" },
     },
    },
-   delete: {
-    tags: ["Product"],
-    summary: "Delete a product",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "productId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Product ID",
+    delete: {
+     tags: ["Product"],
+     summary: "Delete a product",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "productId",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Product ID",
+      },
+     ],
+     responses: {
+      "200": {
+       description: "Product deleted successfully",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "product deleted successfully" },
+          },
+         },
+        },
+       },
+      },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a merchant" },
+      "404": { description: "Product not found" },
      },
-    ],
-    responses: {
-     "204": { description: "Product deleted successfully, no content" },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — user is not a merchant" },
-     "404": { description: "Product not found" },
     },
-   },
   },
   "/api/product/{merchantId}/merchant": {
    get: {
@@ -1318,55 +1338,55 @@ const spec = {
     },
    },
   },
-  "/api/order/status": {
-   get: {
-    tags: ["Order"],
-    summary: "Get user's orders filtered by status",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "status",
-      in: "query",
-      required: false,
-      schema: {
-       type: "string",
-       enum: [
-        "pending",
-        "processing",
-        "fulfilled",
-        "failed",
-        "out_for_delivery",
-        "delivered",
-        "cancelled",
-       ],
+   "/api/order/status": {
+    get: {
+     tags: ["Order"],
+     summary: "Get user's orders filtered by status",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "status",
+       in: "query",
+       required: false,
+       schema: {
+        type: "string",
+        enum: [
+         "pending",
+         "processing",
+         "fulfilled",
+         "failed",
+         "out_for_delivery",
+         "delivered",
+         "cancelled",
+        ],
+       },
+       description: "Order status to filter by",
       },
-      description: "Order status to filter by",
-     },
-    ],
-    responses: {
-     "200": {
-      description: "Fetched orders by status",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "fetched order status" },
-          data: {
-           type: "array",
-           items: { $ref: "#/components/schemas/OrderAndItems" },
+     ],
+     responses: {
+      "200": {
+       description: "Fetched orders by status",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "fetched order status" },
+           data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/OrderJoinRow" },
+           },
           },
          },
         },
        },
       },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — user is not a user" },
      },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — user is not a user" },
     },
    },
-  },
   "/api/order/{orderId}": {
    get: {
     tags: ["Order"],
