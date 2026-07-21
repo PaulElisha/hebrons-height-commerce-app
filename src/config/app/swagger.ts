@@ -803,15 +803,16 @@ const spec = {
       "multipart/form-data": {
        schema: {
         type: "object",
-        required: [
-         "name",
-         "description",
-         "price",
-         "quantity",
-         "category",
-         "subCategory",
-         "file",
-        ],
+         required: [
+          "name",
+          "description",
+          "price",
+          "quantity",
+          "category",
+          "subCategory",
+          "additionalData",
+          "file",
+         ],
         properties: {
          name: { type: "string" },
          description: { type: "string" },
@@ -1892,7 +1893,7 @@ const spec = {
  "/api/product/primary-image/{productId}": {
   put: {
    tags: ["Product"],
-   summary: "Update the primary image of a product",
+    summary: "Update the primary image of a product (merchant only)",
    security: [{ bearerAuth: [] }],
    parameters: [
     {
@@ -1930,7 +1931,7 @@ const spec = {
         type: "object",
         properties: {
          status: { type: "string", example: "ok" },
-         message: { type: "string", example: "primary image updated" },
+          message: { type: "string", example: "product updated successfully" },
          data: { $ref: "#/components/schemas/Product" },
         },
        },
@@ -1962,20 +1963,41 @@ const spec = {
           type: "object",
           properties: {
            totalOrders: { type: "integer" },
-           totalRevenue: { type: "integer" },
-           statusBreakdown: {
-            type: "object",
-            additionalProperties: { type: "integer" },
+            totalRevenue: { type: "integer" },
+            statusBreakdown: {
+             type: "array",
+             items: {
+              type: "object",
+              properties: {
+               status: { type: "string" },
+               count: { type: "integer" },
+              },
+             },
+            },
+            topProducts: {
+             type: "array",
+             items: {
+              type: "object",
+              properties: {
+               productId: { type: "string" },
+               name: { type: "string" },
+               quantity: { type: "integer" },
+               revenue: { type: "integer" },
+              },
+             },
+            },
+            periodCounts: {
+             type: "array",
+             items: {
+              type: "object",
+              properties: {
+               date: { type: "string" },
+               count: { type: "integer" },
+               revenue: { type: "integer" },
+              },
+             },
+            },
            },
-           topProducts: {
-            type: "array",
-            items: { type: "object" },
-           },
-           periodCounts: {
-            type: "object",
-            additionalProperties: { type: "integer" },
-           },
-          },
          },
         },
        },
@@ -2232,19 +2254,14 @@ const spec = {
        type: "object",
        required: ["status"],
        properties: {
-        status: {
-         type: "string",
-         enum: [
-          "pending",
-          "processing",
-          "fulfilled",
-          "failed",
-          "out_for_delivery",
-          "delivered",
-          "cancelled",
-         ],
-         description: "New order status",
-        },
+         status: {
+          type: "string",
+          enum: [
+           "out_for_delivery",
+           "delivered",
+          ],
+          description: "New order status",
+         },
        },
       },
      },
