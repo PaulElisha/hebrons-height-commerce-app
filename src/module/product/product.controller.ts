@@ -8,14 +8,14 @@ import {
  TProduct,
  UploadImages,
 } from "@shared/types.ts";
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 
 import ProductService, { TProductFilter } from "./product.service.ts";
 import z from "zod";
 import { product } from "@schema/product.ts";
 
-export interface ProductParams {
- productId?: string;
+export interface ProductParams extends RequestHandler {
+ productId: string;
 }
 
 export const CreateProductSchema = z.object({

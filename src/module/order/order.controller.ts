@@ -10,7 +10,7 @@ import {
  TOrderItems,
  TOrderJoinRow,
 } from "@shared/types.ts";
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 import z from "zod";
 
 import OrderService, {
@@ -19,8 +19,8 @@ import OrderService, {
  TOrderFilter,
 } from "./order.service.ts";
 
-export interface OrderParams {
- orderId?: string;
+export interface OrderParams extends RequestHandler {
+ orderId: string;
 }
 
 class OrderController {
@@ -31,7 +31,7 @@ class OrderController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const cartId = String(req.params.cartId);
+   const cartId = req.params.cartId;
    const body = req.body;
 
    const [orderId, err] = await OrderService.placeOrder(userId, cartId, body);
@@ -76,7 +76,7 @@ class OrderController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const orderId = String(req.params.orderId);
+   const orderId = req.params.orderId;
 
    const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
@@ -133,7 +133,7 @@ class OrderController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const orderId = String(req.params.orderId);
+   const orderId = req.params.orderId;
    const { status } = req.body;
 
    const [data, err] = await OrderService.updateOrderStatus(
@@ -157,7 +157,7 @@ class OrderController {
    res: Response<APIResponse<TOrder>>,
    next: NextFunction,
   ): Promise<any> => {
-   const orderId = String(req.params.orderId);
+   const orderId = req.params.orderId;
    const [data, err] = await OrderService.cancelOrder(orderId);
 
    if (err || !data) return next(err);
@@ -172,7 +172,7 @@ class OrderController {
 
  deleteOrderItem = asyncHandler(
   async (req: Request<OrderParams>, res: Response, next: NextFunction) => {
-   const orderId = String(req.params.orderId);
+   const orderId = req.params.orderId;
 
    const [, err] = await OrderService.deleteOrderItem(orderId);
 

@@ -1,13 +1,13 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 import z from "zod";
 
 import MerchantService, { UpdateMerchantDto } from "./merchant.service.ts";
 
-export interface MerchantParams {
- merchantId?: string;
+export interface MerchantParams extends RequestHandler {
+ merchantId: string;
 }
 
 export const CreateMerchantSchema = z.object({
@@ -104,7 +104,7 @@ class MerchantController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = String(req.params.merchantId);
+   const merchantId = req.params.merchantId;
 
    const [, err] = await MerchantService.deleteMerchantProfile(
     userId,

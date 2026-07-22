@@ -2,16 +2,17 @@
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import { onSubscribe } from "@shared/event-bus/subscriber.ts";
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 
 import NotificationService from "./notification.service.ts";
 import WebPushService from "../webpush/webpush.service.ts";
 import { Subscription } from "../webpush/config.ts";
 import z from "zod";
 import { createSession } from "better-sse";
+import { APIResponse, TNotification } from "@shared/types.ts";
 
-export interface NotificationParams {
- notificationId?: string;
+export interface NotificationParams extends RequestHandler {
+ notificationId: string;
 }
 
 class NotificationController {
@@ -46,16 +47,16 @@ class NotificationController {
  markAsRead = asyncHandler(
   async (
    req: Request<NotificationParams>,
-   res: Response,
+   res: Response<APIResponse<TNotification>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const notificationId = String(req.params.notificationId);
+   const notificationId = req.params.notificationId;
    const [data, err] = await NotificationService.markAsRead(
     notificationId,
     userId,
    );
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -127,6 +128,11 @@ class NotificationController {
    error: (err) => {
     session.push(err.message);
    },
+  });
+
+  session.on("disconnected", () => {
+   subscription.unsubscribe();
+   res.end();
   });
 
   req.on("close", () => {

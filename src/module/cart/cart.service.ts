@@ -25,7 +25,7 @@ class CartService {
  removeFromCart = async (
   userId: string,
   productId: string,
- ): Promise<Result<TCartAndItem | null, AppError>> => {
+ ): Promise<Result<TCartAndItem, AppError>> => {
   return await CartBase.modifyCart({
    userId,
    productId,
@@ -36,7 +36,7 @@ class CartService {
  incrementItem = async (
   userId: string,
   productId: string,
- ): Promise<Result<TCartAndItem | null, AppError>> => {
+ ): Promise<Result<TCartAndItem, AppError>> => {
   return await CartBase.modifyCart({
    userId,
    productId,

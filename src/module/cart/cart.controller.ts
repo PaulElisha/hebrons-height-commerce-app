@@ -4,25 +4,25 @@ import asyncHandler from "@middleware/async-handler.ts";
 import CartService from "@module/cart/cart.service.ts";
 import { ProductParams } from "@module/product/product.controller.ts";
 import { APIResponse, TCartAndItem } from "@shared/types.ts";
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-export interface CartParams {
- cartId?: string;
+export interface CartParams extends RequestHandler {
+ cartId: string;
 }
 
 class CartController {
  addToCart = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TCartAndItem | null>>,
+   res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
 
    const [data, err] = await CartService.addToCart(userId, productId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -35,15 +35,15 @@ class CartController {
  removeFromCart = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TCartAndItem | null>>,
+   res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
 
    const [data, err] = await CartService.removeFromCart(userId, productId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -56,15 +56,15 @@ class CartController {
  incrementCartItem = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TCartAndItem | null>>,
+   res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
 
    const [data, err] = await CartService.incrementItem(userId, productId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -77,15 +77,15 @@ class CartController {
  decrementCartItem = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TCartAndItem | null>>,
+   res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
 
    const [data, err] = await CartService.decrementItem(userId, productId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -98,7 +98,7 @@ class CartController {
  getUserCart = asyncHandler(
   async (
    req: Request<CartParams>,
-   res: Response<APIResponse<TCartAndItem | null>>,
+   res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -106,7 +106,7 @@ class CartController {
 
    const [data, err] = await CartService.getUserCart(userId, cartId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

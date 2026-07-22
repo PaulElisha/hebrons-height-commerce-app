@@ -65,7 +65,7 @@ class OrderService {
  getOrderWithUser = async (
   userId: string,
   orderId: string,
- ): Promise<Result<TOrderWithUser | null, AppError | null>> => {
+ ): Promise<Result<TOrderWithUser, AppError>> => {
   const result = await db
    .select({
     id: order.id,
@@ -101,7 +101,7 @@ class OrderService {
   userId: string,
   cartId: string,
   body: z.infer<typeof CreateOrderDto>,
- ): Promise<Result<string | null, AppError>> {
+ ): Promise<Result<string, AppError>> {
   const [data, e] = await CartService.getUserCart(userId, cartId);
   if (e || !data) return [null, e];
 
@@ -126,6 +126,7 @@ class OrderService {
     const [merchantId, err] = await helper.getMerchantIdFromProductId(
      v.productId,
     );
+
     if (err || !merchantId) return null;
 
     return {
@@ -201,7 +202,7 @@ class OrderService {
  getUserOrderByStatus = async (
   userId: string,
   status: string,
- ): Promise<Result<TOrderJoinRow[] | null, AppError>> => {
+ ): Promise<Result<TOrderJoinRow[], AppError>> => {
   const result = await db
    .select()
    .from(order)
@@ -227,7 +228,7 @@ class OrderService {
  getOrderDetails = async (
   userId: string,
   orderId: string,
- ): Promise<Result<TOrderAndItems | null, AppError>> => {
+ ): Promise<Result<TOrderAndItems, AppError>> => {
   const result = await db
    .select()
    .from(order)
@@ -258,7 +259,7 @@ class OrderService {
   userId: string,
   filter: TOrderFilter,
   pagination: Pagination,
- ): Promise<Result<TMerchantPaginatedOrders | null, AppError>> => {
+ ): Promise<Result<TMerchantPaginatedOrders, AppError>> => {
   const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
   if (err || !merchantId) return [null, err];
 
@@ -321,7 +322,7 @@ class OrderService {
   userId: string,
   orderId: string,
   status: "out_for_delivery" | "delivered",
- ): Promise<Result<TOrder | null, AppError>> {
+ ): Promise<Result<TOrder, AppError>> {
   const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
   if (err || !merchantId) return [null, err];
 
@@ -389,7 +390,7 @@ class OrderService {
  }
 
  @Transactional()
- async cancelOrder(orderId: string): Promise<Result<TOrder | null, AppError>> {
+ async cancelOrder(orderId: string): Promise<Result<TOrder, AppError>> {
   const [cancelledOrder] = await db
    .update(order)
    .set({
@@ -465,9 +466,7 @@ class OrderService {
  }
 
  @Transactional()
- async deleteOrderItem(
-  orderId: string,
- ): Promise<Result<void | null, AppError>> {
+ async deleteOrderItem(orderId: string): Promise<Result<void, AppError>> {
   const [existingOrder] = await db
    .select()
    .from(order)
