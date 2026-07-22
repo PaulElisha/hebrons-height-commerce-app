@@ -1,9 +1,9 @@
 /** @format */
 import authenticate from "@middleware/authenticate.ts";
+import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
-import { validate } from "@shared/middleware/validate.ts";
-import { Subscription } from "../webpush/config.ts";
+import { Subscription } from "./pusher.ts";
 import WebpushController from "./webpush.controller.ts";
 
 class WebPushRouter {

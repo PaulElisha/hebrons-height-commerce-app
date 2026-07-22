@@ -1,9 +1,9 @@
 /** @format */
 
 import { TPusher } from "@shared/types.ts";
-import z from "zod";
-import webPush from "web-push";
 import Env from "env.ts";
+import webPush from "web-push";
+import z from "zod";
 
 export const Subscription = z.object({
  endpoint: z.string(),

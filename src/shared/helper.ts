@@ -4,12 +4,13 @@ import { cart, cartItem } from "@schema/cart.ts";
 import { merchant } from "@schema/merchant.ts";
 import { order } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
+import { Result, TCartAndItem, TProductThreshold } from "@shared/types.ts";
+import { and, eq, isNotNull } from "drizzle-orm";
+
 import ErrorCode from "./enum/error-code.ts";
 import HttpStatus from "./enum/http.ts";
 import AppError from "./error/app-error.ts";
 import NotFoundException from "./error/not-found.ts";
-import { Result, TCartAndItem, TProductThreshold } from "@shared/types.ts";
-import { and, eq, isNotNull } from "drizzle-orm";
 
 export async function fetchMerchantProductsFromDb(merchantId: string) {
  const productsForMerchant = await db
@@ -80,11 +81,11 @@ export const getCartAndItems = async (
   .leftJoin(cartItem, eq(cartItem.cartId, cartId))
   .where(and(eq(cart.userId, userId), eq(cartItem.cartId, cartId)));
 
-  return {
-   cart: cartAndItems[0]!.cart,
-   cart_items: cartAndItems!.map((i) => i.cart_items!),
-  };
+ return {
+  cart: cartAndItems[0]!.cart,
+  cart_items: cartAndItems!.map((i) => i.cart_items!),
  };
+};
 
 export const checkItemExistsInCart = async (
  cartId: string,

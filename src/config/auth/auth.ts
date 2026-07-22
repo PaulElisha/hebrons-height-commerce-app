@@ -3,7 +3,6 @@ import Env from "@/env.ts";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import db from "@db/db.ts";
 import * as schema from "@schema/auth.ts";
-
 import { hashPassword, verifyPassword } from "@shared/util/password.ts";
 import { betterAuth } from "better-auth";
 import { jwt, openAPI } from "better-auth/plugins";

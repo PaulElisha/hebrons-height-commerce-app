@@ -2,9 +2,9 @@
 import db from "@db/db.ts";
 import InventoryService from "@module/inventory/inventory.service.ts";
 import { cart, cartItem } from "@schema/cart.ts";
-import AppError from "@shared/error/app-error.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
+import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import * as helper from "@shared/helper.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
@@ -38,12 +38,10 @@ class CartBase {
     subtotal: result.subtotal,
    })
    .where(and(eq(cart.id, cartId), eq(cart.userId, userId)));
- };
+ }
 
  @Transactional()
- async modifyCart(
-  userIntent: Intent,
- ): Promise<Result<TCartAndItem, AppError>> {
+ async modifyCart(userIntent: Intent): Promise<Result<TCartAndItem, AppError>> {
   const { userId, productId, intent } = userIntent;
 
   let [userCart] = await db
@@ -53,7 +51,7 @@ class CartBase {
    .limit(1);
 
   if (!userCart) {
-    [userCart] = await db.insert(cart).values({ userId }).returning();
+   [userCart] = await db.insert(cart).values({ userId }).returning();
   }
 
   const callback = CartActions[intent];
@@ -66,24 +64,21 @@ class CartBase {
     );
 
     if (existingItem)
+     return [{ cart: userCart, cart_items: [existingItem] }, null];
+
+    const [price, err] =
+     await InventoryService.checkInventoryThreshold(productId);
+
+    if (err || !price)
      return [
-       { cart: userCart, cart_items: [existingItem] },
       null,
-     ];
-
-     const [price, err] = await InventoryService.checkInventoryThreshold(
-      productId,
-     );
-
-     if (err || !price)
-      return [
-       null,
-       err || new BadRequestException(
+      err ||
+       new BadRequestException(
         "Cannot add item to cart",
         HttpStatus.UNPROCESSABLE_ENTITY,
         ErrorCode.VALIDATION_ERROR,
        ),
-      ];
+     ];
 
     await callback(userCart.id, userId, productId, Number(price));
    } else if (typeof intent === "string" && intent == "increment") {
@@ -93,19 +88,19 @@ class CartBase {
     );
 
     if (existingItem) {
-      const [price, err] = await InventoryService.checkInventoryThreshold(
-       productId,
-      );
+     const [price, err] =
+      await InventoryService.checkInventoryThreshold(productId);
 
-      if (err || !price)
-       return [
-        null,
-        err || new BadRequestException(
+     if (err || !price)
+      return [
+       null,
+       err ||
+        new BadRequestException(
          "Cannot increment item",
          HttpStatus.UNPROCESSABLE_ENTITY,
          ErrorCode.VALIDATION_ERROR,
         ),
-       ];
+      ];
     }
 
     await callback(userCart.id, userId, productId);

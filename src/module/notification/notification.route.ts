@@ -12,10 +12,10 @@ class NotificationRouter {
   this.initializeRoutes();
  }
 
-  initializeRoutes() {
-   this.router.get("/", NotificationController.getNotifications);
-   this.router.get("/stream", NotificationController.streamNotifications);
-   this.router.get("/unread-count", NotificationController.getUnreadCount);
+ initializeRoutes() {
+  this.router.get("/", NotificationController.getNotifications);
+  this.router.get("/stream", NotificationController.streamNotifications);
+  this.router.get("/unread-count", NotificationController.getUnreadCount);
   this.router.put("/:notificationId/read", NotificationController.markAsRead);
   this.router.put("/read-all", NotificationController.markAllAsRead);
  }

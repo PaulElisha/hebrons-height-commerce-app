@@ -1,13 +1,13 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { NextFunction, Request, RequestHandler, Response } from "express";
+import { APIResponse, TCategory, TSubcategory } from "@shared/types.ts";
+import { NextFunction, Request, Response } from "express";
 
 import CategoryService from "./category.service.ts";
-import { APIResponse, TCategory, TSubcategory } from "@shared/types.ts";
 
-export interface CategoryParams extends RequestHandler {
- categoryId: string;
+export interface CategoryParams {
+ categoryId?: string | string[];
 }
 
 class CategoryController {
@@ -36,7 +36,7 @@ class CategoryController {
 
  deleteCategory = asyncHandler(
   async (req: Request<CategoryParams>, res: Response, next: NextFunction) => {
-   const categoryId = req.params.categoryId;
+   const categoryId = String(req.params.categoryId);
    const [, err] = await CategoryService.deleteCategory(categoryId);
    if (err) return next(err);
 

@@ -11,7 +11,6 @@ import ProductController, {
  CreateProductSchema,
 } from "./product.controller.ts";
 import { UpdateProductDto } from "./product.service.ts";
-import { auth } from "@auth/auth.ts";
 
 class ProductRouter {
  router: Router;

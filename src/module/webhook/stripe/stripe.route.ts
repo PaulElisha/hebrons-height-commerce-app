@@ -7,11 +7,9 @@ import { stripeWebhookHandler } from "./stripe.webhook.ts";
 const stripeWebhookRouter = Router().post(
  "/webhook",
  express.raw({ type: "application/json" }),
- asyncHandler(
-  async (req: Request, res: Response) => {
-   await stripeWebhookHandler(req, res);
-  },
- ),
+ asyncHandler(async (req: Request, res: Response) => {
+  await stripeWebhookHandler(req, res);
+ }),
 );
 
 export default stripeWebhookRouter;

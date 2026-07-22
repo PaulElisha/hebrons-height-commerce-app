@@ -1,7 +1,6 @@
 /** @format */
 
-import { EventType } from "@shared/event-bus/config.ts";
-import { PublishEvent } from "@shared/event-bus/publisher.ts";
+import { EventBus, EventType } from "@shared/event-bus/index.ts";
 
 export const paystackWebhookHandler = async (body: any) => {
  const eventName = body.event;
@@ -12,7 +11,7 @@ export const paystackWebhookHandler = async (body: any) => {
 
  const orderId = body.data?.metadata?.orderId;
 
- PublishEvent({
+ EventBus.publish({
   event_type: EventType.PAYSTACK_PAYMENT_VERIFIED,
   payload: {
    orderId,

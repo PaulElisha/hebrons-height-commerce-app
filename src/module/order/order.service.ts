@@ -9,38 +9,24 @@ import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import NotFoundException from "@shared/error/not-found.ts";
-import { EventType } from "@shared/event-bus/config.ts";
-import { PublishEvent } from "@shared/event-bus/publisher.ts";
+import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import * as helper from "@shared/helper.ts";
-import { Mutex } from "async-mutex";
 import {
  Pagination,
  Result,
  TCartItem,
+ TMerchantPaginatedOrders,
  TOrder,
  TOrderAndItems,
  TOrderJoinRow,
  TOrderWithUser,
- TMerchantPaginatedOrders,
- TOrderItems,
 } from "@shared/types.ts";
-
-const mutex = new Mutex();
-import {
- and,
- count,
- desc,
- eq,
- isNotNull,
- lt,
- ne,
- SQL,
- sql,
- sum,
-} from "drizzle-orm";
+import { Mutex } from "async-mutex";
+import { and, count, desc, eq, isNotNull, lt, ne, SQL, sql } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
+const mutex = new Mutex();
 
 export interface TOrderStatusQuery {
  status: string;
@@ -185,7 +171,7 @@ class OrderService {
   if (err) return [null, err];
 
   runOnTransactionCommit(() => {
-   PublishEvent({
+   EventBus.publish({
     event_type: EventType.ORDER_PLACED,
     payload: {
      userId,
@@ -375,7 +361,7 @@ class OrderService {
   }
 
   runOnTransactionCommit(() => {
-   PublishEvent({
+   EventBus.publish({
     event_type: EventType.ORDER_STATUS_UPDATED,
     payload: {
      userId: updatedOrder.userId,
@@ -453,7 +439,7 @@ class OrderService {
   ).map((item) => item.productId);
 
   runOnTransactionCommit(() => {
-   PublishEvent({
+   EventBus.publish({
     event_type: EventType.ORDER_CANCELLED,
     payload: {
      productIds,

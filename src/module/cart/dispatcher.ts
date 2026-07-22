@@ -23,11 +23,7 @@ export const CartActions: Record<string, (...args: any[]) => any> = {
    .returning();
   return inserted;
  },
- increment: async (
-  cartId: string,
-  userId: string,
-  productId: string,
- ) => {
+ increment: async (cartId: string, userId: string, productId: string) => {
   return await db
    .update(cartItem)
    .set({
@@ -43,11 +39,7 @@ export const CartActions: Record<string, (...args: any[]) => any> = {
    )
    .returning();
  },
- decrement: async (
-  cartId: string,
-  userId: string,
-  productId: string,
- ) => {
+ decrement: async (cartId: string, userId: string, productId: string) => {
   const item = await db
    .select()
    .from(cartItem)
@@ -89,11 +81,7 @@ export const CartActions: Record<string, (...args: any[]) => any> = {
    )
    .returning();
  },
- remove: async (
-  cartId: string,
-  userId: string,
-  productId: string,
- ) => {
+ remove: async (cartId: string, userId: string, productId: string) => {
   return await db
    .delete(cartItem)
    .where(

@@ -8,8 +8,7 @@ import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
-import { EventType } from "@shared/event-bus/config.ts";
-import { PublishEvent } from "@shared/event-bus/publisher.ts";
+import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import { Result, TOrderItems } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import Env from "env.ts";
@@ -19,13 +18,16 @@ import z from "zod";
 import { CheckoutData, PaymentResponse } from "./payment.service.ts";
 
 export const FetchRail: Record<string, (...any: any[]) => any> = {
-  initializePaystackCheckout: async (
-   userId: string,
-   orderId: string,
-   data: z.infer<typeof CheckoutData>,
-  ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
-   const [orderWithUser, err] = await OrderService.getOrderWithUser(userId, orderId);
-    if (err || !orderWithUser) return [null, err];
+ initializePaystackCheckout: async (
+  userId: string,
+  orderId: string,
+  data: z.infer<typeof CheckoutData>,
+ ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
+  const [orderWithUser, err] = await OrderService.getOrderWithUser(
+   userId,
+   orderId,
+  );
+  if (err || !orderWithUser) return [null, err];
 
   const baseAmount = Math.round(Number(orderWithUser.subtotal) * Env.SCALER);
   const subCharge = Math.round((baseAmount * 15) / 10000) + 100 * Env.SCALER; // 0.15% + 100 NGN
@@ -79,7 +81,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
   };
 
   if (responseData?.data)
-   PublishEvent({
+   EventBus.publish({
     event_type: EventType.PAYSTACK_PAYMENT_INITIALIZED,
     payload: {
      paystackData: res,
@@ -152,7 +154,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      reference: session.id,
     };
 
-    PublishEvent({
+    EventBus.publish({
      event_type: EventType.STRIPE_PAYMENT_INITIALIZED,
      payload: {
       stripeData: res,

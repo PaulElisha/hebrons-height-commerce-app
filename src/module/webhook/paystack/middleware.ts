@@ -1,10 +1,10 @@
 /** @format */
 
+import ErrorCode from "@shared/enum/error-code.ts";
+import HttpStatus from "@shared/enum/http.ts";
+import BadRequestException from "@shared/error/bad-request.ts";
 import crypto from "crypto";
 import Env from "env.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import { NextFunction, Request, Response } from "express";
 
 export function parsePaystackBody(

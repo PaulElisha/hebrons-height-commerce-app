@@ -1,16 +1,11 @@
 /** @format */
-import db from "@db/db.ts";
-import { product } from "@schema/product.ts";
-import { eq } from "drizzle-orm";
-import { PublishEvent } from "@shared/event-bus/publisher.ts";
 import { formatErrorPayload } from "@shared/error/format-error.ts";
-import { EventType } from "@shared/event-bus/config.ts";
-import { onEvent } from "@shared/event-bus/consumer.ts";
+import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import FA from "fasy";
 
 import InventoryService from "./inventory.service.ts";
 
-onEvent(EventType.ORDER_PLACED).subscribe({
+EventBus.on(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
   try {
    const { orderId, productIds } = payload.payload;
@@ -38,7 +33,7 @@ onEvent(EventType.ORDER_PLACED).subscribe({
  },
 });
 
-onEvent(EventType.ORDER_CANCELLED).subscribe({
+EventBus.on(EventType.ORDER_CANCELLED).subscribe({
  next: async (payload) => {
   try {
    const { orderId, productIds } = payload.payload;

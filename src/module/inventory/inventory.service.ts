@@ -9,8 +9,7 @@ import AppError from "@shared/error/app-error.ts";
 import BadRequestException from "@shared/error/bad-request.ts";
 import InternalServerError from "@shared/error/internal-server.ts";
 import NotFoundException from "@shared/error/not-found.ts";
-import { EventType } from "@shared/event-bus/config.ts";
-import { PublishEvent } from "@shared/event-bus/publisher.ts";
+import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import { Result, TProduct, TProductThreshold } from "@shared/types.ts";
 import { and, eq, isNotNull, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
@@ -100,7 +99,7 @@ class InventoryService {
 
   for (const threshold of STOCK_THRESHOLDS) {
    if (current.quantity === threshold) {
-    PublishEvent({
+    EventBus.publish({
      event_type: EventType.LOW_STOCK_ALERT,
      payload: {
       productId,

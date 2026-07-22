@@ -15,7 +15,7 @@ import {
  TMerchant,
  TMerchantWithUser,
 } from "@shared/types.ts";
-import { and, count, desc, eq, isNotNull, SQL, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, sql, sum } from "drizzle-orm";
 import z from "zod";
 
 export const CreateMerchantDto = z.object({

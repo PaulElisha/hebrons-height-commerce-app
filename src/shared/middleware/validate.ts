@@ -9,7 +9,7 @@ export const validate = (schema: ZodType) => {
    Object.assign(req.body, body);
    next();
   } catch (err) {
-    next(err);
+   next(err);
   }
  };
 };

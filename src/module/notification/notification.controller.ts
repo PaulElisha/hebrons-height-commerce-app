@@ -1,26 +1,30 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
+import { EventBus } from "@shared/event-bus/index.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { onSubscribe } from "@shared/event-bus/subscriber.ts";
-import { NextFunction, Request, RequestHandler, Response } from "express";
-
-import NotificationService from "./notification.service.ts";
-import WebPushService from "../webpush/webpush.service.ts";
-import { Subscription } from "../webpush/config.ts";
-import z from "zod";
-import { createSession } from "better-sse";
 import { APIResponse, TNotification } from "@shared/types.ts";
+import { createSession } from "better-sse";
+import { NextFunction, Request, Response } from "express";
+import z from "zod";
 
-export interface NotificationParams extends RequestHandler {
+import { Subscription } from "../webpush/pusher.ts";
+import WebPushService from "../webpush/webpush.service.ts";
+import NotificationService from "./notification.service.ts";
+
+export interface NotificationParams {
  notificationId: string;
 }
 
 class NotificationController {
  getNotifications = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+   req: Request,
+   res: Response<APIResponse<TNotification[]>>,
+   next: NextFunction,
+  ) => {
    const userId = req.user.id;
    const [data, err] = await NotificationService.getUserNotifications(userId);
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -31,15 +35,21 @@ class NotificationController {
  );
 
  getUnreadCount = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+   req: Request,
+   res: Response<APIResponse<{ unread: number }>>,
+   next: NextFunction,
+  ) => {
    const userId = req.user.id;
    const [count, err] = await NotificationService.getUnreadCount(userId);
    if (err) return next(err);
 
+   const unread = count ?? 0;
+
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "unread count fetched",
-    data: { unread: count },
+    data: { unread },
    });
   },
  );
@@ -121,7 +131,7 @@ class NotificationController {
 
   const session = await createSession(req, res);
 
-  const subscription = onSubscribe(userId).subscribe({
+  const subscription = EventBus.subscribe(userId).subscribe({
    next: (payload) => {
     session.push(payload.payload, payload.event_type);
    },

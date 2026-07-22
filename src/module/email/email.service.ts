@@ -24,8 +24,8 @@ class EmailService<T> {
   return (data: MailData<U>) => {
    try {
     return callback(this.transporter, data);
-    } catch (err) {
-     throw err;
+   } catch (err) {
+    throw err;
    }
   };
  };
@@ -43,5 +43,5 @@ const transporterConfig = {
 };
 
 export default new EmailService<Transporter>(
-  nodemailer.createTransport(transporterConfig),
+ nodemailer.createTransport(transporterConfig),
 );

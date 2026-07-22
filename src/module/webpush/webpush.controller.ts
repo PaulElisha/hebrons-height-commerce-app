@@ -1,11 +1,11 @@
 /** @format */
+import WebPushService from "@module/webpush/webpush.service.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import { NextFunction, Request, Response } from "express";
-
-import WebPushService from "@module/webpush/webpush.service.ts";
-import { Subscription } from "../webpush/config.ts";
 import z from "zod";
+
+import { Subscription } from "./pusher.ts";
 
 export interface NotificationParams {
  notificationId?: string;

@@ -1,9 +1,9 @@
 /** @format */
 
-import db from "../config/db/db.ts";
-import { category } from "@schema/category.ts";
-import { subcategory } from "@schema/category.ts";
+import { category, subcategory } from "@schema/category.ts";
 import { and, eq } from "drizzle-orm";
+
+import db from "../config/db/db.ts";
 
 interface CategorySeed {
  name: string;

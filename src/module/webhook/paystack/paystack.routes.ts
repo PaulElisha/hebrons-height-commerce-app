@@ -1,8 +1,7 @@
 /** @format */
-import { verifyPaystackSignature } from "./middleware.ts";
 import express, { Request, Response, Router } from "express";
 
-import { parsePaystackBody } from "./middleware.ts";
+import { parsePaystackBody, verifyPaystackSignature } from "./middleware.ts";
 import { paystackWebhookHandler } from "./paystack.webhook.ts";
 
 const paystackWebhookRouter = Router().post(

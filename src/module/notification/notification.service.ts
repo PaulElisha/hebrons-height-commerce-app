@@ -54,19 +54,19 @@ class NotificationService {
   return [null, null];
  };
 
-  createNotification = async (
-   userId: string,
-   title: string,
-   message: string,
-   type: "order_update" | "stock_alert" | "system",
-  ): Promise<Result<TNotification, AppError>> => {
-   const [created] = await db
-    .insert(notification)
-    .values({ userId, title, message, type })
-    .returning();
+ createNotification = async (
+  userId: string,
+  title: string,
+  message: string,
+  type: "order_update" | "stock_alert" | "system",
+ ): Promise<Result<TNotification, AppError>> => {
+  const [created] = await db
+   .insert(notification)
+   .values({ userId, title, message, type })
+   .returning();
 
-   return [created, null];
-  };
+  return [created, null];
+ };
 }
 
 export default new NotificationService();

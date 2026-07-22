@@ -1,5 +1,4 @@
 /** @format */
-import { Subject } from "rxjs";
 
 export enum EventType {
  ORDER_PLACED = "order.placed",
@@ -15,11 +14,3 @@ export enum EventType {
  PAYSTACK_PAYMENT_VERIFIED = "payment.paystack.checkout.verified",
  STRIPE_PAYMENT_VERIFIED = "payment.stripe.checkout.verified",
 }
-
-export interface EventContract {
- event_type: string | "error";
- payload: any;
-}
-
-const eventBus$ = new Subject<EventContract>();
-export default eventBus$;

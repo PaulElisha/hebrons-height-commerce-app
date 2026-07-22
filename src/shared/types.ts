@@ -260,3 +260,29 @@ export interface TPusher {
  pubKey: string;
  privKey: string;
 }
+
+export interface TPayment {
+ email: string;
+ amount: number | null;
+ currency: string | null;
+ rail: string;
+ mode: string | null;
+ id: string;
+ createdAt: Date;
+ updatedAt: Date;
+ userId: string;
+ status: string;
+ orderId: string;
+ attempts: number | null;
+ callbackUrl: string | null;
+ paymentReference: string | null;
+ paymentProvider: string | null;
+ accessCode: string | null;
+ authorizationUrl: string | null;
+ paidAt: Date | null;
+}
+
+export interface TPaymentVerificationResult {
+ payment: any;
+ order?: any;
+}

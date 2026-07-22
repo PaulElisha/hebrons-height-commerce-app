@@ -1,12 +1,12 @@
 /** @format */
-import { formatErrorPayload } from "@shared/error/format-error.ts";
-import { EventType } from "@shared/event-bus/config.ts";
-import { onEvent } from "@shared/event-bus/consumer.ts";
 import OrderService from "@module/order/order.service.ts";
-import NotificationService from "./notification.service.ts";
-import WebPushService from "../webpush/webpush.service.ts";
+import { formatErrorPayload } from "@shared/error/format-error.ts";
+import { EventBus, EventType } from "@shared/event-bus/index.ts";
 
-onEvent(EventType.ORDER_STATUS_UPDATED).subscribe({
+import WebPushService from "../webpush/webpush.service.ts";
+import NotificationService from "./notification.service.ts";
+
+EventBus.on(EventType.ORDER_STATUS_UPDATED).subscribe({
  next: async (payload) => {
   try {
    const { userId, orderId, status, message } = payload.payload;
@@ -28,7 +28,7 @@ onEvent(EventType.ORDER_STATUS_UPDATED).subscribe({
  },
 });
 
-onEvent(EventType.ORDER_PLACED).subscribe({
+EventBus.on(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
   try {
    const { userId, orderId } = payload.payload;
@@ -50,7 +50,7 @@ onEvent(EventType.ORDER_PLACED).subscribe({
  },
 });
 
-onEvent(EventType.LOW_STOCK_ALERT).subscribe({
+EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
  next: async (payload) => {
   try {
    const { merchantId, productName, productId, quantity } = payload.payload;
@@ -79,7 +79,7 @@ onEvent(EventType.LOW_STOCK_ALERT).subscribe({
  },
 });
 
-onEvent(EventType.ORDER_CANCELLED).subscribe({
+EventBus.on(EventType.ORDER_CANCELLED).subscribe({
  next: async (payload) => {
   try {
    const { orderId } = payload.payload;

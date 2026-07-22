@@ -6,7 +6,6 @@ import { product } from "@schema/product.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
 import NotFoundException from "@shared/error/not-found.ts";
 import * as helper from "@shared/helper.ts";
 import {
@@ -297,7 +296,7 @@ class ProductService {
   userId: string,
   productId: string,
   primaryImageUrl: string,
- ) => {
+ ): Promise<Result<TProduct, AppError>> => {
   const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
   if (err || !targetMerchantId) return [null, err];
 

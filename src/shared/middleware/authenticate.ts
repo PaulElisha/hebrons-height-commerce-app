@@ -28,8 +28,8 @@ const authenticate = async (
   req.session = session.session;
 
   next();
-  } catch (err) {
-   next(err);
+ } catch (err) {
+  next(err);
  }
 };
 

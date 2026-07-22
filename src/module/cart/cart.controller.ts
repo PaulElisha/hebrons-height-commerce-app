@@ -4,10 +4,10 @@ import asyncHandler from "@middleware/async-handler.ts";
 import CartService from "@module/cart/cart.service.ts";
 import { ProductParams } from "@module/product/product.controller.ts";
 import { APIResponse, TCartAndItem } from "@shared/types.ts";
-import type { NextFunction, Request, RequestHandler, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 
-export interface CartParams extends RequestHandler {
- cartId: string;
+export interface CartParams {
+ cartId?: string;
 }
 
 class CartController {
@@ -18,7 +18,7 @@ class CartController {
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = String(req.params.productId);
 
    const [data, err] = await CartService.addToCart(userId, productId);
 
@@ -39,7 +39,7 @@ class CartController {
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = String(req.params.productId);
 
    const [data, err] = await CartService.removeFromCart(userId, productId);
 
@@ -60,7 +60,7 @@ class CartController {
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = String(req.params.productId);
 
    const [data, err] = await CartService.incrementItem(userId, productId);
 
@@ -81,7 +81,7 @@ class CartController {
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = req.params.productId;
+   const productId = String(req.params.productId);
 
    const [data, err] = await CartService.decrementItem(userId, productId);
 

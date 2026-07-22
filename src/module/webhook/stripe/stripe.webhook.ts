@@ -2,8 +2,7 @@
 
 import stripeClient from "@app/stripe.ts";
 import HttpStatus from "@shared/enum/http.ts";
-import { EventType } from "@shared/event-bus/config.ts";
-import { PublishEvent } from "@shared/event-bus/publisher.ts";
+import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import Env from "env.ts";
 import { Request, Response } from "express";
 import Stripe from "stripe";
@@ -24,13 +23,13 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
    .send(`Webhook Error: ${error.message}`);
  }
 
-  try {
-   switch (event.type) {
-    case "checkout.session.completed":
-    case "checkout.session.expired": {
-     const session = event.data.object;
+ try {
+  switch (event.type) {
+   case "checkout.session.completed":
+   case "checkout.session.expired": {
+    const session = event.data.object;
 
-     PublishEvent({
+    EventBus.publish({
      event_type: EventType.STRIPE_PAYMENT_VERIFIED,
      payload: {
       event: session,

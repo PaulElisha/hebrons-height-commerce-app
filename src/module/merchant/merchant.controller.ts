@@ -1,13 +1,19 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { NextFunction, Request, RequestHandler, Response } from "express";
+import {
+ APIResponse,
+ TAnalyticsResult,
+ TMerchant,
+ TMerchantWithUser,
+} from "@shared/types.ts";
+import { NextFunction, Request, Response } from "express";
 import z from "zod";
 
 import MerchantService, { UpdateMerchantDto } from "./merchant.service.ts";
 
-export interface MerchantParams extends RequestHandler {
- merchantId: string;
+export interface MerchantParams {
+ merchantId?: string;
 }
 
 export const CreateMerchantSchema = z.object({
@@ -18,16 +24,20 @@ export const CreateMerchantSchema = z.object({
 
 class MerchantController {
  getMerchantProfile = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  async (
+   req: Request,
+   res: Response<APIResponse<TMerchantWithUser>>,
+   next: NextFunction,
+  ): Promise<any> => {
    const userId = req.user.id;
    const [data, err] = await MerchantService.getMerchantProfile(userId);
 
-   if (err) throw err;
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "fetched merchant profile",
-    data,
+    data: data ?? undefined,
    });
   },
  );
@@ -35,7 +45,7 @@ class MerchantController {
  createMerchantProfile = asyncHandler(
   async (
    req: Request<any, any, z.infer<typeof CreateMerchantSchema>>,
-   res: Response,
+   res: Response<APIResponse<TMerchant>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -47,7 +57,7 @@ class MerchantController {
     businessLogo,
    });
 
-   if (err) throw err;
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -60,7 +70,7 @@ class MerchantController {
  updateMerchantProfile = asyncHandler(
   async (
    req: Request<MerchantParams, any, any, z.infer<typeof UpdateMerchantDto>>,
-   res: Response,
+   res: Response<APIResponse<TMerchant>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -73,7 +83,7 @@ class MerchantController {
     body,
    );
 
-   if (err) throw err;
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -84,10 +94,14 @@ class MerchantController {
  );
 
  getAnalytics = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+   req: Request,
+   res: Response<APIResponse<TAnalyticsResult>>,
+   next: NextFunction,
+  ) => {
    const userId = req.user.id;
    const [data, err] = await MerchantService.getAnalytics(userId);
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -104,14 +118,14 @@ class MerchantController {
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
-   const merchantId = req.params.merchantId;
+   const merchantId = String(req.params.merchantId);
 
    const [, err] = await MerchantService.deleteMerchantProfile(
     userId,
     merchantId,
    );
 
-   if (err) throw err;
+   if (err) return next(err);
 
    return res.status(HttpStatus.NO_CONTENT).send();
   },

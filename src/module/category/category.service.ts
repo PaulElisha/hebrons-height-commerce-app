@@ -1,13 +1,12 @@
 /** @format */
 import db from "@db/db.ts";
-import { category } from "@schema/category.ts";
-import { subcategory } from "@schema/category.ts";
+import { category, subcategory } from "@schema/category.ts";
 import ErrorCode from "@shared/enum/error-code.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
 import NotFoundException from "@shared/error/not-found.ts";
 import { Result, TCategory, TSubcategory } from "@shared/types.ts";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import FA from "fasy";
 
 class CategoryService {

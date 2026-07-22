@@ -31,7 +31,7 @@ class PaymentController {
     },
    );
 
-    if (err || !paymentRes) return next(err);
+   if (err || !paymentRes) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

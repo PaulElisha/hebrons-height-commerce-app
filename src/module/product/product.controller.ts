@@ -5,17 +5,20 @@ import asyncHandler from "@shared/middleware/async-handler.ts";
 import {
  APIResponse,
  Pagination,
+ TCategory,
+ TMerchantProducts,
+ TPaginatedProducts,
  TProduct,
- UploadImages,
+ TProductWithMerchant,
+ TSubcategory,
 } from "@shared/types.ts";
-import { NextFunction, Request, RequestHandler, Response } from "express";
+import { NextFunction, Request, Response } from "express";
+import z from "zod";
 
 import ProductService, { TProductFilter } from "./product.service.ts";
-import z from "zod";
-import { product } from "@schema/product.ts";
 
-export interface ProductParams extends RequestHandler {
- productId: string;
+export interface ProductParams {
+ productId?: string;
 }
 
 export const CreateProductSchema = z.object({
@@ -30,11 +33,15 @@ export const CreateProductSchema = z.object({
 
 class ProductController {
  getMerchantProduct = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+   req: Request,
+   res: Response<APIResponse<TMerchantProducts>>,
+   next: NextFunction,
+  ) => {
    const userId = req.user.id;
    const [data, err] = await ProductService.getMerchantProducts(userId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    res.status(HttpStatus.OK).json({
     status: "ok",
@@ -47,13 +54,13 @@ class ProductController {
  getSingleProduct = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response,
+   res: Response<APIResponse<TProduct>>,
    next: NextFunction,
   ): Promise<any> => {
    const productId = String(req.params.productId);
    const [data, err] = await ProductService.getSingleProduct(productId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -64,12 +71,16 @@ class ProductController {
  );
 
  getProductForMerchant = asyncHandler(
-  async (req: Request<MerchantParams>, res: Response, next: NextFunction) => {
+  async (
+   req: Request<MerchantParams>,
+   res: Response<APIResponse<TMerchantProducts>>,
+   next: NextFunction,
+  ) => {
    const merchantId = String(req.params.merchantId);
 
    const [data, err] = await ProductService.getProductForMerchant(merchantId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    res.status(HttpStatus.OK).json({
     status: "ok",
@@ -80,9 +91,23 @@ class ProductController {
  );
 
  getProductsByCategories = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+   req: Request,
+   res: Response<
+    APIResponse<
+     {
+      category: TCategory;
+      subcategories: {
+       subcategory: TSubcategory;
+       products: TProduct[];
+      }[];
+     }[]
+    >
+   >,
+   next: NextFunction,
+  ) => {
    const [data, err] = await ProductService.getProductsByCategories();
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -95,7 +120,7 @@ class ProductController {
  getLatestProducts = asyncHandler(
   async (
    req: Request<{}, {}, {}, Pagination>,
-   res: Response,
+   res: Response<APIResponse<TProductWithMerchant[]>>,
    next: NextFunction,
   ): Promise<any> => {
    const pageSizeValue = Number(req.query.pageSize);
@@ -108,7 +133,7 @@ class ProductController {
 
    const [data, err] = await ProductService.getLatestProducts(pagination);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -121,7 +146,7 @@ class ProductController {
  getProducts = asyncHandler(
   async (
    req: Request<any, any, any, Pagination & TProductFilter>,
-   res: Response,
+   res: Response<APIResponse<TPaginatedProducts>>,
    next: NextFunction,
   ): Promise<any> => {
    const pageSizeValue = Number(req.query.pageSize);
@@ -140,7 +165,7 @@ class ProductController {
 
    const [data, err] = await ProductService.getProducts(filters, pagination);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -228,18 +253,22 @@ class ProductController {
  );
 
  updatePrimaryImage = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+   req: Request<ProductParams>,
+   res: Response<APIResponse<TProduct>>,
+   next: NextFunction,
+  ) => {
    const userId = req.user.id;
    const productId = String(req.params.productId);
    const primaryImageUrl = req.upload_image.url;
 
-   const [data, e] = await ProductService.updatePrimaryImage(
+   const [data, err] = await ProductService.updatePrimaryImage(
     userId,
     productId,
     primaryImageUrl,
    );
 
-   if (e || !data) return next(e);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -252,7 +281,7 @@ class ProductController {
  deleteProduct = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response,
+   res: Response<APIResponse<undefined>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;

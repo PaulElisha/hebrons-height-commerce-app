@@ -2,9 +2,9 @@
 import db from "@db/db.ts";
 import { pushSubscription } from "@schema/push-subscription.ts";
 import { and, eq } from "drizzle-orm";
-import Env from "env.ts";
-import Pusher, { Subscription } from "./config.ts";
 import z from "zod";
+
+import Pusher, { Subscription } from "./pusher.ts";
 
 Pusher.config();
 
