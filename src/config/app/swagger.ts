@@ -2286,58 +2286,116 @@ const spec = {
     },
    },
   },
-  "/api/auth/register": {
-   post: {
-    tags: ["Authentication"],
-    summary: "Register a new user",
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: {
-        type: "object",
-        required: ["name", "email", "password"],
-        properties: {
-         name: { type: "string" },
-         email: { type: "string", format: "email" },
-         password: { type: "string", minLength: 8 },
+   "/api/auth/sign-up/email": {
+    post: {
+     tags: ["Authentication"],
+     summary: "Register a new user with email and password",
+     operationId: "signUpWithEmailAndPassword",
+     requestBody: {
+      required: true,
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         required: ["name", "email", "password", "role"],
+         properties: {
+          name: { type: "string", description: "The name of the user" },
+          email: { type: "string", format: "email", description: "The email of the user" },
+          password: { type: "string", minLength: 6, description: "The password of the user" },
+          image: { type: "string", format: "uri", description: "The profile image URL of the user" },
+          role: { type: "string", description: "User role", enum: ["user", "admin", "merchant"] },
+          callbackURL: { type: "string", description: "URL to use for email verification callback" },
+          rememberMe: { type: "boolean", default: true, description: "If false, the session will not be remembered" },
+         },
         },
        },
       },
      },
-    },
-    responses: {
-     "200": { description: "User registered successfully" },
-     "400": { description: "Validation error" },
-     "409": { description: "Email already exists" },
+     responses: {
+      "200": {
+       description: "User registered successfully",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           token: { type: "string", nullable: true, description: "Authentication token for the session" },
+           user: {
+            type: "object",
+            properties: {
+             id: { type: "string" },
+             email: { type: "string", format: "email" },
+             name: { type: "string" },
+             image: { type: "string", format: "uri", nullable: true },
+             role: { type: "string", enum: ["user", "admin", "merchant"] },
+             emailVerified: { type: "boolean" },
+             createdAt: { type: "string", format: "date-time" },
+             updatedAt: { type: "string", format: "date-time" },
+            },
+           },
+          },
+         },
+        },
+       },
+      },
+      "400": { description: "Bad Request — missing or invalid params" },
+      "401": { description: "Unauthorized" },
+      "403": { description: "Forbidden" },
+      "404": { description: "Not Found" },
+      "422": { description: "User already exists or failed to create user" },
+      "429": { description: "Too Many Requests — rate limited" },
+      "500": { description: "Internal Server Error" },
+     },
     },
    },
-  },
-  "/api/auth/login": {
-   post: {
-    tags: ["Authentication"],
-    summary: "Login with email and password",
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: {
-        type: "object",
-        required: ["email", "password"],
-        properties: {
-         email: { type: "string", format: "email" },
-         password: { type: "string" },
+   "/api/auth/sign-in/email": {
+    post: {
+     tags: ["Authentication"],
+     summary: "Login with email and password",
+     operationId: "signInEmail",
+     requestBody: {
+      required: true,
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         required: ["email", "password"],
+         properties: {
+          email: { type: "string", format: "email", description: "Email of the user" },
+          password: { type: "string", description: "Password of the user" },
+          callbackURL: { type: "string", description: "Callback URL for email verification redirect" },
+          rememberMe: { type: "boolean", default: true, description: "If false, the session will not be remembered" },
+         },
         },
        },
       },
      },
-    },
-    responses: {
-     "200": { description: "Login successful" },
-     "401": { description: "Invalid credentials" },
+     responses: {
+      "200": {
+       description: "Login successful",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           redirect: { type: "boolean", example: false, description: "Indicates whether a redirect is needed" },
+           token: { type: "string", description: "Session token" },
+           url: { type: "string", nullable: true, description: "URL for redirect (if applicable)" },
+           user: { $ref: "#/components/schemas/User" },
+          },
+         },
+        },
+       },
+      },
+      "400": { description: "Bad Request — missing or invalid params" },
+      "401": { description: "Unauthorized — invalid credentials" },
+      "403": { description: "Forbidden" },
+      "404": { description: "Not Found" },
+      "429": { description: "Too Many Requests — rate limited" },
+      "500": { description: "Internal Server Error" },
+     },
     },
    },
-  },
  },
 };
 
