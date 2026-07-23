@@ -2393,11 +2393,37 @@ const spec = {
       "404": { description: "Not Found" },
       "429": { description: "Too Many Requests — rate limited" },
       "500": { description: "Internal Server Error" },
+      },
+     },
+    },
+   "/api/auth/sign-out": {
+    post: {
+     tags: ["Authentication"],
+     summary: "Sign out the current user and revoke the session",
+     operationId: "signOut",
+     security: [{ bearerAuth: [] }],
+     responses: {
+      "200": {
+       description: "Successfully signed out",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "boolean", example: true, description: "Indicates if the session was revoked successfully" },
+          },
+          required: ["status"],
+         },
+        },
+       },
+      },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "500": { description: "Internal Server Error" },
      },
     },
    },
- },
-};
+  },
+ };
 
 export const options: Record<string, unknown> = {
  explorer: true,
