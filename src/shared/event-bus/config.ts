@@ -9,6 +9,7 @@ export enum EventType {
  ORDER_STATUS_UPDATED = "order.status.updated",
  UPDATE_INVENTORY = "inventory.update",
  LOW_STOCK_ALERT = "inventory.low_stock",
+ CART_LOW_STOCK = "cart.low_stock",
  STRIPE_PAYMENT_INITIALIZED = "payment.stripe.checkout.initialized",
  PAYSTACK_PAYMENT_INITIALIZED = "payment.paystack.checkout.initialized",
  PAYSTACK_PAYMENT_VERIFIED = "payment.paystack.checkout.verified",

@@ -1,13 +1,13 @@
 /** @format */
 import db from "@db/db.ts";
-import { cartItem } from "@schema/cart.ts";
+import { cart, cartItem } from "@schema/cart.ts";
 import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
 import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import { Result, TProduct, TProductThreshold } from "@shared/types.ts";
-import { and, eq, isNotNull, ne, sql, sum } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 
 const STOCK_THRESHOLDS = [10, 5, 3, 1] as const;
@@ -54,6 +54,36 @@ class InventoryService {
    return [null, APIError.internalServer("Product threshold exceeded")];
 
   return [price, null];
+ };
+
+ checkUserStockAtIntervals = async (productId: string) => {
+  const [result] = await db
+   .select({
+    userId: cartItem.userId,
+    name: product.name,
+    quantity: product.quantity,
+   })
+   .from(cartItem)
+   .innerJoin(cart, eq(cart.id, cartItem.cartId))
+   .innerJoin(product, eq(cartItem.productId, product.id))
+   .where(
+    and(
+     eq(cartItem.productId, productId),
+     inArray(product.quantity, STOCK_THRESHOLDS),
+    ),
+   );
+
+  if (!result) return;
+
+  EventBus.publish({
+   event_type: EventType.LOW_STOCK_ALERT,
+   payload: {
+    productId,
+    id: result.userId,
+    productName: result.name,
+    quantity: result.quantity,
+   },
+  });
  };
 
  checkLowStock = async (productId: string) => {
@@ -142,6 +172,26 @@ class InventoryService {
    }
 
    await this.checkLowStock(productId);
+
+   if (action === "placeOrder" && updatedProduct && updatedProduct.quantity <= 3) {
+    const cartUsers = await db
+     .select({ userId: cartItem.userId })
+     .from(cartItem)
+     .where(and(eq(cartItem.productId, productId), isNotNull(cartItem.userId)))
+     .groupBy(cartItem.userId);
+
+    if (cartUsers.length > 0) {
+     EventBus.publish({
+      event_type: EventType.CART_LOW_STOCK,
+      payload: {
+       productId,
+       productName: updatedProduct.name,
+       quantity: updatedProduct.quantity,
+       userIds: cartUsers.map((u) => u.userId),
+      },
+     });
+    }
+   }
 
    return [updatedProduct ?? null, null];
   } catch (err) {
