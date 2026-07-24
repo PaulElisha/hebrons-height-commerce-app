@@ -79,6 +79,35 @@ EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
  },
 });
 
+EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
+ next: async (payload) => {
+  try {
+   const { userId, productName, productId, quantity } = payload.payload;
+   await Promise.all([
+    NotificationService.createNotification(
+     userId,
+     "Low Stock Alert",
+     `"${productName}" is running low (${quantity} left)`,
+     "stock_alert",
+    ),
+    WebPushService.sendPushNotification(
+     userId,
+     "Low Stock Alert",
+     `"${productName}" is running low (${quantity} left)`,
+    ),
+   ]);
+  } catch (err) {
+   const formatted = formatErrorPayload(
+    err instanceof Error ? err : new Error(String(err)),
+   );
+   console.error("[Notification Error]:", formatted.body);
+  }
+ },
+ error: (err) => {
+  console.error(err);
+ },
+});
+
 EventBus.on(EventType.ORDER_CANCELLED).subscribe({
  next: async (payload) => {
   try {

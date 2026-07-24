@@ -7,8 +7,9 @@ import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import { Result, TProduct, TProductThreshold } from "@shared/types.ts";
-import { and, eq, inArray, isNotNull, ne, sql, sum } from "drizzle-orm";
+import { and, eq, isNotNull, lt, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
+import FA from "fasy";
 
 const STOCK_THRESHOLDS = [10, 5, 3, 1] as const;
 
@@ -57,7 +58,7 @@ class InventoryService {
  };
 
  checkUserStockAtIntervals = async (productId: string) => {
-  const [result] = await db
+  const result = await db
    .select({
     userId: cartItem.userId,
     name: product.name,
@@ -69,21 +70,23 @@ class InventoryService {
    .where(
     and(
      eq(cartItem.productId, productId),
-     inArray(product.quantity, STOCK_THRESHOLDS),
+     lt(product.quantity, STOCK_THRESHOLDS[0]),
     ),
    );
 
-  if (!result) return;
+  if (result.length === 0) return;
 
-  EventBus.publish({
-   event_type: EventType.LOW_STOCK_ALERT,
-   payload: {
-    productId,
-    id: result.userId,
-    productName: result.name,
-    quantity: result.quantity,
-   },
-  });
+  await FA.concurrent.map(async ({ userId, name, quantity }: any) => {
+   EventBus.publish({
+    event_type: EventType.LOW_STOCK_ALERT,
+    payload: {
+     productId,
+     userId,
+     productName: name,
+     quantity: quantity,
+    },
+   });
+  }, result);
  };
 
  checkLowStock = async (productId: string) => {
@@ -99,19 +102,17 @@ class InventoryService {
 
   if (!current) return;
 
-  for (const threshold of STOCK_THRESHOLDS) {
-   if (current.quantity === threshold) {
-    EventBus.publish({
-     event_type: EventType.LOW_STOCK_ALERT,
-     payload: {
-      productId,
-      productName: current.name,
-      quantity: current.quantity,
-      merchantId: current.merchantId,
-     },
-    });
-    return;
-   }
+  if (current.quantity <= STOCK_THRESHOLDS[0]) {
+   EventBus.publish({
+    event_type: EventType.LOW_STOCK_ALERT,
+    payload: {
+     productId,
+     productName: current.name,
+     quantity: current.quantity,
+     merchantId: current.merchantId,
+    },
+   });
+   return;
   }
  };
 
@@ -173,25 +174,7 @@ class InventoryService {
 
    await this.checkLowStock(productId);
 
-   if (action === "placeOrder" && updatedProduct && updatedProduct.quantity <= 3) {
-    const cartUsers = await db
-     .select({ userId: cartItem.userId })
-     .from(cartItem)
-     .where(and(eq(cartItem.productId, productId), isNotNull(cartItem.userId)))
-     .groupBy(cartItem.userId);
-
-    if (cartUsers.length > 0) {
-     EventBus.publish({
-      event_type: EventType.CART_LOW_STOCK,
-      payload: {
-       productId,
-       productName: updatedProduct.name,
-       quantity: updatedProduct.quantity,
-       userIds: cartUsers.map((u) => u.userId),
-      },
-     });
-    }
-   }
+   await this.checkUserStockAtIntervals(productId);
 
    return [updatedProduct ?? null, null];
   } catch (err) {

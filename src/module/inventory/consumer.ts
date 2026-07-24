@@ -8,7 +8,7 @@ import InventoryService from "./inventory.service.ts";
 EventBus.on(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
   try {
-   const { orderId, productIds } = payload.payload;
+   const { userId, orderId, productIds } = payload.payload;
    console.log("[Inventory update for Order placement]:", {
     product_ids: productIds,
    });
