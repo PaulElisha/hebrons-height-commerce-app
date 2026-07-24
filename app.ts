@@ -68,8 +68,8 @@ class App {
  }
 
  initializeWebhooks() {
-  this.app.use("/api/stripe", stripeWebhookRouter);
-  this.app.use("/api/paystack", paystackWebhookRouter);
+  this.app.use("/api/webhook", stripeWebhookRouter);
+  this.app.use("/api/webhook", paystackWebhookRouter);
  }
 
  initializeApiRoutes() {

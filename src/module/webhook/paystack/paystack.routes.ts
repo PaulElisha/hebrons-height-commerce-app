@@ -5,7 +5,7 @@ import { parsePaystackBody, verifyPaystackSignature } from "./middleware.ts";
 import { paystackWebhookHandler } from "./paystack.webhook.ts";
 
 const paystackWebhookRouter = Router().post(
- "/webhook",
+ "/paystack",
  express.raw({ type: "application/json" }),
  parsePaystackBody,
  verifyPaystackSignature,

@@ -818,8 +818,10 @@ const spec = {
          description: { type: "string" },
          price: { type: "integer" },
          quantity: { type: "integer" },
-         category: { type: "string" },
-         subCategory: { type: "string" },
+      categoryId: { type: "string", nullable: true },
+      subCategoryId: { type: "string", nullable: true },
+      category: { type: "string" },
+      subCategory: { type: "string" },
          additionalData: {
           type: "object",
           additionalProperties: { type: "string" },
@@ -1673,10 +1675,10 @@ const spec = {
     },
    },
   },
-  "/api/stripe/webhook": {
-   post: {
-    tags: ["Webhook"],
-    summary: "Stripe webhook handler (checkout.session.completed/expired)",
+   "/api/webhook/stripe": {
+    post: {
+     tags: ["Webhook"],
+     summary: "Stripe webhook handler (checkout.session.completed/expired)",
     requestBody: {
      required: true,
      content: {
@@ -1707,10 +1709,10 @@ const spec = {
     },
    },
   },
-  "/api/paystack/webhook": {
-   post: {
-    tags: ["Webhook"],
-    summary: "Paystack webhook handler (charge.success/charge.failed)",
+   "/api/webhook/paystack": {
+    post: {
+     tags: ["Webhook"],
+     summary: "Paystack webhook handler (charge.success/charge.failed)",
     requestBody: {
      required: true,
      content: {
@@ -2113,89 +2115,7 @@ const spec = {
     },
    },
   },
-  "/api/notification/subscribe": {
-   post: {
-    tags: ["Notification"],
-    summary: "Subscribe browser to push notifications",
-    security: [{ bearerAuth: [] }],
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: {
-        type: "object",
-        required: ["endpoint", "keys"],
-        properties: {
-         endpoint: { type: "string" },
-         keys: {
-          type: "object",
-          properties: {
-           auth: { type: "string" },
-           p256dh: { type: "string" },
-          },
-         },
-        },
-       },
-      },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Subscribed successfully",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "subscribed successfully" },
-         },
-        },
-       },
-      },
-     },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-    },
-   },
-  },
-  "/api/notification/unsubscribe": {
-   post: {
-    tags: ["Notification"],
-    summary: "Unsubscribe browser from push notifications",
-    security: [{ bearerAuth: [] }],
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: {
-        type: "object",
-        required: ["endpoint"],
-        properties: {
-         endpoint: { type: "string" },
-        },
-       },
-      },
-     },
-    },
-    responses: {
-     "200": {
-      description: "Unsubscribed successfully",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "unsubscribed successfully" },
-         },
-        },
-       },
-      },
-     },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-    },
-   },
-  },
+
   "/api/notification": {
    get: {
     tags: ["Notification"],
