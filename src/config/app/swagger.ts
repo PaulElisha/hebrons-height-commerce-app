@@ -1782,10 +1782,94 @@ const spec = {
     },
    },
   },
-  "/api/category": {
-   get: {
-    tags: ["Category"],
-    summary: "Get all categories with subcategories",
+   "/api/webpush/subscribe": {
+    post: {
+     tags: ["WebPush"],
+     summary: "Subscribe browser to push notifications",
+     security: [{ bearerAuth: [] }],
+     requestBody: {
+      required: true,
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         required: ["endpoint", "keys"],
+         properties: {
+          endpoint: { type: "string" },
+          keys: {
+           type: "object",
+           required: ["auth", "p256dh"],
+           properties: {
+            auth: { type: "string" },
+            p256dh: { type: "string" },
+           },
+          },
+         },
+        },
+       },
+      },
+     },
+     responses: {
+      "200": {
+       description: "Subscribed successfully",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "subscribed successfully" },
+          },
+         },
+        },
+       },
+      },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+     },
+    },
+   },
+   "/api/webpush/unsubscribe": {
+    post: {
+     tags: ["WebPush"],
+     summary: "Unsubscribe browser from push notifications",
+     security: [{ bearerAuth: [] }],
+     requestBody: {
+      required: true,
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         required: ["endpoint"],
+         properties: {
+          endpoint: { type: "string" },
+         },
+        },
+       },
+      },
+     },
+     responses: {
+      "200": {
+       description: "Unsubscribed successfully",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "unsubscribed successfully" },
+          },
+         },
+        },
+       },
+      },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+     },
+    },
+   },
+   "/api/category": {
+    get: {
+     tags: ["Category"],
+     summary: "Get all categories with subcategories",
     responses: {
      "200": {
       description: "Categories fetched successfully",
