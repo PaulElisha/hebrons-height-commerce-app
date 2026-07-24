@@ -1,8 +1,6 @@
 /** @format */
 import cloudinary from "@app/cloudinary.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import { createPublicId } from "@shared/helper.ts";
 import { AssetType } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
@@ -16,11 +14,7 @@ export const cloudinaryUploadBulkStream = (folder: AssetType) => {
 
    if (!targetFiles || targetFiles.length === 0) {
     return next(
-     new BadRequestException(
-      "No files uploaded under the 'gallery' field key.",
-      HttpStatus.BAD_REQUEST,
-      ErrorCode.VALIDATION_ERROR,
-     ),
+     APIError.badRequest("No files uploaded under the 'gallery' field key."),
     );
    }
 

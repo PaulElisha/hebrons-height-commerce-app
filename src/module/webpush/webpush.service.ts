@@ -5,8 +5,13 @@ import { and, eq } from "drizzle-orm";
 import z from "zod";
 
 import Pusher, { Subscription } from "./pusher.ts";
+import Env from "env.ts";
 
-Pusher.config();
+const pusher = Pusher.config({
+ email: `mailto:${Env.EMAIL_USER}`,
+ pubKey: Env.VAPID_PUBLIC_KEY,
+ privKey: Env.VAPID_PRIVATE_KEY,
+});
 
 class WebPushService {
  async subscribe(
@@ -55,7 +60,7 @@ class WebPushService {
    .where(eq(pushSubscription.userId, userId));
 
   try {
-   Pusher.sendNotification(
+   pusher.sendNotification(
     {
      endpoint: subscriptions.endpoint,
      keys: subscriptions.keys,

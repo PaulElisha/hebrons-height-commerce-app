@@ -8,11 +8,8 @@ import PaymentService, {
 import { cartItem } from "@schema/cart.ts";
 import { order } from "@schema/order.ts";
 import { payment } from "@schema/payment.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
-import NotFoundException from "@shared/error/not-found.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
@@ -58,16 +55,7 @@ class WebhookHandler {
    .where(eq(payment.paymentReference, reference))
    .for("update");
 
-  if (!paymentRecord) {
-   return [
-    null,
-    new NotFoundException(
-     "Payment not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!paymentRecord) return [null, APIError.notFound("Payment not found")];
 
   if (paymentRecord.status === "paid" || paymentRecord.status === "failed") {
    return [{ payment: paymentRecord }, null];
@@ -99,16 +87,8 @@ class WebhookHandler {
 
   const recordedAmount = Number(paymentRecord.amount) / Env.SCALER;
 
-  if (paidAmount !== recordedAmount) {
-   return [
-    null,
-    new BadRequestException(
-     "Payment amount mismatch",
-     HttpStatus.BAD_REQUEST,
-     ErrorCode.VALIDATION_ERROR,
-    ),
-   ];
-  }
+  if (paidAmount !== recordedAmount)
+   return [null, APIError.badRequest("Payment amount mismatch")];
 
   const [updatedPayment] = await db
    .update(payment)

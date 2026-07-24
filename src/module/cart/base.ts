@@ -2,10 +2,8 @@
 import db from "@db/db.ts";
 import InventoryService from "@module/inventory/inventory.service.ts";
 import { cart, cartItem } from "@schema/cart.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import * as helper from "@shared/helper.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
 import { Mutex } from "async-mutex";
@@ -70,15 +68,7 @@ class CartBase {
      await InventoryService.checkInventoryThreshold(productId);
 
     if (err || !price)
-     return [
-      null,
-      err ||
-       new BadRequestException(
-        "Cannot add item to cart",
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        ErrorCode.VALIDATION_ERROR,
-       ),
-     ];
+     return [null, err ?? APIError.badRequest("Cannot add item to cart")];
 
     await callback(userCart.id, userId, productId, Number(price));
    } else if (typeof intent === "string" && intent == "increment") {
@@ -92,15 +82,7 @@ class CartBase {
       await InventoryService.checkInventoryThreshold(productId);
 
      if (err || !price)
-      return [
-       null,
-       err ||
-        new BadRequestException(
-         "Cannot increment item",
-         HttpStatus.UNPROCESSABLE_ENTITY,
-         ErrorCode.VALIDATION_ERROR,
-        ),
-      ];
+      return [null, err ?? APIError.badRequest("Cannot increment item")];
     }
 
     await callback(userCart.id, userId, productId);

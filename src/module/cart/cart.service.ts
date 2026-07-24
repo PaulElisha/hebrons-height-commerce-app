@@ -1,10 +1,8 @@
 /** @format */
 import db from "@db/db.ts";
 import { cart, cartItem } from "@schema/cart.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import NotFoundException from "@shared/error/not-found.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
 import { and, eq } from "drizzle-orm";
 
@@ -66,16 +64,8 @@ class CartService {
    .where(and(eq(cart.userId, userId), eq(cart.id, cartId)))
    .limit(1);
 
-  if (!result.length || !result[0].cart) {
-   return [
-    null,
-    new NotFoundException(
-     "Cart not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!result.length || !result[0].cart)
+   return [null, APIError.notFound("Cart not found")];
 
   return [
    {

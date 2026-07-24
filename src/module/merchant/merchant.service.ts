@@ -4,17 +4,15 @@ import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
 import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
-import NotFoundException from "@shared/error/not-found.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import {
  Result,
  TAnalyticsResult,
  TMerchant,
  TMerchantWithUser,
 } from "@shared/types.ts";
+import * as helper from "@shared/helper.ts";
 import { and, count, desc, eq, isNotNull, sql, sum } from "drizzle-orm";
 import z from "zod";
 
@@ -53,16 +51,8 @@ class MerchantService {
    .where(and(eq(merchant?.userId, userId), isNotNull(merchant?.id)))
    .limit(1);
 
-  if (!merchantProfile) {
-   return [
-    null,
-    new NotFoundException(
-     "Merchant profile not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!merchantProfile)
+   return [null, APIError.notFound("Merchant profile not found")];
 
   return [merchantProfile, null];
  };
@@ -77,16 +67,11 @@ class MerchantService {
    .where(eq(merchant.userId, userId))
    .limit(1);
 
-  if (existing) {
+  if (existing)
    return [
     null,
-    new BadRequestException(
-     "A merchant profile already exists for this user.",
-     HttpStatus.CONFLICT,
-     ErrorCode.ACCESS_UNAUTHORIZED,
-    ),
+    APIError.badRequest("A merchant profile already exists for this user."),
    ];
-  }
 
   const [newMerchant] = await db
    .insert(merchant)
@@ -130,16 +115,8 @@ class MerchantService {
    )
    .returning();
 
-  if (!updatedMerchant) {
-   return [
-    null,
-    new NotFoundException(
-     "Merchant profile not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!updatedMerchant)
+   return [null, APIError.notFound("Merchant profile not found")];
 
   return [updatedMerchant, null];
  };
@@ -153,16 +130,8 @@ class MerchantService {
    .where(and(eq(merchant.userId, userId), eq(merchant.id, merchantId)))
    .returning();
 
-  if (!deletedMerchant) {
-   return [
-    null,
-    new NotFoundException(
-     "Merchant profile not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!deletedMerchant)
+   return [null, APIError.notFound("Merchant profile not found")];
 
   return [null, null];
  };
@@ -170,9 +139,7 @@ class MerchantService {
  getAnalytics = async (
   userId: string,
  ): Promise<Result<TAnalyticsResult, AppError>> => {
-  const [merchantId, err] = await import("@shared/helper.ts").then((m) =>
-   m.getMerchantIdFromUser(userId),
-  );
+  const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
   if (err || !merchantId) return [null, err];
 
   const [totalResult] = await db

@@ -1,10 +1,8 @@
 /** @format */
 import db from "@db/db.ts";
 import { category, subcategory } from "@schema/category.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import NotFoundException from "@shared/error/not-found.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import { Result, TCategory, TSubcategory } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import FA from "fasy";
@@ -36,16 +34,7 @@ class CategoryService {
    .where(eq(category.name, name))
    .limit(1);
 
-  if (!existing) {
-   return [
-    null,
-    new NotFoundException(
-     "Category not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!existing) return [null, APIError.notFound("Category not found")];
 
   return [existing, null];
  };
@@ -58,16 +47,7 @@ class CategoryService {
    .where(eq(category.id, categoryId))
    .returning();
 
-  if (!deleted) {
-   return [
-    null,
-    new NotFoundException(
-     "Category not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!deleted) return [null, APIError.notFound("Category not found")];
 
   return [null, null];
  };

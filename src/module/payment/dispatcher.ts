@@ -3,11 +3,8 @@ import stripeClient from "@app/stripe.ts";
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
 import { product } from "@schema/product.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
-import InternalServerError from "@shared/error/internal-server.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import { Result, TOrderItems } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
@@ -56,14 +53,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
   if (!response.ok) {
    const errBody = await response.json().catch(() => ({}));
 
-   return [
-    null,
-    new BadRequestException(
-     errBody.message || "Paystack Payment failed",
-     HttpStatus.BAD_REQUEST,
-     ErrorCode.VALIDATION_ERROR,
-    ),
-   ];
+   return [null, APIError.badRequest(errBody.message || "Paystack Payment failed")];
   }
 
   const responseData = await response.json();
@@ -134,14 +124,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
    })
    .then(async (session) => {
     if (!session.url) {
-     return [
-      null,
-      new InternalServerError(
-       "Stripe payment failed",
-       HttpStatus.INTERNAL_SERVER_ERROR,
-       ErrorCode.INTERNAL_SERVER_ERROR,
-      ),
-     ];
+     return [null, APIError.internalServer("Stripe payment failed")];
     }
 
     const res = {

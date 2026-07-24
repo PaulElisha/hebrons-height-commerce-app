@@ -1,7 +1,6 @@
 /** @format */
 
 import { TPusher } from "@shared/types.ts";
-import Env from "env.ts";
 import webPush from "web-push";
 import z from "zod";
 
@@ -14,16 +13,12 @@ export const Subscription = z.object({
 });
 
 class Pusher<T extends TPusher> {
- constructor(protected param: T) {
-  this.param = param;
- }
+ config = (param: T) => {
+  try {
+   webPush.setVapidDetails(param.email, param.pubKey, param.privKey);
+  } catch (error) {}
 
- config = () => {
-  webPush.setVapidDetails(
-   this.param.email,
-   this.param.pubKey,
-   this.param.privKey,
-  );
+  return new Pusher();
  };
 
  sendNotification = (
@@ -39,8 +34,4 @@ class Pusher<T extends TPusher> {
  };
 }
 
-export default new Pusher<TPusher>({
- email: `mailto:${Env.EMAIL_USER}`,
- pubKey: Env.VAPID_PUBLIC_KEY,
- privKey: Env.VAPID_PRIVATE_KEY,
-});
+export default new Pusher();

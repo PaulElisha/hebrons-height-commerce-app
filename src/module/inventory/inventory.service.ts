@@ -3,12 +3,8 @@ import db from "@db/db.ts";
 import { cartItem } from "@schema/cart.ts";
 import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
-import InternalServerError from "@shared/error/internal-server.ts";
-import NotFoundException from "@shared/error/not-found.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import { Result, TProduct, TProductThreshold } from "@shared/types.ts";
 import { and, eq, isNotNull, ne, sql, sum } from "drizzle-orm";
@@ -26,27 +22,10 @@ class InventoryService {
    .where(and(eq(product.id, productId), isNotNull(product.quantity)))
    .limit(1);
 
-  if (!data) {
-   return [
-    null,
-    new NotFoundException(
-     "Product not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!data) return [null, APIError.notFound("Product not found")];
 
-  if (data.quantity <= 0) {
-   return [
-    null,
-    new NotFoundException(
-     "Product is out of stock",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (data.quantity <= 0)
+   return [null, APIError.notFound("Product is out of stock")];
 
   return [data, null];
  };
@@ -72,14 +51,7 @@ class InventoryService {
    : 0;
 
   if (currentAllocatedTotal + 1 > currentQuantity)
-   return [
-    null,
-    new InternalServerError(
-     "Product threshold exceeded",
-     HttpStatus.UNPROCESSABLE_ENTITY,
-     ErrorCode.INTERNAL_SERVER_ERROR,
-    ),
-   ];
+   return [null, APIError.internalServer("Product threshold exceeded")];
 
   return [price, null];
  };
@@ -141,16 +113,11 @@ class InventoryService {
      ),
     );
 
-   if (!ItemQuantityPurchased) {
+   if (!ItemQuantityPurchased)
     return [
      null,
-     new BadRequestException(
-      "This product was not part of the original order.",
-      HttpStatus.BAD_REQUEST,
-      ErrorCode.VALIDATION_ERROR,
-     ),
+     APIError.badRequest("This product was not part of the original order."),
     ];
-   }
 
    let updatedProduct: TProduct | undefined;
 
@@ -180,10 +147,8 @@ class InventoryService {
   } catch (err) {
    return [
     null,
-    new InternalServerError(
+    APIError.internalServer(
      err instanceof Error ? err.message : "Unknown error",
-     HttpStatus.INTERNAL_SERVER_ERROR,
-     ErrorCode.INTERNAL_SERVER_ERROR,
     ),
    ];
   }

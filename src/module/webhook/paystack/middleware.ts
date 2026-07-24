@@ -1,8 +1,6 @@
 /** @format */
 
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import crypto from "crypto";
 import Env from "env.ts";
 import { NextFunction, Request, Response } from "express";
@@ -16,13 +14,7 @@ export function parsePaystackBody(
   req.rawBody = req.body.toString("utf8");
   req.body = JSON.parse(req.rawBody);
  } catch {
-  return next(
-   new BadRequestException(
-    "Invalid JSON payload",
-    HttpStatus.BAD_REQUEST,
-    ErrorCode.VALIDATION_ERROR,
-   ),
-  );
+  return next(APIError.badRequest("Invalid JSON payload"));
  }
  next();
 }
@@ -36,13 +28,7 @@ export const verifyPaystackSignature = async (
   const signature = req.headers["x-paystack-signature"];
 
   if (!signature) {
-   return next(
-    new BadRequestException(
-     "Missing Paystack signature",
-     HttpStatus.BAD_REQUEST,
-     ErrorCode.VALIDATION_ERROR,
-    ),
-   );
+   return next(APIError.badRequest("Missing Paystack signature"));
   }
 
   const hash = crypto
@@ -52,11 +38,7 @@ export const verifyPaystackSignature = async (
 
   if (hash !== signature) {
    return next(
-    new BadRequestException(
-     "Invalid Paystack signature verification failed",
-     HttpStatus.BAD_REQUEST,
-     ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
-    ),
+    APIError.badRequest("Invalid Paystack signature verification failed"),
    );
   }
 

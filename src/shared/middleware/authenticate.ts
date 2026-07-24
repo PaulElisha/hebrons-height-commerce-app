@@ -1,8 +1,6 @@
 /** @format */
 import { auth } from "@auth/auth.ts";
-import UnauthorizedExceptionError from "@error/unauthorized.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import { fromNodeHeaders } from "better-auth/node";
 import { NextFunction, Request, Response } from "express";
 
@@ -17,11 +15,7 @@ const authenticate = async (
   });
 
   if (!session) {
-   throw new UnauthorizedExceptionError(
-    "Unauthorized, Please sign in",
-    HttpStatus.UNAUTHORIZED,
-    ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
-   );
+   throw APIError.unauthorized();
   }
 
   req.user = session.user;

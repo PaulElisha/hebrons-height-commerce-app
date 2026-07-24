@@ -4,12 +4,9 @@ import db from "@db/db.ts";
 import CartService from "@module/cart/cart.service.ts";
 import { user } from "@schema/auth.ts";
 import { order, orderItem } from "@schema/order.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import BadRequestException from "@shared/error/bad-request.ts";
-import NotFoundException from "@shared/error/not-found.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import * as helper from "@shared/helper.ts";
 import {
  Pagination,
@@ -22,7 +19,18 @@ import {
  TOrderWithUser,
 } from "@shared/types.ts";
 import { Mutex } from "async-mutex";
-import { and, count, desc, eq, isNotNull, lt, ne, SQL, sql } from "drizzle-orm";
+import {
+ and,
+ count,
+ desc,
+ eq,
+ inArray,
+ isNotNull,
+ lt,
+ ne,
+ SQL,
+ sql,
+} from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
@@ -68,16 +76,8 @@ class OrderService {
    .innerJoin(user, eq(order.userId, user.id))
    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-  if (!(result.length > 0)) {
-   return [
-    null,
-    new NotFoundException(
-     `Order with ID ${orderId} not found`,
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!(result.length > 0))
+   return [null, APIError.notFound(`Order with ID ${orderId} not found`)];
 
   return [result[0], null];
  };
@@ -94,16 +94,7 @@ class OrderService {
   const [result, err] = await mutex.runExclusive(async () => {
    const [orderExists] = await helper.validateOrderForCart(cartId, userId);
 
-   if (orderExists) {
-    return [
-     null,
-     new BadRequestException(
-      "Order already created",
-      HttpStatus.UNPROCESSABLE_ENTITY,
-      ErrorCode.VALIDATION_ERROR,
-     ),
-    ];
-   }
+   if (orderExists) return [null, APIError.badRequest("Order already created")];
 
    const itemResults = await FA.concurrent.map(async (v: TCartItem) => {
     const [productData, e] = await helper.getProductThreshold(v.productId);
@@ -126,16 +117,8 @@ class OrderService {
 
    const validItems = itemResults.filter(Boolean);
 
-   if (validItems.length <= 0) {
-    return [
-     null,
-     new NotFoundException(
-      "Item not found in cart",
-      HttpStatus.NOT_FOUND,
-      ErrorCode.RESOURCE_NOT_FOUND,
-     ),
-    ];
-   }
+   if (validItems.length <= 0)
+    return [null, APIError.notFound("Item not found in cart")];
 
    const [newOrder] = await db
     .insert(order)
@@ -199,14 +182,7 @@ class OrderService {
    .orderBy(desc(order.createdAt));
 
   if (!(result.length > 0))
-   return [
-    null,
-    new NotFoundException(
-     `${status} order not found`,
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
+   return [null, APIError.notFound(`${status} order not found`)];
 
   return [result, null];
  };
@@ -221,16 +197,7 @@ class OrderService {
    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-  if (!(result.length > 0)) {
-   return [
-    null,
-    new NotFoundException(
-     "order not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!(result.length > 0)) return [null, APIError.notFound("order not found")];
 
   return [
    {
@@ -246,14 +213,11 @@ class OrderService {
   filter: TOrderFilter,
   pagination: Pagination,
  ): Promise<Result<TMerchantPaginatedOrders, AppError>> => {
-  const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
-  if (err || !merchantId) return [null, err];
+  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
 
-  const limit = Math.min(Math.max(pagination.pageSize ?? 10, 1), 50);
-  const pageNumber = Math.max(pagination.pageNumber ?? 1, 1);
-  const offset = (pageNumber - 1) * limit;
-
-  const filters: SQL[] = [eq(orderItem.merchantId, merchantId)];
+  const filters: SQL[] = [
+   inArray(orderItem.merchantId, helper.merchantIdSubquery(userId)),
+  ];
 
   if (filter?.status) {
    filters?.push(eq(order?.orderStatus, filter?.status)!);
@@ -309,27 +273,19 @@ class OrderService {
   orderId: string,
   status: "out_for_delivery" | "delivered",
  ): Promise<Result<TOrder, AppError>> {
-  const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
-  if (err || !merchantId) return [null, err];
-
   const [orderItemForMerchant] = await db
    .select()
    .from(orderItem)
    .where(
-    and(eq(orderItem.orderId, orderId), eq(orderItem.merchantId, merchantId)),
+    and(
+     eq(orderItem.orderId, orderId),
+     inArray(orderItem.merchantId, helper.merchantIdSubquery(userId)),
+    ),
    )
    .limit(1);
 
-  if (!orderItemForMerchant) {
-   return [
-    null,
-    new NotFoundException(
-     "Order not found for this merchant",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!orderItemForMerchant)
+   return [null, APIError.notFound("Order not found for this merchant")];
 
   const [updatedOrder] = await db
    .update(order)
@@ -350,12 +306,10 @@ class OrderService {
   if (!updatedOrder) {
    return [
     null,
-    new BadRequestException(
+    APIError.badRequest(
      status === "out_for_delivery"
       ? "Order must be in processing status to mark as out for delivery"
       : "Order must be out for delivery to mark as delivered",
-     HttpStatus.UNPROCESSABLE_ENTITY,
-     ErrorCode.VALIDATION_ERROR,
     ),
    ];
   }
@@ -399,36 +353,11 @@ class OrderService {
     .where(eq(order.id, orderId))
     .limit(1);
 
-   if (!existingOrder) {
-    return [
-     null,
-     new NotFoundException(
-      "Order not found",
-      HttpStatus.NOT_FOUND,
-      ErrorCode.RESOURCE_NOT_FOUND,
-     ),
-    ];
-   }
+   if (!existingOrder) return [null, APIError.notFound("Order not found")];
+   if (existingOrder.orderStatus === "cancelled")
+    return [null, APIError.badRequest("Order already cancelled")];
 
-   if (existingOrder.orderStatus === "cancelled") {
-    return [
-     null,
-     new BadRequestException(
-      "Order already cancelled",
-      HttpStatus.UNPROCESSABLE_ENTITY,
-      ErrorCode.VALIDATION_ERROR,
-     ),
-    ];
-   }
-
-   return [
-    null,
-    new BadRequestException(
-     "Cannot cancel a paid order",
-     HttpStatus.UNPROCESSABLE_ENTITY,
-     ErrorCode.VALIDATION_ERROR,
-    ),
-   ];
+   return [null, APIError.badRequest("Cannot cancel a paid order")];
   }
 
   const productIds = (
@@ -458,16 +387,7 @@ class OrderService {
    .from(order)
    .where(eq(order.id, orderId));
 
-  if (!existingOrder) {
-   return [
-    null,
-    new BadRequestException(
-     "Invalid order",
-     HttpStatus.BAD_REQUEST,
-     ErrorCode.VALIDATION_ERROR,
-    ),
-   ];
-  }
+  if (!existingOrder) return [null, APIError.badRequest("Invalid order")];
 
   await db.delete(orderItem).where(eq(orderItem.orderId, orderId));
   await db.delete(order).where(eq(order.id, orderId));

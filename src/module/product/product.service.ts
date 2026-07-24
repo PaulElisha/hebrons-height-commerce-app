@@ -3,10 +3,8 @@ import db from "@db/db.ts";
 import { category, subcategory } from "@schema/category.ts";
 import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
-import ErrorCode from "@shared/enum/error-code.ts";
-import HttpStatus from "@shared/enum/http.ts";
 import AppError from "@shared/error/app-error.ts";
-import NotFoundException from "@shared/error/not-found.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import * as helper from "@shared/helper.ts";
 import {
  Pagination,
@@ -19,7 +17,17 @@ import {
  TSubcategory,
  UploadImages,
 } from "@shared/types.ts";
-import { and, count, desc, eq, ilike, isNotNull, or, SQL } from "drizzle-orm";
+import {
+ and,
+ count,
+ desc,
+ eq,
+ ilike,
+ inArray,
+ isNotNull,
+ or,
+ SQL,
+} from "drizzle-orm";
 import FA from "fasy";
 import z from "zod";
 
@@ -55,10 +63,7 @@ class ProductService {
  getMerchantProducts = async (
   userId: string,
  ): Promise<Result<TMerchantProducts, AppError>> => {
-  const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
-  if (err || !merchantId) return [null, err];
-
-  const data = await helper.fetchMerchantProductsFromDb(merchantId);
+  const data = await helper.fetchMerchantProductsByUserId(userId);
   return [data, null];
  };
 
@@ -71,16 +76,7 @@ class ProductService {
    .where(eq(product.id, productId))
    .limit(1);
 
-  if (!productDetails) {
-   return [
-    null,
-    new NotFoundException(
-     "Product not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  if (!productDetails) return [null, APIError.notFound("Product not found")];
 
   return [productDetails, null];
  };
@@ -95,9 +91,7 @@ class ProductService {
  getLatestProducts = async (
   pagination: Pagination,
  ): Promise<Result<TProductWithMerchant[], AppError>> => {
-  const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
-  const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
-  const offset = (pageNumber - 1) * limit;
+  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
 
   const latestProducts = await db
    .select()
@@ -128,9 +122,7 @@ class ProductService {
   filter: TProductFilter,
   pagination: Pagination,
  ): Promise<Result<TPaginatedProducts, AppError>> => {
-  const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
-  const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
-  const offset = (pageNumber - 1) * limit;
+  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
 
   const filters: SQL[] = [eq(product?.status, "available")];
 
@@ -192,32 +184,10 @@ class ProductService {
   const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
   if (err || !targetMerchantId) return [null, err];
 
-  let categoryId;
-  let subCategoryId;
-
-  if (body.category) {
-   const [existingCategory] = await db
-    .select({ id: category.id })
-    .from(category)
-    .where(eq(category.name, body.category))
-    .limit(1);
-   if (existingCategory) {
-    categoryId = existingCategory.id;
-    if (body.subCategory) {
-     const [existingSubCategory] = await db
-      .select({ id: subcategory.id })
-      .from(subcategory)
-      .where(
-       and(
-        eq(subcategory.categoryId, existingCategory.id),
-        eq(subcategory.name, body.subCategory),
-       ),
-      )
-      .limit(1);
-     if (existingSubCategory) subCategoryId = existingSubCategory.id;
-    }
-   }
-  }
+  const { categoryId, subCategoryId } = await helper.resolveCategoryId(
+   body.category,
+   body.subCategory,
+  );
 
   const [newProduct] = await db
    .insert(product)
@@ -244,27 +214,11 @@ class ProductService {
   productId: string,
   uploadedImages: UploadImages,
  ): Promise<Result<TProduct, AppError>> => {
-  const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
-  if (err || !targetMerchantId) return [null, err];
-
-  const [existingProduct] = await db
-   .select()
-   .from(product)
-   .where(
-    and(eq(product.id, productId), eq(product.merchantId, targetMerchantId)),
-   )
-   .limit(1);
-
-  if (!existingProduct) {
-   return [
-    null,
-    new NotFoundException(
-     "product not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
+  const [existingProduct, err] = await helper.getMerchantProduct(
+   userId,
+   productId,
+  );
+  if (err || !existingProduct) return [null, err];
 
   const imageLinks = uploadedImages.map((img) => img.url);
 
@@ -273,21 +227,14 @@ class ProductService {
    .set({
     additionalImages: imageLinks,
    })
-   .where(
-    and(eq(product.id, productId), eq(product.merchantId, targetMerchantId)),
-   )
+   .where(eq(product.id, productId))
    .returning();
 
-  if (!updatedImages) {
+  if (!updatedImages)
    return [
     null,
-    new NotFoundException(
-     "Product not found or not owned by merchant",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
+    APIError.notFound("Product not found or not owned by merchant"),
    ];
-  }
 
   return [updatedImages, null];
  };
@@ -297,48 +244,25 @@ class ProductService {
   productId: string,
   primaryImageUrl: string,
  ): Promise<Result<TProduct, AppError>> => {
-  const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
-  if (err || !targetMerchantId) return [null, err];
-
-  const [existingProduct] = await db
-   .select()
-   .from(product)
-   .where(
-    and(eq(product.id, productId), eq(product.merchantId, targetMerchantId)),
-   )
-   .limit(1);
-
-  if (!existingProduct) {
-   return [
-    null,
-    new NotFoundException(
-     "product not found",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
-   ];
-  }
-
   const [updatedProductImage] = await db
    .update(product)
    .set({
     image: primaryImageUrl,
+    updatedAt: new Date(),
    })
    .where(
-    and(eq(product.id, productId), eq(product.merchantId, targetMerchantId)),
+    and(
+     eq(product.id, productId),
+     inArray(product.merchantId, helper.merchantIdSubquery(userId)),
+    ),
    )
    .returning();
 
-  if (!updatedProductImage) {
+  if (!updatedProductImage)
    return [
     null,
-    new NotFoundException(
-     "Product not found or not owned by merchant",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
+    APIError.notFound("Product not found or not owned by merchant"),
    ];
-  }
 
   return [updatedProductImage, null];
  };
@@ -348,9 +272,6 @@ class ProductService {
   productId: string,
   body: z.infer<typeof UpdateProductDto>,
  ): Promise<Result<TProduct, AppError>> => {
-  const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
-  if (err || !targetMerchantId) return [null, err];
-
   const updateData: Record<string, any> = {};
 
   if (body.name !== undefined) updateData.name = body.name;
@@ -363,30 +284,12 @@ class ProductService {
   updateData.updatedAt = new Date();
 
   if (body.category !== undefined) {
-   const [matched] = await db
-    .select({ id: category.id })
-    .from(category)
-    .where(eq(category.name, body.category))
-    .limit(1);
-   if (matched) {
-    updateData.category = body.category;
-    updateData.categoryId = matched.id;
-    if (body.subCategory !== undefined) {
-     const [subMatched] = await db
-      .select({ id: subcategory.id })
-      .from(subcategory)
-      .where(
-       and(
-        eq(subcategory.categoryId, matched.id),
-        eq(subcategory.name, body.subCategory),
-       ),
-      )
-      .limit(1);
-     if (subMatched) {
-      updateData.subCategory = body.subCategory;
-      updateData.subCategoryId = subMatched.id;
-     }
-    }
+   const ids = await helper.resolveCategoryId(body.category, body.subCategory);
+   updateData.category = body.category;
+   updateData.categoryId = ids.categoryId;
+   if (body.subCategory !== undefined) {
+    updateData.subCategory = body.subCategory;
+    updateData.subCategoryId = ids.subCategoryId;
    }
   }
 
@@ -394,20 +297,18 @@ class ProductService {
    .update(product)
    .set(updateData)
    .where(
-    and(eq(product.id, productId), eq(product.merchantId, targetMerchantId)),
+    and(
+     eq(product.id, productId),
+     inArray(product.merchantId, helper.merchantIdSubquery(userId)),
+    ),
    )
    .returning();
 
-  if (!updatedProduct) {
+  if (!updatedProduct)
    return [
     null,
-    new NotFoundException(
-     "Product not found or not owned by merchant",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
+    APIError.notFound("Product not found or not owned by merchant"),
    ];
-  }
 
   return [updatedProduct, null];
  };
@@ -416,26 +317,21 @@ class ProductService {
   userId: string,
   productId: string,
  ): Promise<Result<void, AppError>> => {
-  const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
-  if (err || !targetMerchantId) return [null, err];
-
   const [deletedProduct] = await db
    .delete(product)
    .where(
-    and(eq(product.merchantId, targetMerchantId), eq(product.id, productId)),
+    and(
+     eq(product.id, productId),
+     inArray(product.merchantId, helper.merchantIdSubquery(userId)),
+    ),
    )
    .returning();
 
-  if (!deletedProduct) {
+  if (!deletedProduct)
    return [
     null,
-    new NotFoundException(
-     "Product not found or not owned by merchant",
-     HttpStatus.NOT_FOUND,
-     ErrorCode.RESOURCE_NOT_FOUND,
-    ),
+    APIError.notFound("Product not found or not owned by merchant"),
    ];
-  }
 
   return [null, null];
  };

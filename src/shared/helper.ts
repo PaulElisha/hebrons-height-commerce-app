@@ -1,16 +1,21 @@
 /** @format */
 import db from "@db/db.ts";
 import { cart, cartItem } from "@schema/cart.ts";
+import { category, subcategory } from "@schema/category.ts";
 import { merchant } from "@schema/merchant.ts";
 import { order } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
-import { Result, TCartAndItem, TProductThreshold } from "@shared/types.ts";
-import { and, eq, isNotNull } from "drizzle-orm";
+import {
+ Pagination,
+ Result,
+ TCartAndItem,
+ TProduct,
+ TProductThreshold,
+} from "@shared/types.ts";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 
-import ErrorCode from "./enum/error-code.ts";
-import HttpStatus from "./enum/http.ts";
+import * as APIError from "./error/APIError.ts";
 import AppError from "./error/app-error.ts";
-import NotFoundException from "./error/not-found.ts";
 
 export async function fetchMerchantProductsFromDb(merchantId: string) {
  const productsForMerchant = await db
@@ -25,6 +30,26 @@ export async function fetchMerchantProductsFromDb(merchantId: string) {
  };
 }
 
+export async function fetchMerchantProductsByUserId(userId: string) {
+ const productsForMerchant = await db
+  .select()
+  .from(product)
+  .innerJoin(merchant, eq(merchant.id, product.merchantId))
+  .where(eq(merchant.userId, userId));
+
+ return {
+  merchant: productsForMerchant[0]?.merchant || null,
+  products: productsForMerchant?.map((p) => p.product) || [],
+ };
+}
+
+export function merchantIdSubquery(userId: string) {
+ return db
+  .select({ id: merchant.id })
+  .from(merchant)
+  .where(eq(merchant.userId, userId));
+}
+
 export async function getMerchantIdFromUser(
  userId: string,
 ): Promise<Result<string, AppError>> {
@@ -34,16 +59,8 @@ export async function getMerchantIdFromUser(
   .where(eq(merchant?.userId, userId))
   .limit(1);
 
- if (!relatedMerchant) {
-  return [
-   null,
-   new NotFoundException(
-    "Merchant profile not found",
-    HttpStatus.NOT_FOUND,
-    ErrorCode.RESOURCE_NOT_FOUND,
-   ),
-  ];
- }
+ if (!relatedMerchant)
+  return [null, APIError.notFound("Merchant profile not found")];
 
  return [relatedMerchant.id, null];
 }
@@ -57,16 +74,8 @@ export async function getMerchantIdFromProductId(
   .innerJoin(merchant, eq(product.merchantId, merchant.id))
   .where(eq(product.id, productId));
 
- if (!productMerchant) {
-  return [
-   null,
-   new NotFoundException(
-    "Merchant not found for this product",
-    HttpStatus.NOT_FOUND,
-    ErrorCode.RESOURCE_NOT_FOUND,
-   ),
-  ];
- }
+ if (!productMerchant)
+  return [null, APIError.notFound("Merchant not found for this product")];
 
  return [productMerchant.merchant.id, null];
 }
@@ -118,6 +127,66 @@ export async function validateOrderForCart(cartId: string, userId: string) {
   );
 }
 
+export function parsePagination(pagination?: Pagination) {
+ const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
+ const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
+ const offset = (pageNumber - 1) * limit;
+ return { limit, pageNumber, offset };
+}
+
+export async function getMerchantProduct(
+ userId: string,
+ productId: string,
+): Promise<Result<TProduct, AppError>> {
+ const [existingProduct] = await db
+  .select()
+  .from(product)
+  .where(
+   and(
+    eq(product.id, productId),
+    inArray(product.merchantId, merchantIdSubquery(userId)),
+   ),
+  )
+  .limit(1);
+
+ if (!existingProduct)
+  return [
+   null,
+   APIError.notFound("Product not found or not owned by merchant"),
+  ];
+
+ return [existingProduct, null];
+}
+
+export async function resolveCategoryId(
+ categoryName?: string,
+ subCategoryName?: string,
+): Promise<{ categoryId?: string; subCategoryId?: string }> {
+ if (!categoryName) return {};
+
+ const [matched] = await db
+  .select({ id: category.id })
+  .from(category)
+  .where(eq(category.name, categoryName))
+  .limit(1);
+
+ if (!matched) return {};
+ if (!subCategoryName) return { categoryId: matched.id };
+
+ const [subMatched] = await db
+  .select({ id: subcategory.id })
+  .from(subcategory)
+  .where(
+   and(
+    eq(subcategory.categoryId, matched.id),
+    eq(subcategory.name, subCategoryName),
+   ),
+  )
+  .limit(1);
+
+ return { categoryId: matched.id, subCategoryId: subMatched?.id ?? undefined };
+}
+
 export async function getProductThreshold(
  productId: string,
 ): Promise<Result<TProductThreshold, AppError>> {
@@ -127,27 +196,10 @@ export async function getProductThreshold(
   .where(and(eq(product.id, productId), isNotNull(product.quantity)))
   .limit(1);
 
- if (!data) {
-  return [
-   null,
-   new NotFoundException(
-    "Product not found",
-    HttpStatus.NOT_FOUND,
-    ErrorCode.RESOURCE_NOT_FOUND,
-   ),
-  ];
- }
+ if (!data) return [null, APIError.notFound("Product not found")];
 
- if (data.quantity <= 0) {
-  return [
-   null,
-   new NotFoundException(
-    "Product is out of stock",
-    HttpStatus.NOT_FOUND,
-    ErrorCode.RESOURCE_NOT_FOUND,
-   ),
-  ];
- }
+ if (data.quantity <= 0)
+  return [null, APIError.notFound("Product is out of stock")];
 
  return [data, null];
 }
