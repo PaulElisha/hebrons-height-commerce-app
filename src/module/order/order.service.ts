@@ -34,6 +34,7 @@ import {
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
+import InventoryService from "@module/inventory/inventory.service.ts";
 const mutex = new Mutex();
 
 export interface TOrderStatusQuery {
@@ -97,14 +98,16 @@ class OrderService {
    if (orderExists) return [null, APIError.badRequest("Order already created")];
 
    const itemResults = await FA.concurrent.map(async (v: TCartItem) => {
-    const [productData, e] = await helper.getProductThreshold(v.productId);
-    if (e || !productData) return null;
+    const [productData, e] = await InventoryService.checkProductThreshold(
+     v.productId,
+    );
+    if (e || Number(productData?.quantity) <= 0) return [null, e];
 
     const [merchantId, err] = await helper.getMerchantIdFromProductId(
      v.productId,
     );
 
-    if (err || !merchantId) return null;
+    if (err || !merchantId) return [null, err];
 
     return {
      productId: v.productId,
@@ -216,7 +219,7 @@ class OrderService {
   const { limit, pageNumber, offset } = helper.parsePagination(pagination);
 
   const filters: SQL[] = [
-   inArray(orderItem.merchantId, helper.merchantIdSubquery(userId)),
+   eq(orderItem.merchantId, helper.merchantIdSubquery(userId)),
   ];
 
   if (filter?.status) {

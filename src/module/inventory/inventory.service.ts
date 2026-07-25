@@ -14,11 +14,11 @@ import FA from "fasy";
 const STOCK_THRESHOLDS = [10, 5, 3, 1] as const;
 
 class InventoryService {
- getProductThreshold = async (
+ checkProductThreshold = async (
   productId: string,
  ): Promise<Result<TProductThreshold, AppError>> => {
   const [data] = await db
-   .select({ price: product.price, quantity: product.quantity })
+   .select({ quantity: product.quantity })
    .from(product)
    .where(and(eq(product.id, productId), isNotNull(product.quantity)))
    .limit(1);
@@ -33,12 +33,12 @@ class InventoryService {
 
  checkInventoryThreshold = async (
   productId: string,
- ): Promise<Result<number, AppError>> => {
-  const [productData, err] = await this.getProductThreshold(productId);
+ ): Promise<Result<void, AppError>> => {
+  const [productData, err] = await this.checkProductThreshold(productId);
 
-  if (err || !productData) return [null, err];
+  if (err || !productData || Number(productData?.quantity)) return [null, err];
 
-  const { price, quantity: currentQuantity } = productData;
+  const { quantity: currentQuantity } = productData;
 
   const allocatedQuantity = await db
    .select({ totalQuantity: sum(cartItem.quantity) })
@@ -54,7 +54,7 @@ class InventoryService {
   if (currentAllocatedTotal + 1 > currentQuantity)
    return [null, APIError.internalServer("Product threshold exceeded")];
 
-  return [price, null];
+  return [null, null];
  };
 
  checkUserStockAtIntervals = async (productId: string) => {
@@ -123,9 +123,9 @@ class InventoryService {
   action: "placeOrder" | "cancelOrder",
  ): Promise<Result<TProduct, AppError>> {
   try {
-   const [_, err] = await this.getProductThreshold(productId);
+   const [productThreshold, err] = await this.checkProductThreshold(productId);
 
-   if (err) return [null, err];
+   if (err || !productThreshold) return [null, err];
 
    const [ItemQuantityPurchased] = await db
     .select({ quantityPurchased: orderItem.quantity })
@@ -144,7 +144,7 @@ class InventoryService {
      ),
     );
 
-   if (!ItemQuantityPurchased)
+   if (ItemQuantityPurchased.quantityPurchased <= 0)
     return [
      null,
      APIError.badRequest("This product was not part of the original order."),

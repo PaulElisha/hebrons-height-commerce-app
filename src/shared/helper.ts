@@ -12,7 +12,7 @@ import {
  TProduct,
  TProductThreshold,
 } from "@shared/types.ts";
-import { and, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 
 import * as APIError from "./error/APIError.ts";
 import AppError from "./error/app-error.ts";
@@ -22,7 +22,7 @@ export async function fetchMerchantProductsFromDb(merchantId: string) {
   .select()
   .from(product)
   .innerJoin(merchant, eq(merchant.id, product.merchantId))
-  .where(eq(merchant.id, merchantId));
+  .where(and(eq(merchant.id, merchantId), isNull(product.deletedAt)));
 
  return {
   merchant: productsForMerchant[0]?.merchant || null,
@@ -185,21 +185,4 @@ export async function resolveCategoryId(
   .limit(1);
 
  return { categoryId: matched.id, subCategoryId: subMatched?.id ?? undefined };
-}
-
-export async function getProductThreshold(
- productId: string,
-): Promise<Result<TProductThreshold, AppError>> {
- const [data] = await db
-  .select({ price: product.price, quantity: product.quantity })
-  .from(product)
-  .where(and(eq(product.id, productId), isNotNull(product.quantity)))
-  .limit(1);
-
- if (!data) return [null, APIError.notFound("Product not found")];
-
- if (data.quantity <= 0)
-  return [null, APIError.notFound("Product is out of stock")];
-
- return [data, null];
 }

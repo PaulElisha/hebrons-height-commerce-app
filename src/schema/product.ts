@@ -43,6 +43,7 @@ export const product = pgTable(
   additionalData: jsonb("additional_data").$type<Record<string, string>>(),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { mode: "date" }),
  },
  (table) => [
   check(

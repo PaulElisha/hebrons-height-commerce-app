@@ -13,7 +13,6 @@ import {
 import { user } from "./auth.ts";
 import { cart } from "./cart.ts";
 import { merchant } from "./merchant.ts";
-import { product } from "./product.ts";
 
 export const orderStatuses: readonly [
  string,
@@ -110,9 +109,7 @@ export const orderItem = pgTable("orderItem", {
  merchantId: text("merchant_id")
   .notNull()
   .references(() => merchant.id),
- productId: text("product_id")
-  .notNull()
-  .references(() => product.id),
+ productId: text("product_id").notNull(),
  quantity: integer("quantity").notNull(),
  unitPrice: integer("unit_price").notNull(),
  lineTotal: integer("line_total"),

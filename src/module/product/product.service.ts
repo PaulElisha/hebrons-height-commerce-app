@@ -25,6 +25,7 @@ import {
  ilike,
  inArray,
  isNotNull,
+ isNull,
  or,
  SQL,
 } from "drizzle-orm";
@@ -73,7 +74,7 @@ class ProductService {
   const [productDetails] = await db
    .select()
    .from(product)
-   .where(eq(product.id, productId))
+   .where(and(eq(product.id, productId), isNull(product.deletedAt)))
    .limit(1);
 
   if (!productDetails) return [null, APIError.notFound("Product not found")];
@@ -97,7 +98,7 @@ class ProductService {
    .select()
    .from(product)
    .leftJoin(merchant, eq(product.merchantId, merchant.id))
-   .where(eq(product.status, "available"))
+   .where(and(eq(product.status, "available"), isNull(product.deletedAt)))
    .limit(limit)
    .offset(offset)
    .orderBy(desc(product.createdAt));
@@ -124,7 +125,10 @@ class ProductService {
  ): Promise<Result<TPaginatedProducts, AppError>> => {
   const { limit, pageNumber, offset } = helper.parsePagination(pagination);
 
-  const filters: SQL[] = [eq(product?.status, "available")];
+  const filters: SQL[] = [
+   eq(product?.status, "available"),
+   isNull(product.deletedAt),
+  ];
 
   if (filter?.search) {
    filters?.push(
@@ -281,6 +285,7 @@ class ProductService {
   if (body.quantity !== undefined) updateData.quantity = body.quantity;
   if (body.additionalData !== undefined)
    updateData.additionalData = body.additionalData;
+  updateData.deletedAt = null;
   updateData.updatedAt = new Date();
 
   if (body.category !== undefined) {
@@ -318,7 +323,8 @@ class ProductService {
   productId: string,
  ): Promise<Result<void, AppError>> => {
   const [deletedProduct] = await db
-   .delete(product)
+   .update(product)
+   .set({ deletedAt: new Date() })
    .where(
     and(
      eq(product.id, productId),
@@ -361,7 +367,11 @@ class ProductService {
        .select()
        .from(product)
        .where(
-        and(eq(product.subCategoryId, sub.id), isNotNull(product.quantity)),
+        and(
+         eq(product.subCategoryId, sub.id),
+         isNotNull(product.quantity),
+         isNull(product.deletedAt),
+        ),
        )
        .orderBy(desc(product.createdAt));
 

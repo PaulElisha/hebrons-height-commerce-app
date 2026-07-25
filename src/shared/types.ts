@@ -120,7 +120,6 @@ export type AssetType =
  | "product_videos";
 
 export interface TProductThreshold {
- price: number;
  quantity: number;
 }
 
