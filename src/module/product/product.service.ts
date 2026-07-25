@@ -276,6 +276,23 @@ class ProductService {
   productId: string,
   body: z.infer<typeof UpdateProductDto>,
  ): Promise<Result<TProduct, AppError>> => {
+  const [existing] = await db
+   .select({ deletedAt: product.deletedAt, status: product.status })
+   .from(product)
+   .where(
+    and(
+     eq(product.id, productId),
+     inArray(product.merchantId, helper.merchantIdSubquery(userId)),
+    ),
+   )
+   .limit(1);
+
+  if (!existing)
+   return [
+    null,
+    APIError.notFound("Product not found or not owned by merchant"),
+   ];
+
   const updateData: Record<string, any> = {};
 
   if (body.name !== undefined) updateData.name = body.name;
@@ -286,6 +303,10 @@ class ProductService {
   if (body.additionalData !== undefined)
    updateData.additionalData = body.additionalData;
   updateData.deletedAt = null;
+
+  if (existing.deletedAt || existing.status === "sold_out") {
+   updateData.status = "available";
+  }
   updateData.updatedAt = new Date();
 
   if (body.category !== undefined) {
