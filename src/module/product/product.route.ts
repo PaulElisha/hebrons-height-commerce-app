@@ -41,15 +41,15 @@ class ProductRouter {
    roleGuard("user"),
    ProductController.getProductForMerchant,
   );
-  this.router.post(
-   "/",
-   authenticate,
-   roleGuard("merchant"),
-   validate(CreateProductSchema),
-   upload.single("file"),
-   cloudinaryUploadStream("product_images"),
-   ProductController.createProduct,
-  );
+   this.router.post(
+    "/",
+    authenticate,
+    roleGuard("merchant"),
+    upload.single("file"),
+    validate(CreateProductSchema),
+    cloudinaryUploadStream("product_images"),
+    ProductController.createProduct,
+   );
   this.router.put(
    "/additional-images/:productId",
    authenticate,

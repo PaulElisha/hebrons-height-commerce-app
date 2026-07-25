@@ -23,13 +23,13 @@ class MerchantRouter {
  initializeRoutes() {
   this.router.get("/profile", MerchantController.getMerchantProfile);
   this.router.get("/analytics", MerchantController.getAnalytics);
-  this.router.post(
-   "/",
-   validate(CreateMerchantSchema),
-   upload.single("file"),
-   cloudinaryUploadStream("avatar"),
-   MerchantController.createMerchantProfile,
-  );
+   this.router.post(
+    "/",
+    upload.single("file"),
+    validate(CreateMerchantSchema),
+    cloudinaryUploadStream("avatar"),
+    MerchantController.createMerchantProfile,
+   );
   this.router.put(
    "/:merchantId",
    validate(UpdateMerchantDto),

@@ -199,7 +199,7 @@ class ProductService {
     merchantId: targetMerchantId,
     name: body.name,
     description: body.description,
-    image: body.image || "",
+    image: body.image,
     price: body.price,
     quantity: body.quantity,
     categoryId,
