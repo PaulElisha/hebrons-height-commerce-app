@@ -32,10 +32,9 @@ class EmailService<T> {
 }
 
 const transporterConfig = {
- host: Env.EMAIL_HOST,
- port: Env.EMAIL_PORT,
+ service: "Gmail",
  secure: true,
- family: 4,
+ pool: true,
  auth: {
   user: Env.EMAIL_USER,
   pass: Env.EMAIL_PASS,

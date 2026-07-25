@@ -369,11 +369,11 @@ const spec = {
       type: "string",
       enum: ["payment", "subscription", "setup"],
      },
-     metadata: {
-      type: "object",
-      description: "Optional metadata key-value pairs",
-      additionalProperties: { type: "string" },
-     },
+      metadata: {
+       type: "object",
+       description: "Optional metadata key-value pairs",
+       additionalProperties: true,
+      },
     },
    },
    Category: {
@@ -811,15 +811,12 @@ const spec = {
          "category",
          "subCategory",
          "additionalData",
-         "file",
         ],
         properties: {
          name: { type: "string" },
          description: { type: "string" },
          price: { type: "integer" },
          quantity: { type: "integer" },
-      categoryId: { type: "string", nullable: true },
-      subCategoryId: { type: "string", nullable: true },
       category: { type: "string" },
       subCategory: { type: "string" },
          additionalData: {
@@ -924,7 +921,7 @@ const spec = {
       },
      },
      "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — user is not a user" },
+     "403": { description: "Forbidden — user role required" },
      "404": { description: "Product not found" },
     },
    },
@@ -1043,7 +1040,7 @@ const spec = {
       },
      },
      "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — user is not a user" },
+     "403": { description: "Forbidden — user role required" },
      "404": { description: "Merchant not found" },
     },
    },
@@ -1374,12 +1371,12 @@ const spec = {
        },
       },
      },
-     "401": { description: "Unauthorized — invalid or missing session token" },
-     "403": { description: "Forbidden — user is not a user" },
+      "401": { description: "Unauthorized — invalid or missing session token" },
+      "403": { description: "Forbidden — merchant only" },
+     },
     },
    },
-  },
-  "/api/order/status": {
+   "/api/order/status": {
    get: {
     tags: ["Order"],
     summary: "Get user's orders filtered by status",
@@ -1644,6 +1641,15 @@ const spec = {
     tags: ["Payment"],
     summary: "Payment success page",
     security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "session_id",
+      in: "query",
+      required: true,
+      schema: { type: "string" },
+      description: "Stripe Checkout session ID to retrieve session details",
+     },
+    ],
     responses: {
      "200": {
       description: "Payment successful",
@@ -1657,17 +1663,17 @@ const spec = {
     },
    },
   },
-  "/api/payment/failed": {
+  "/api/payment/cancel": {
    get: {
     tags: ["Payment"],
-    summary: "Payment failure page",
+    summary: "Payment cancellation page",
     security: [{ bearerAuth: [] }],
     responses: {
      "200": {
-      description: "Payment failed",
+      description: "Payment cancelled",
       content: {
        "text/html": {
-        schema: { type: "string", example: "Payment failed" },
+        schema: { type: "string", example: "Payment cancelled" },
        },
       },
      },
@@ -1784,11 +1790,13 @@ const spec = {
     },
    },
   },
-   "/api/webpush/subscribe": {
-    post: {
-     tags: ["WebPush"],
-     summary: "Subscribe browser to push notifications",
-     security: [{ bearerAuth: [] }],
+    "/api/webpush/subscribe": {
+     post: {
+      tags: ["WebPush"],
+      summary: "Subscribe browser to push notifications",
+      description:
+       "Triggers push notifications for: `inventory.low_stock`, `cart.low_stock`, `order.cancelled` events.",
+      security: [{ bearerAuth: [] }],
      requestBody: {
       required: true,
       content: {
@@ -2097,14 +2105,14 @@ const spec = {
   "/api/notification/stream": {
    get: {
     tags: ["Notification"],
-    summary: "SSE stream for real-time notification events",
-    description:
-     "Listens for events: `order_placed`, `order_status_updated`, `low_stock_alert`, `order_cancelled`. The frontend uses EventSource.addEventListener to handle each event type.",
-    security: [{ bearerAuth: [] }],
-    responses: {
-     "200": {
-      description:
-       "SSE stream connected — events pushed with event types: order_placed, order_status_updated, low_stock_alert, order_cancelled",
+     summary: "SSE stream for real-time notification events",
+     description:
+      "Listens for events: `order_placed`, `order_status_updated`, `inventory.low_stock`, `cart.low_stock`, `order_cancelled`. The frontend uses EventSource.addEventListener to handle each event type.",
+     security: [{ bearerAuth: [] }],
+     responses: {
+      "200": {
+       description:
+        "SSE stream connected — events pushed with event types: order_placed, order_status_updated, inventory.low_stock, cart.low_stock, order_cancelled",
       content: {
        "text/event-stream": {
         schema: { type: "string" },

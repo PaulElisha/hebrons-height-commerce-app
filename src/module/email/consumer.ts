@@ -42,7 +42,7 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
  },
 });
 
-EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
+EventBus.on(EventType.CART_LOW_STOCK_ALERT).subscribe({
  next: async (payload) => {
   try {
    const { userId, productName, productId, quantity } = payload.payload;

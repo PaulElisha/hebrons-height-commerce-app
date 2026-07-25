@@ -53,7 +53,10 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
   if (!response.ok) {
    const errBody = await response.json().catch(() => ({}));
 
-   return [null, APIError.badRequest(errBody.message || "Paystack Payment failed")];
+   return [
+    null,
+    APIError.badRequest(errBody.message || "Paystack Payment failed"),
+   ];
   }
 
   const responseData = await response.json();
@@ -105,7 +108,8 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
          .from(product)
          .where(eq(product.id, i.productId))
          .then((res) => {
-          if (!res[0]) return "Unknown product";
+          if (res.length === 0)
+           return [null, APIError.internalServer("Unknown product")];
           return res[0].name;
          }),
        },
@@ -119,8 +123,8 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      orderId,
      ...data.metadata,
     },
-    success_url: `${Env.BASE_URL}/success`,
-    cancel_url: `${Env.BASE_URL}/failed`,
+    success_url: `${Env.BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${Env.BASE_URL}/cancel`,
    })
    .then(async (session) => {
     if (!session.url) {

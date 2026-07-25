@@ -64,7 +64,7 @@ class CartService {
    .where(and(eq(cart.userId, userId), eq(cart.id, cartId)))
    .limit(1);
 
-  if (!result.length || !result[0].cart)
+  if (result.length === 0 || !result[0].cart)
    return [null, APIError.notFound("Cart not found")];
 
   return [

@@ -78,7 +78,7 @@ class InventoryService {
 
   await FA.concurrent.map(async ({ userId, name, quantity }: any) => {
    EventBus.publish({
-    event_type: EventType.LOW_STOCK_ALERT,
+    event_type: EventType.CART_LOW_STOCK_ALERT,
     payload: {
      productId,
      userId,
@@ -150,7 +150,7 @@ class InventoryService {
      APIError.badRequest("This product was not part of the original order."),
     ];
 
-   let updatedProduct: TProduct | undefined;
+   let updatedProduct: TProduct;
 
    if (action === "placeOrder") {
     [updatedProduct] = await db
@@ -170,13 +170,15 @@ class InventoryService {
      })
      .where(eq(product.id, productId))
      .returning();
+   } else {
+    return [null, null];
    }
 
    await this.checkLowStock(productId);
 
    await this.checkUserStockAtIntervals(productId);
 
-   return [updatedProduct ?? null, null];
+   return [updatedProduct, null];
   } catch (err) {
    return [
     null,

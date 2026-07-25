@@ -2,10 +2,12 @@
 import authenticate from "@shared/middleware/authenticate.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { validate } from "@shared/middleware/validate.ts";
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 
 import PaymentController from "./payment.controller.ts";
 import { CheckoutData } from "./payment.service.ts";
+import stripeClient from "@app/stripe.ts";
+import asyncHandler from "@shared/middleware/async-handler.ts";
 
 class PaymentRoutes {
  router: Router;
@@ -17,11 +19,22 @@ class PaymentRoutes {
  }
 
  initializeRoutes() {
-  this.router.get("/success", (_req, res) => {
-   res.send("Payment successful");
-  });
+  this.router.get(
+   "/success",
+   asyncHandler(
+    async (
+     req: Request<any, any, any, { session_id: string }>,
+     res: Response,
+    ) => {
+     const session = await stripeClient.checkout.sessions.retrieve(
+      req.query.session_id,
+     );
+     res.send(`${session.customer_details?.name}`);
+    },
+   ),
+  );
 
-  this.router.get("/failed", (_req, res) => {
+  this.router.get("/cancel", (_req, res) => {
    res.send("Payment failed");
   });
 

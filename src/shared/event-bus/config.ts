@@ -13,5 +13,5 @@ export enum EventType {
  PAYSTACK_PAYMENT_INITIALIZED = "payment.paystack.checkout.initialized",
  PAYSTACK_PAYMENT_VERIFIED = "payment.paystack.checkout.verified",
  STRIPE_PAYMENT_VERIFIED = "payment.stripe.checkout.verified",
- CART_LOW_STOCK_ALERT = "CART_LOW_STOCK_ALERT",
+ CART_LOW_STOCK_ALERT = "cart.low_stock",
 }
