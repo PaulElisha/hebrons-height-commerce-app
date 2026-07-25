@@ -67,8 +67,7 @@ class CartBase {
     const [price, err] =
      await InventoryService.checkInventoryThreshold(productId);
 
-    if (err || !price)
-     return [null, err ?? APIError.badRequest("Cannot add item to cart")];
+    if (err || !price) return [null, err];
 
     await callback(userCart.id, userId, productId, Number(price));
    } else if (typeof intent === "string" && intent == "increment") {
@@ -81,8 +80,7 @@ class CartBase {
      const [price, err] =
       await InventoryService.checkInventoryThreshold(productId);
 
-     if (err || !price)
-      return [null, err ?? APIError.badRequest("Cannot increment item")];
+     if (err || !price) return [null, err];
     }
 
     await callback(userCart.id, userId, productId);

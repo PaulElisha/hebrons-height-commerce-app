@@ -22,7 +22,7 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
     userId,
     orderId,
    );
-   if (err || !orderDetails) throw err || new Error("Order not found");
+   if (err || !orderDetails) throw err;
 
    const emailMessage = `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`;
 
