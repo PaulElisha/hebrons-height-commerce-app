@@ -18,7 +18,7 @@ class InventoryService {
   productId: string,
  ): Promise<Result<TProductThreshold, AppError>> => {
   const [data] = await db
-   .select({ quantity: product.quantity })
+   .select({ price: product.price, quantity: product.quantity })
    .from(product)
    .where(and(eq(product.id, productId), isNotNull(product.quantity)))
    .limit(1);
