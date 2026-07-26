@@ -33,12 +33,15 @@ class InventoryService {
 
  checkInventoryThreshold = async (
   productId: string,
- ): Promise<Result<void, AppError>> => {
+ ): Promise<Result<number, AppError>> => {
   const [productData, err] = await this.checkProductThreshold(productId);
 
-  if (err || !productData || Number(productData?.quantity)) return [null, err];
+  if (err || !productData) return [null, err];
 
-  const { quantity: currentQuantity } = productData;
+  const { quantity: currentQuantity, price } = productData;
+
+  if (currentQuantity <= 0)
+   return [null, APIError.notFound("Product is out of stock")];
 
   const allocatedQuantity = await db
    .select({ totalQuantity: sum(cartItem.quantity) })
@@ -54,7 +57,7 @@ class InventoryService {
   if (currentAllocatedTotal + 1 > currentQuantity)
    return [null, APIError.internalServer("Product threshold exceeded")];
 
-  return [null, null];
+  return [Number(price), null];
  };
 
  checkUserStockAtIntervals = async (productId: string) => {
