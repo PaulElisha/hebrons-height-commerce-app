@@ -1,7 +1,10 @@
 /** @format */
+import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
+import { merchant } from "@schema/merchant.ts";
 import { formatErrorPayload } from "@shared/error/format-error.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
+import { eq } from "drizzle-orm";
 
 import WebPushService from "../webpush/webpush.service.ts";
 import NotificationService from "./notification.service.ts";
@@ -54,15 +57,22 @@ EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
  next: async (payload) => {
   try {
    const { merchantId, productName, productId, quantity } = payload.payload;
+   const [merchantData] = await db
+    .select({ userId: merchant.userId })
+    .from(merchant)
+    .where(eq(merchant.id, merchantId))
+    .limit(1);
+   if (!merchantData) return;
+
    await Promise.all([
     NotificationService.createNotification(
-     merchantId,
+     merchantData.userId,
      "Low Stock Alert",
      `"${productName}" is running low (${quantity} left)`,
      "stock_alert",
     ),
     WebPushService.sendPushNotification(
-     merchantId,
+     merchantData.userId,
      "Low Stock Alert",
      `"${productName}" is running low (${quantity} left)`,
     ),
