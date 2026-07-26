@@ -162,17 +162,21 @@ export async function getMerchantProduct(
 }
 
 export async function resolveCategoryId(
- categoryName: string,
- subCategoryName: string,
-): Promise<Result<{ categoryId: string; subCategoryId: string }, AppError>> {
+ categoryName?: string,
+ subCategoryName?: string,
+): Promise<{
+ categoryId: string | undefined;
+ subCategoryId: string | undefined;
+}> {
+ if (!categoryName) return { categoryId: undefined, subCategoryId: undefined };
+
  const [matched] = await db
   .select({ id: category.id })
   .from(category)
   .where(eq(category.name, categoryName))
   .limit(1);
 
- if (!matched)
-  return [null, APIError.notFound("Product with category not found")];
+ if (!matched) return { categoryId: undefined, subCategoryId: undefined };
 
  const [subMatched] = await db
   .select({ id: subcategory.id })
@@ -180,13 +184,13 @@ export async function resolveCategoryId(
   .where(
    and(
     eq(subcategory.categoryId, matched.id),
-    eq(subcategory.name, subCategoryName),
+    eq(subcategory.name, subCategoryName!),
    ),
   )
   .limit(1);
 
- if (!subMatched)
-  return [null, APIError.notFound("Product with subcategory not found")];
-
- return [{ categoryId: matched.id, subCategoryId: subMatched.id }, null];
+ return {
+  categoryId: matched.id,
+  subCategoryId: subMatched?.id,
+ };
 }

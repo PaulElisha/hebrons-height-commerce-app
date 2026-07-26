@@ -28,19 +28,7 @@ export const CreateProductSchema = z.object({
  quantity: z.coerce.number(),
  category: z.string(),
  subCategory: z.string(),
- additionalData: z.preprocess(
-  (val) => {
-   if (typeof val === "string") {
-    try {
-     return JSON.parse(val);
-    } catch {
-     return val;
-    }
-   }
-   return val;
-  },
-  z.record(z.string(), z.string()),
- ),
+ additionalData: z.record(z.string(), z.string()),
 });
 
 class ProductController {

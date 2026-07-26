@@ -188,7 +188,7 @@ class ProductService {
   const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
   if (err || !targetMerchantId) return [null, err];
 
-  const [data, e] = await helper.resolveCategoryId(
+  const { categoryId, subCategoryId } = await helper.resolveCategoryId(
    body.category,
    body.subCategory,
   );
@@ -202,8 +202,8 @@ class ProductService {
     image: body.image,
     price: body.price,
     quantity: body.quantity,
-    categoryId: data?.categoryId,
-    subCategoryId: data?.subCategoryId,
+    categoryId,
+    subCategoryId,
     category: body.category,
     subCategory: body.subCategory,
     additionalData: body.additionalData,
