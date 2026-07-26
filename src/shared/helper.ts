@@ -9,6 +9,7 @@ import {
  Pagination,
  Result,
  TCartAndItem,
+ TCartItem,
  TProduct,
  TProductThreshold,
 } from "@shared/types.ts";
@@ -87,12 +88,14 @@ export const getCartAndItems = async (
  const cartAndItems = await db
   .select()
   .from(cart)
-  .leftJoin(cartItem, eq(cartItem.cartId, cartId))
-  .where(and(eq(cart.userId, userId), eq(cartItem.cartId, cartId)));
+  .leftJoin(cartItem, eq(cartItem.cartId, cart.id))
+  .where(and(eq(cart.userId, userId), eq(cart.id, cartId)));
 
  return {
   cart: cartAndItems[0]!.cart,
-  cart_items: cartAndItems!.map((i) => i.cart_items!),
+  cart_items: cartAndItems
+   .map((i) => i.cart_items)
+   .filter(Boolean) as TCartItem[],
  };
 };
 
