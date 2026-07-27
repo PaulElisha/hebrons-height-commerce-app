@@ -9,10 +9,10 @@ import * as helper from "@shared/helper.ts";
 import {
  Pagination,
  Result,
+ T,
  TCategory,
  TMerchantProducts,
  TPaginatedProducts,
- TProduct,
  TProductWithMerchant,
  TSubcategory,
  UploadImages,
@@ -61,16 +61,17 @@ export const UpdateProductDto = z.object({
 });
 
 class ProductService {
- getMerchantProducts = async (
-  userId: string,
- ): Promise<Result<TMerchantProducts, AppError>> => {
-  const data = await helper.fetchMerchantProductsByUserId(userId);
-  return [data, null];
- };
+  getMerchantProducts = async (
+   userId: string,
+  ): Promise<Result<TMerchantProducts, AppError>> => {
+   const [data, err] = await helper.fetchMerchantProductsByUserId(userId);
+   if (err || !data) return [null, err];
+   return [data, null];
+  };
 
  getSingleProduct = async (
   productId: string,
- ): Promise<Result<TProduct, AppError>> => {
+ ): Promise<Result<T<"product">, AppError>> => {
   const [productDetails] = await db
    .select()
    .from(product)
@@ -82,12 +83,13 @@ class ProductService {
   return [productDetails, null];
  };
 
- getProductForMerchant = async (
-  merchantId: string,
- ): Promise<Result<TMerchantProducts, AppError>> => {
-  const data = await helper.fetchMerchantProductsFromDb(merchantId);
-  return [data, null];
- };
+  getProductForMerchant = async (
+   merchantId: string,
+  ): Promise<Result<TMerchantProducts, AppError>> => {
+   const [data, err] = await helper.fetchMerchantProductsFromDb(merchantId);
+   if (err || !data) return [null, err];
+   return [data, null];
+  };
 
  getLatestProducts = async (
   pagination: Pagination,
@@ -184,7 +186,7 @@ class ProductService {
  createProduct = async (
   userId: string,
   body: z.infer<typeof CreateProductDto>,
- ): Promise<Result<TProduct, AppError>> => {
+ ): Promise<Result<T<"product">, AppError>> => {
   const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
   if (err || !targetMerchantId) return [null, err];
 
@@ -217,7 +219,7 @@ class ProductService {
   userId: string,
   productId: string,
   uploadedImages: UploadImages,
- ): Promise<Result<TProduct, AppError>> => {
+ ): Promise<Result<T<"product">, AppError>> => {
   const [existingProduct, err] = await helper.getMerchantProduct(
    userId,
    productId,
@@ -247,7 +249,7 @@ class ProductService {
   userId: string,
   productId: string,
   primaryImageUrl: string,
- ): Promise<Result<TProduct, AppError>> => {
+ ): Promise<Result<T<"product">, AppError>> => {
   const [updatedProductImage] = await db
    .update(product)
    .set({
@@ -275,7 +277,7 @@ class ProductService {
   userId: string,
   productId: string,
   body: z.infer<typeof UpdateProductDto>,
- ): Promise<Result<TProduct, AppError>> => {
+ ): Promise<Result<T<"product">, AppError>> => {
   const [existing] = await db
    .select({ deletedAt: product.deletedAt, status: product.status })
    .from(product)
@@ -367,7 +369,7 @@ class ProductService {
   Result<
    {
     category: TCategory;
-    subcategories: { subcategory: TSubcategory; products: TProduct[] }[];
+    subcategories: { subcategory: TSubcategory; products: T<"product">[] }[];
    }[],
    AppError
   >

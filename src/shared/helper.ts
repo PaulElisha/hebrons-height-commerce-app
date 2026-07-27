@@ -8,9 +8,10 @@ import { product } from "@schema/product.ts";
 import {
  Pagination,
  Result,
+ T,
  TCartAndItem,
  TCartItem,
- TProduct,
+ TMerchantProducts,
  TProductThreshold,
 } from "@shared/types.ts";
 import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
@@ -18,30 +19,48 @@ import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import * as APIError from "./error/APIError.ts";
 import AppError from "./error/app-error.ts";
 
-export async function fetchMerchantProductsFromDb(merchantId: string) {
- const productsForMerchant = await db
-  .select()
-  .from(product)
-  .innerJoin(merchant, eq(merchant.id, product.merchantId))
-  .where(and(eq(merchant.id, merchantId), isNull(product.deletedAt)));
+export async function fetchMerchantProductsFromDb(
+ merchantId: string,
+): Promise<Result<TMerchantProducts, AppError>> {
+ try {
+  const productsForMerchant = await db
+   .select()
+   .from(product)
+   .innerJoin(merchant, eq(merchant.id, product.merchantId))
+   .where(and(eq(merchant.id, merchantId), isNull(product.deletedAt)));
 
- return {
-  merchant: productsForMerchant[0]?.merchant || null,
-  products: productsForMerchant?.map((p) => p.product) || [],
- };
+  return [
+   {
+    merchant: productsForMerchant[0]?.merchant || null,
+    products: productsForMerchant?.map((p) => p.product) || [],
+   },
+   null,
+  ];
+ } catch (err) {
+  return [null, APIError.internalServer("Failed to fetch merchant products")];
+ }
 }
 
-export async function fetchMerchantProductsByUserId(userId: string) {
- const productsForMerchant = await db
-  .select()
-  .from(product)
-  .innerJoin(merchant, eq(merchant.id, product.merchantId))
-  .where(eq(merchant.userId, userId));
+export async function fetchMerchantProductsByUserId(
+ userId: string,
+): Promise<Result<TMerchantProducts, AppError>> {
+ try {
+  const productsForMerchant = await db
+   .select()
+   .from(product)
+   .innerJoin(merchant, eq(merchant.id, product.merchantId))
+   .where(eq(merchant.userId, userId));
 
- return {
-  merchant: productsForMerchant[0]?.merchant || null,
-  products: productsForMerchant?.map((p) => p.product) || [],
- };
+  return [
+   {
+    merchant: productsForMerchant[0]?.merchant || null,
+    products: productsForMerchant?.map((p) => p.product) || [],
+   },
+   null,
+  ];
+ } catch (err) {
+  return [null, APIError.internalServer("Failed to fetch merchant products")];
+ }
 }
 
 export function merchantIdSubquery(userId: string) {
@@ -84,19 +103,29 @@ export async function getMerchantIdFromProductId(
 export const getCartAndItems = async (
  cartId: string,
  userId: string,
-): Promise<TCartAndItem> => {
- const cartAndItems = await db
-  .select()
-  .from(cart)
-  .leftJoin(cartItem, eq(cartItem.cartId, cart.id))
-  .where(and(eq(cart.userId, userId), eq(cart.id, cartId)));
+): Promise<Result<TCartAndItem, AppError>> => {
+ try {
+  const cartAndItems = await db
+   .select()
+   .from(cart)
+   .leftJoin(cartItem, eq(cartItem.cartId, cart.id))
+   .where(and(eq(cart.userId, userId), eq(cart.id, cartId)));
 
- return {
-  cart: cartAndItems[0]!.cart,
-  cart_items: cartAndItems
-   .map((i) => i.cart_items)
-   .filter(Boolean) as TCartItem[],
- };
+  if (!cartAndItems[0]?.cart)
+   return [null, APIError.notFound("Cart not found")];
+
+  return [
+   {
+    cart: cartAndItems[0].cart,
+    cart_items: cartAndItems
+     .map((i) => i.cart_items)
+     .filter(Boolean) as TCartItem[],
+   },
+   null,
+  ];
+ } catch (err) {
+  return [null, APIError.internalServer("Failed to fetch cart")];
+ }
 };
 
 export const checkItemExistsInCart = async (
@@ -117,17 +146,26 @@ export function createPublicId(
  return `${folder}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 }
 
-export async function validateOrderForCart(cartId: string, userId: string) {
- return await db
-  .select()
-  .from(order)
-  .where(
-   and(
-    eq(order.cartId, cartId),
-    eq(order.userId, userId),
-    eq(order.orderStatus, "pending"),
-   ),
-  );
+export async function validateOrderForCart(
+ cartId: string,
+ userId: string,
+): Promise<Result<any[], AppError>> {
+ try {
+  const result = await db
+   .select()
+   .from(order)
+   .where(
+    and(
+     eq(order.cartId, cartId),
+     eq(order.userId, userId),
+     eq(order.orderStatus, "pending"),
+    ),
+   );
+
+  return [result, null];
+ } catch (err) {
+  return [null, APIError.internalServer("Failed to validate order")];
+ }
 }
 
 export function parsePagination(pagination?: Pagination) {
@@ -140,7 +178,7 @@ export function parsePagination(pagination?: Pagination) {
 export async function getMerchantProduct(
  userId: string,
  productId: string,
-): Promise<Result<TProduct, AppError>> {
+): Promise<Result<T<"product">, AppError>> {
  const [existingProduct] = await db
   .select()
   .from(product)

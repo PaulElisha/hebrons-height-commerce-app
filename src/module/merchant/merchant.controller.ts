@@ -3,8 +3,8 @@ import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import {
  APIResponse,
+ T,
  TAnalyticsResult,
- TMerchant,
  TMerchantWithUser,
 } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
@@ -45,7 +45,7 @@ class MerchantController {
  createMerchantProfile = asyncHandler(
   async (
    req: Request<any, any, z.infer<typeof CreateMerchantSchema>>,
-   res: Response<APIResponse<TMerchant>>,
+   res: Response<APIResponse<T<"merchant">>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -70,7 +70,7 @@ class MerchantController {
  updateMerchantProfile = asyncHandler(
   async (
    req: Request<MerchantParams, any, any, z.infer<typeof UpdateMerchantDto>>,
-   res: Response<APIResponse<TMerchant>>,
+   res: Response<APIResponse<T<"merchant">>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;

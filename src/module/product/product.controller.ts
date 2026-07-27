@@ -5,10 +5,10 @@ import asyncHandler from "@shared/middleware/async-handler.ts";
 import {
  APIResponse,
  Pagination,
+ T,
  TCategory,
  TMerchantProducts,
  TPaginatedProducts,
- TProduct,
  TProductWithMerchant,
  TSubcategory,
 } from "@shared/types.ts";
@@ -54,7 +54,7 @@ class ProductController {
  getSingleProduct = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TProduct>>,
+   res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
   ): Promise<any> => {
    const productId = String(req.params.productId);
@@ -99,7 +99,7 @@ class ProductController {
       category: TCategory;
       subcategories: {
        subcategory: TSubcategory;
-       products: TProduct[];
+        products: T<"product">[];
       }[];
      }[]
     >
@@ -178,7 +178,7 @@ class ProductController {
  createProduct = asyncHandler(
   async (
    req: Request<any, any, z.infer<typeof CreateProductSchema>>,
-   res: Response<APIResponse<TProduct>>,
+   res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -203,7 +203,7 @@ class ProductController {
  updateProduct = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TProduct>>,
+   res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -229,7 +229,7 @@ class ProductController {
  uploadAdditionalMediaForProduct = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TProduct>>,
+   res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -255,7 +255,7 @@ class ProductController {
  updatePrimaryImage = asyncHandler(
   async (
    req: Request<ProductParams>,
-   res: Response<APIResponse<TProduct>>,
+   res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;

@@ -81,23 +81,23 @@ export interface TOrderItems {
 }
 
 export type TOrderAndItems = {
- order: TOrder;
- order_items: TOrderItems[];
+ order: T<"order">;
+ order_items: T<"orderItems">[];
 };
 
 export type TOrderJoinRow = {
- orders: TOrder;
- orderItem: TOrderItems;
+ orders: T<"order">;
+ orderItem: T<"orderItems">;
 };
 
 export type TMerchantProducts = {
- merchant: TMerchant;
- products: TProduct[];
+ merchant: T<"merchant">;
+ products: T<"product">[];
 };
 
 export type TMerchantWithUser = {
- merchant: TMerchant;
- user: TUser;
+ merchant: T<"merchant">;
+ user: T<"user">;
 };
 
 export interface TUser {
@@ -164,7 +164,7 @@ export interface TProductPagination extends TPaginationMeta {
 }
 
 export interface TProductPageData {
- products: TProduct[];
+ products: T<"product">[];
  pagination: TProductPagination;
 }
 
@@ -286,3 +286,20 @@ export interface TPaymentVerificationResult {
  payment: any;
  order?: any;
 }
+
+export interface ModelMap {
+ product: TProduct;
+ order: TOrder;
+ user: TUser;
+ merchant: TMerchant;
+ cart: TCart;
+ cartItem: TCartItem;
+ category: TCategory;
+ subcategory: TSubcategory;
+ notification: TNotification;
+ payment: TPayment;
+ orderItems: TOrderItems;
+ merchantInfo: TMerchantInfo;
+}
+
+export type T<K extends keyof ModelMap> = ModelMap[K];

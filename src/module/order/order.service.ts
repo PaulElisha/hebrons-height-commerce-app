@@ -11,9 +11,9 @@ import * as helper from "@shared/helper.ts";
 import {
  Pagination,
  Result,
+ T,
  TCartItem,
  TMerchantPaginatedOrders,
- TOrder,
  TOrderAndItems,
  TOrderJoinRow,
  TOrderWithUser,
@@ -92,10 +92,10 @@ class OrderService {
   const [data, e] = await CartService.getUserCart(userId, cartId);
   if (e || !data) return [null, e];
 
-  const [result, err] = await mutex.runExclusive(async () => {
-   const [orderExists] = await helper.validateOrderForCart(cartId, userId);
-
-   if (orderExists) return [null, APIError.badRequest("Order already created")];
+    const [result, err] = await mutex.runExclusive(async () => {
+     const [orders, e] = await helper.validateOrderForCart(cartId, userId);
+     if (e) return [null, e];
+     if (orders && orders.length > 0) return [null, APIError.badRequest("Order already created")];
 
    const itemResults = await FA.concurrent.map(async (v: TCartItem) => {
     const [productData, e] = await InventoryService.checkProductThreshold(
@@ -258,16 +258,22 @@ class OrderService {
   ];
  };
 
- clearPendingOrders = async () => {
-  await db
-   .delete(order)
-   .where(
-    and(
-     lt(order.createdAt, sql`now() - interval '1 day'`),
-     eq(order.orderStatus, "pending"),
-     eq(orderItem.orderId, order.id),
-    ),
-   );
+ clearPendingOrders = async (): Promise<Result<void, AppError>> => {
+  try {
+   await db
+    .delete(order)
+    .where(
+     and(
+      lt(order.createdAt, sql`now() - interval '1 day'`),
+      eq(order.orderStatus, "pending"),
+      eq(orderItem.orderId, order.id),
+     ),
+    );
+
+   return [null, null];
+  } catch (err) {
+   return [null, APIError.internalServer("Failed to clear pending orders")];
+  }
  };
 
  @Transactional()
@@ -275,7 +281,7 @@ class OrderService {
   userId: string,
   orderId: string,
   status: "out_for_delivery" | "delivered",
- ): Promise<Result<TOrder, AppError>> {
+ ): Promise<Result<T<"order">, AppError>> {
   const [orderItemForMerchant] = await db
    .select()
    .from(orderItem)
@@ -333,7 +339,7 @@ class OrderService {
  }
 
  @Transactional()
- async cancelOrder(orderId: string): Promise<Result<TOrder, AppError>> {
+ async cancelOrder(orderId: string): Promise<Result<T<"order">, AppError>> {
   const [cancelledOrder] = await db
    .update(order)
    .set({

@@ -41,6 +41,7 @@ export const auth = betterAuth({
  },
  advanced: {
   useSecureCookies: Env.BASE_URL.startsWith("https://"),
+  disableCSRFCheck: true,
   cookiePrefix: "hhg",
   cookies: {
    session_token: {

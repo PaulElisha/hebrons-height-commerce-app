@@ -96,7 +96,11 @@ class CartBase {
 
   await this.calculateTotalAmount(userCart.id, userId);
 
-  const cartData = await helper.getCartAndItems(userCart.id, userId);
+  const [cartData, cartErr] = await helper.getCartAndItems(
+   userCart.id,
+   userId,
+  );
+  if (cartErr || !cartData) return [null, cartErr];
   return [cartData, null];
  }
 }

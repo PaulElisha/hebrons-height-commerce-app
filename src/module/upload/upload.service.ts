@@ -1,6 +1,9 @@
 /** @format */
 import cloudinary from "@app/cloudinary.ts";
+import AppError from "@shared/error/app-error.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import { createPublicId } from "@shared/helper.ts";
+import { Result } from "@shared/types.ts";
 import Env from "env.ts";
 
 export interface UploadResult {
@@ -15,30 +18,40 @@ export interface UploadResult {
 class UploadService {
  generateUploadSignature = async (
   folder: "product_images" | "avatar" | "product_videos",
- ): Promise<UploadResult> => {
-  const publicId = createPublicId(folder);
-  const signature = cloudinary.utils.api_sign_request(
-   {
-    timestamp: Math.floor(Date.now() / 1000),
-    folder: `${folder}/${publicId}`,
-    public_id: publicId,
-    unique_filename: false,
-    overwrite: true,
-    resource_type: "auto",
-    tags: ["upload"],
-    context: "alt=upload",
-   },
-   Env.CLOUDINARY_SECRET,
-  );
+ ): Promise<Result<UploadResult, AppError>> => {
+  try {
+   const publicId = createPublicId(folder);
+   const signature = cloudinary.utils.api_sign_request(
+    {
+     timestamp: Math.floor(Date.now() / 1000),
+     folder: `${folder}/${publicId}`,
+     public_id: publicId,
+     unique_filename: false,
+     overwrite: true,
+     resource_type: "auto",
+     tags: ["upload"],
+     context: "alt=upload",
+    },
+    Env.CLOUDINARY_SECRET,
+   );
 
-  return {
-   signature,
-   public_id: publicId,
-   folder: `hhg-${folder}`,
-   url: `https://api.cloudinary.com/v1_1/${Env.CLOUDINARY_CLOUD_NAME}/images/upload`,
-   timestamp: Math.floor(Date.now() / 1000),
-   apiKey: Env.CLOUDINARY_KEY,
-  };
+   return [
+    {
+     signature,
+     public_id: publicId,
+     folder: `hhg-${folder}`,
+     url: `https://api.cloudinary.com/v1_1/${Env.CLOUDINARY_CLOUD_NAME}/images/upload`,
+     timestamp: Math.floor(Date.now() / 1000),
+     apiKey: Env.CLOUDINARY_KEY,
+    },
+    null,
+   ];
+  } catch (err) {
+   return [
+    null,
+    APIError.internalServer("Failed to generate upload signature"),
+   ];
+  }
  };
 }
 

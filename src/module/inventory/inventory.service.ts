@@ -6,7 +6,7 @@ import { product } from "@schema/product.ts";
 import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
-import { Result, TProduct, TProductThreshold } from "@shared/types.ts";
+import { Result, T, TProductThreshold } from "@shared/types.ts";
 import { and, eq, isNotNull, lt, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import FA from "fasy";
@@ -60,62 +60,77 @@ class InventoryService {
   return [Number(price), null];
  };
 
- checkUserStockAtIntervals = async (productId: string) => {
-  const result = await db
-   .select({
-    userId: cartItem.userId,
-    name: product.name,
-    quantity: product.quantity,
-   })
-   .from(cartItem)
-   .innerJoin(cart, eq(cart.id, cartItem.cartId))
-   .innerJoin(product, eq(cartItem.productId, product.id))
-   .where(
-    and(
-     eq(cartItem.productId, productId),
-     lt(product.quantity, STOCK_THRESHOLDS[0]),
-    ),
-   );
+ checkUserStockAtIntervals = async (
+  productId: string,
+ ): Promise<Result<void, AppError>> => {
+  try {
+   const result = await db
+    .select({
+     userId: cartItem.userId,
+     name: product.name,
+     quantity: product.quantity,
+    })
+    .from(cartItem)
+    .innerJoin(cart, eq(cart.id, cartItem.cartId))
+    .innerJoin(product, eq(cartItem.productId, product.id))
+    .where(
+     and(
+      eq(cartItem.productId, productId),
+      lt(product.quantity, STOCK_THRESHOLDS[0]),
+     ),
+    );
 
-  if (result.length === 0) return;
+   if (result.length === 0) return [null, null];
 
-  await FA.concurrent.map(async ({ userId, name, quantity }: any) => {
-   EventBus.publish({
-    event_type: EventType.CART_LOW_STOCK_ALERT,
-    payload: {
-     productId,
-     userId,
-     productName: name,
-     quantity: quantity,
-    },
-   });
-  }, result);
+   await FA.concurrent.map(async ({ userId, name, quantity }: any) => {
+    EventBus.publish({
+     event_type: EventType.CART_LOW_STOCK_ALERT,
+     payload: {
+      productId,
+      userId,
+      productName: name,
+      quantity: quantity,
+     },
+    });
+   }, result);
+
+   return [null, null];
+  } catch (err) {
+   return [null, APIError.internalServer("Failed to check user stock")];
+  }
  };
 
- checkLowStock = async (productId: string) => {
-  const [current] = await db
-   .select({
-    quantity: product.quantity,
-    name: product.name,
-    merchantId: product.merchantId,
-   })
-   .from(product)
-   .where(eq(product.id, productId))
-   .limit(1);
+ checkLowStock = async (
+  productId: string,
+ ): Promise<Result<void, AppError>> => {
+  try {
+   const [current] = await db
+    .select({
+     quantity: product.quantity,
+     name: product.name,
+     merchantId: product.merchantId,
+    })
+    .from(product)
+    .where(eq(product.id, productId))
+    .limit(1);
 
-  if (!current) return;
+   if (!current) return [null, null];
 
-  if (current.quantity <= STOCK_THRESHOLDS[0]) {
-   EventBus.publish({
-    event_type: EventType.LOW_STOCK_ALERT,
-    payload: {
-     productId,
-     productName: current.name,
-     quantity: current.quantity,
-     merchantId: current.merchantId,
-    },
-   });
-   return;
+   if (current.quantity <= STOCK_THRESHOLDS[0]) {
+    EventBus.publish({
+     event_type: EventType.LOW_STOCK_ALERT,
+     payload: {
+      productId,
+      productName: current.name,
+      quantity: current.quantity,
+      merchantId: current.merchantId,
+     },
+    });
+   }
+
+   return [null, null];
+  } catch (err) {
+   return [null, APIError.internalServer("Failed to check low stock")];
   }
  };
 
@@ -124,7 +139,7 @@ class InventoryService {
   productId: string,
   orderId: string,
   action: "placeOrder" | "cancelOrder",
- ): Promise<Result<TProduct, AppError>> {
+ ): Promise<Result<T<"product">, AppError>> {
   try {
    const [productThreshold, err] = await this.checkProductThreshold(productId);
 
@@ -153,7 +168,7 @@ class InventoryService {
      APIError.badRequest("This product was not part of the original order."),
     ];
 
-   let updatedProduct: TProduct;
+   let updatedProduct: T<"product">;
 
    if (action === "placeOrder") {
     [updatedProduct] = await db
@@ -177,9 +192,8 @@ class InventoryService {
     return [null, null];
    }
 
-   await this.checkLowStock(productId);
-
-   await this.checkUserStockAtIntervals(productId);
+    await this.checkLowStock(productId);
+    await this.checkUserStockAtIntervals(productId);
 
    return [updatedProduct, null];
   } catch (err) {

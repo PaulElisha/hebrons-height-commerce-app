@@ -5,7 +5,7 @@ import asyncHandler from "@shared/middleware/async-handler.ts";
 import {
  APIResponse,
  Pagination,
- TOrder,
+ T,
  TOrderAndItems,
  TOrderJoinRow,
 } from "@shared/types.ts";
@@ -128,7 +128,7 @@ class OrderController {
  updateOrderStatus = asyncHandler(
   async (
    req: Request<OrderParams, {}, { status: "out_for_delivery" | "delivered" }>,
-   res: Response<APIResponse<TOrder>>,
+   res: Response<APIResponse<T<"order">>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
@@ -153,7 +153,7 @@ class OrderController {
  cancelOrder = asyncHandler(
   async (
    req: Request<OrderParams>,
-   res: Response<APIResponse<TOrder>>,
+   res: Response<APIResponse<T<"order">>>,
    next: NextFunction,
   ): Promise<any> => {
    const orderId = String(req.params.orderId);

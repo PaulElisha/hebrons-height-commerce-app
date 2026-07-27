@@ -21,7 +21,12 @@ class WebPushController {
    const userId = req.user.id;
    const { endpoint, keys } = req.body;
 
-   await WebPushService.subscribe(userId, { endpoint, keys });
+   const [, err] = await WebPushService.subscribe(userId, {
+    endpoint,
+    keys,
+   });
+   if (err) return next(err);
+
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "subscribed successfully",
@@ -41,7 +46,9 @@ class WebPushController {
     });
    }
 
-   await WebPushService.unsubscribe(userId, endpoint);
+   const [, err] = await WebPushService.unsubscribe(userId, endpoint);
+   if (err) return next(err);
+
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "unsubscribed successfully",

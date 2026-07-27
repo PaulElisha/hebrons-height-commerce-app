@@ -5,7 +5,7 @@ import { order } from "@schema/order.ts";
 import { payment } from "@schema/payment.ts";
 import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import { Result, TPayment } from "@shared/types.ts";
+import { Result, T } from "@shared/types.ts";
 import { and, eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import Stripe from "stripe";
@@ -65,7 +65,7 @@ class PaymentService {
   userId: string,
   orderId: string,
   paymentData: z.infer<typeof PaymentData>,
- ): Promise<Result<TPayment, AppError>> {
+ ): Promise<Result<T<"payment">, AppError>> {
   const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
   if (err || !data) return [null, err];

@@ -80,22 +80,23 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
   try {
    const { orderId, productIds } = payload.payload;
 
-   await FA.concurrent.map(async (productId: string) => {
-    const merchantForProduct =
-     await MerchantService.getMerchantIdFromProductId(productId);
+    await FA.concurrent.map(async (productId: string) => {
+     const [merchantForProduct, err] =
+      await MerchantService.getMerchantIdFromProductId(productId);
+     if (err || !merchantForProduct) throw err;
 
-    const [userMerchant] = await db
-     .select({
-      businessName: merchant.businessName,
-      user: {
-       id: user.id,
-       email: user.email,
-       name: user.name,
-      },
-     })
-     .from(merchant)
-     .innerJoin(user, eq(merchant.userId, user.id))
-     .where(eq(merchant.id, merchantForProduct.id));
+     const [userMerchant] = await db
+      .select({
+       businessName: merchant.businessName,
+       user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+       },
+      })
+      .from(merchant)
+      .innerJoin(user, eq(merchant.userId, user.id))
+      .where(eq(merchant.id, merchantForProduct.id));
 
     const emailMessage = `Hi ${userMerchant.user.name}, a purchase of #${orderId} has been made for your product`;
 

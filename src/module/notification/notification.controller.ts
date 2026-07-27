@@ -2,7 +2,7 @@
 import HttpStatus from "@shared/enum/http.ts";
 import { EventBus } from "@shared/event-bus/index.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { APIResponse, TNotification } from "@shared/types.ts";
+import { APIResponse, T } from "@shared/types.ts";
 import { createSession } from "better-sse";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
@@ -19,7 +19,7 @@ class NotificationController {
  getNotifications = asyncHandler(
   async (
    req: Request,
-   res: Response<APIResponse<TNotification[]>>,
+   res: Response<APIResponse<T<"notification">[]>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -57,7 +57,7 @@ class NotificationController {
  markAsRead = asyncHandler(
   async (
    req: Request<NotificationParams>,
-   res: Response<APIResponse<TNotification>>,
+   res: Response<APIResponse<T<"notification">>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;

@@ -8,8 +8,8 @@ import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import {
  Result,
+ T,
  TAnalyticsResult,
- TMerchant,
  TMerchantWithUser,
 } from "@shared/types.ts";
 import * as helper from "@shared/helper.ts";
@@ -31,15 +31,20 @@ export const UpdateMerchantDto = z.object({
 });
 
 class MerchantService {
- getMerchantIdFromProductId = async (productId: string): Promise<any> => {
-  const [productMerchant] = await db
-   .select()
-   .from(product)
-   .innerJoin(merchant, eq(product.merchantId, merchant.id))
-   .where(eq(product.id, productId));
+  getMerchantIdFromProductId = async (
+   productId: string,
+  ): Promise<Result<T<"merchant">, AppError>> => {
+   const [productMerchant] = await db
+    .select()
+    .from(product)
+    .innerJoin(merchant, eq(product.merchantId, merchant.id))
+    .where(eq(product.id, productId));
 
-  return productMerchant?.merchant;
- };
+   if (!productMerchant)
+    return [null, APIError.notFound("Merchant not found for this product")];
+
+   return [productMerchant.merchant, null];
+  };
 
  getMerchantProfile = async (
   userId: string,
@@ -60,7 +65,7 @@ class MerchantService {
  createMerchantProfile = async (
   userId: string,
   body: z.infer<typeof CreateMerchantDto>,
- ): Promise<Result<TMerchant, AppError>> => {
+ ): Promise<Result<T<"merchant">, AppError>> => {
   const [existing] = await db
    .select()
    .from(merchant)
@@ -91,7 +96,7 @@ class MerchantService {
   userId: string,
   merchantId: string,
   body: z.infer<typeof UpdateMerchantDto>,
- ): Promise<Result<TMerchant, AppError>> => {
+ ): Promise<Result<T<"merchant">, AppError>> => {
   const updateData: Record<string, any> = {};
 
   if (body.businessName !== undefined)

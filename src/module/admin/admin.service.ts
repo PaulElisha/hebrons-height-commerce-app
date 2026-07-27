@@ -1,7 +1,11 @@
 /** @format */
+import AppError from "@shared/error/app-error.ts";
+import { Result } from "@shared/types.ts";
 
-class AdminServive {
- createAdminAccount = async () => {};
+class AdminService {
+ createAdminAccount = async (): Promise<Result<void, AppError>> => {
+  return [null, null];
+ };
 }
 
-export default new AdminServive();
+export default new AdminService();
