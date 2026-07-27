@@ -40,7 +40,7 @@ export const auth = betterAuth({
   },
  },
  advanced: {
-  useSecureCookies: false,
+  useSecureCookies: Env.BASE_URL.startsWith("https://") && Env.NODE_ENV === "production",
   cookiePrefix: "hhg",
   cookies: {
    session_token: {
