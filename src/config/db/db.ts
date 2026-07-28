@@ -10,7 +10,7 @@ const createPool = () =>
  new Pool({
   connectionString: Env.DB_URL,
   ssl:
-   process.env.NODE_ENV === "production"
+   Env.NODE_ENV === "production"
     ? { rejectUnauthorized: false }
     : false,
  });
