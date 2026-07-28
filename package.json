@@ -31,13 +31,13 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/web-push": "^3.6.4",
-    "custom-env": "^2.0.6",
     "drizzle-kit": "^0.31.10",
     "ts-node": "^10.0.0",
     "tsx": "^4.22.4",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "custom-env": "^2.0.6",
     "@better-auth/drizzle-adapter": "^1.6.22",
     "@epic-web/remember": "^1.1.0",
     "@node-rs/argon2": "^2.0.2",
