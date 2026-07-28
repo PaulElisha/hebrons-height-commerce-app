@@ -16,15 +16,13 @@ if (isProduction) {
  loadEnv("dev");
 }
 
-process.env.NODE_ENV =
- process.env.NODE_ENV ||
- (isProduction ? "production" : isTesting ? "testing" : "development");
-
 const EnvSchema = z.object({
  PORT: z.coerce.number(),
 
- NODE_ENV: z.enum(["production", "development", "testing"]),
- APP_STAGE: z.enum(["dev", "test", "prod"]).default("dev"),
+ NODE_ENV: z
+  .enum(["production", "development", "testing"])
+  .default("production"),
+ APP_STAGE: z.enum(["dev", "test", "prod"]).default("prod"),
 
  DB_URL: z.string(),
 
