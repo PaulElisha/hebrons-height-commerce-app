@@ -131,17 +131,17 @@ class App {
    logger.info(`Server is running on ${Env.BASE_URL}`);
   });
 
-  OutboxService.replayUnprocessed().then((count) => {
-   if (count > 0) logger.info(`Replayed ${count} unprocessed outbox events.`);
-  });
+  // OutboxService.replayUnprocessed().then((count) => {
+  //  if (count > 0) logger.info(`Replayed ${count} unprocessed outbox events.`);
+  // });
 
-  const outboxTimer = setInterval(() => {
-   OutboxService.replayUnprocessed();
-  }, 5_000).unref();
+  // const outboxTimer = setInterval(() => {
+  //  OutboxService.replayUnprocessed();
+  // }, 5_000).unref();
 
   const shutdown = (signal: string) => {
    logger.info({ signal }, "Shutting down gracefully...");
-   clearInterval(outboxTimer);
+   //  clearInterval(outboxTimer);
 
    server.close(() => {
     logger.info("HTTP server closed.");
