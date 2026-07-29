@@ -1,14 +1,14 @@
 /** @format */
 import db from "@db/db.ts";
 import { pushSubscription } from "@schema/push-subscription.ts";
-import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
+import AppError from "@shared/error/app-error.ts";
 import { Result } from "@shared/types.ts";
 import { and, eq } from "drizzle-orm";
+import Env from "env.ts";
 import z from "zod";
 
 import Pusher, { Subscription } from "./pusher.ts";
-import Env from "env.ts";
 
 const pusher = Pusher.config({
  email: `mailto:${Env.EMAIL_USER}`,
@@ -47,7 +47,10 @@ class WebPushService {
   }
  }
 
- async unsubscribe(userId: string, endpoint: string): Promise<Result<void, AppError>> {
+ async unsubscribe(
+  userId: string,
+  endpoint: string,
+ ): Promise<Result<void, AppError>> {
   try {
    await db
     .delete(pushSubscription)
@@ -95,9 +98,7 @@ class WebPushService {
     (err as any).statusCode === 410 &&
     sub
    ) {
-    await db
-     .delete(pushSubscription)
-     .where(eq(pushSubscription.id, sub.id));
+    await db.delete(pushSubscription).where(eq(pushSubscription.id, sub.id));
    }
 
    return [null, null];

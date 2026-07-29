@@ -11,10 +11,13 @@ const allowedOrigins = Env.CORS_ORIGIN.includes(",")
  ? Env.CORS_ORIGIN.split(",")
  : [Env.CORS_ORIGIN];
 
+const effectiveBaseURL = Env.LOCAL_URL || Env.BASE_URL;
+const isHttps = effectiveBaseURL.startsWith("https://");
+
 export const auth = betterAuth({
  secret: Env.AUTH_SECRET,
  basePath: "/api/auth",
- baseURL: Env.BASE_URL,
+ baseURL: effectiveBaseURL,
  database: drizzleAdapter(db, {
   provider: "pg",
   schema,
@@ -40,15 +43,15 @@ export const auth = betterAuth({
   },
  },
  advanced: {
-  useSecureCookies: true,
+  useSecureCookies: isHttps,
   cookiePrefix: "hhg",
   cookies: {
    session_token: {
     name: "auth_session_token",
 
     attributes: {
-     sameSite: "none",
-     secure: true,
+     sameSite: isHttps ? "none" : "lax",
+     secure: isHttps,
     },
    },
   },

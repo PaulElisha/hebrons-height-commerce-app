@@ -3,9 +3,10 @@ import stripeClient from "@app/stripe.ts";
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
 import { product } from "@schema/product.ts";
-import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import { EventBus, EventType } from "@shared/event-bus/index.ts";
+import AppError from "@shared/error/app-error.ts";
+import { EventType } from "@shared/event-bus/index.ts";
+import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, T } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import Env from "env.ts";
@@ -74,7 +75,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
   };
 
   if (responseData?.data)
-   EventBus.publish({
+   await publishEvent({
     event_type: EventType.PAYSTACK_PAYMENT_INITIALIZED,
     payload: {
      paystackData: res,
@@ -141,7 +142,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      reference: session.id,
     };
 
-    EventBus.publish({
+    await publishEvent({
      event_type: EventType.STRIPE_PAYMENT_INITIALIZED,
      payload: {
       stripeData: res,

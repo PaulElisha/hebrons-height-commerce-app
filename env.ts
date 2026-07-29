@@ -29,6 +29,7 @@ const EnvSchema = z.object({
  DB_URL: z.string(),
 
  BASE_URL: z.string(),
+ LOCAL_URL: z.string().optional(),
 
  AUTH_SECRET: z.string(),
 

@@ -37,7 +37,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "custom-env": "^2.0.6",
     "@better-auth/drizzle-adapter": "^1.6.22",
     "@epic-web/remember": "^1.1.0",
     "@node-rs/argon2": "^2.0.2",
@@ -48,6 +47,7 @@
     "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "custom-env": "^2.0.6",
     "drizzle-orm": "^0.45.2",
     "drizzle-transactional": "^1.2.0",
     "drizzle-zod": "^0.8.3",
@@ -59,6 +59,8 @@
     "multer": "^2.2.0",
     "nodemailer": "^9.0.1",
     "pg": "^8.22.0",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
     "rxjs": "^7.8.2",
     "streamifier": "^0.1.1",
     "stripe": "^22.3.0",

@@ -99,7 +99,7 @@ class ProductController {
       category: TCategory;
       subcategories: {
        subcategory: TSubcategory;
-        products: T<"product">[];
+       products: T<"product">[];
       }[];
      }[]
     >

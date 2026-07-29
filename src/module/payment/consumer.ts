@@ -1,5 +1,5 @@
 /** @format */
-import { formatErrorPayload } from "@error/format-error.ts";
+import logger from "@app/logger.ts";
 import WebHookHandler from "@module/webhook/handler/payment.handler.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
 
@@ -13,16 +13,12 @@ EventBus.on(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
     { ...paystackData, paymentProvider: "paystack" },
    );
    if (err) throw err;
-   console.log("[...Paystack initialised]:", { data });
+   logger.info({ data }, "[...Paystack initialised]");
   } catch (err) {
-   console.error(
-    "[Background Event Error]:",
-    formatErrorPayload(err instanceof Error ? err : new Error(String(err)))
-     .body,
-   );
+   logger.error({ err }, "[Background Event Error]:");
   }
  },
- error: (err) => console.error(err),
+ error: (err) => logger.error({ err }),
 });
 
 EventBus.on(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
@@ -32,16 +28,12 @@ EventBus.on(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
    const [data, err] =
     await WebHookHandler.handlePaystackPaymentVerified(event);
    if (err) throw err;
-   console.log("[...Paystack verification completed]:", { data });
+   logger.info({ data }, "[...Paystack verification completed]");
   } catch (err) {
-   console.error(
-    "[Background Event Error]:",
-    formatErrorPayload(err instanceof Error ? err : new Error(String(err)))
-     .body,
-   );
+   logger.error({ err }, "[Background Event Error]");
   }
  },
- error: (err) => console.error(err),
+ error: (err) => logger.error({ err }),
 });
 
 EventBus.on(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
@@ -54,16 +46,12 @@ EventBus.on(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
     { ...stripeData, paymentProvider: "stripe" },
    );
    if (err) throw err;
-   console.log("[...Stripe initialised]:", { data });
+   logger.info({ data }, "[...Stripe initialised]");
   } catch (err) {
-   console.error(
-    "[Background Event Error]:",
-    formatErrorPayload(err instanceof Error ? err : new Error(String(err)))
-     .body,
-   );
+   logger.error({ err }, "[Background Event Error]");
   }
  },
- error: (err) => console.error(err),
+ error: (err) => logger.error({ err }),
 });
 
 EventBus.on(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
@@ -75,14 +63,10 @@ EventBus.on(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
     eventType,
    );
    if (err) throw err;
-   console.log("[...Stripe verification completed]:", { data });
+   logger.info({ data }, "[...Stripe verification completed]");
   } catch (err) {
-   console.error(
-    "[Background Event Error]:",
-    formatErrorPayload(err instanceof Error ? err : new Error(String(err)))
-     .body,
-   );
+   logger.error({ err }, "[Background Event Error]");
   }
  },
- error: (err) => console.error(err),
+ error: (err) => logger.error({ err }),
 });

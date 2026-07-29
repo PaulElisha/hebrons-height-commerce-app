@@ -1,17 +1,15 @@
 /** @format */
+import logger from "@app/logger.ts";
 import db from "@db/db.ts";
-import { formatErrorPayload } from "@error/format-error.ts";
 import MerchantService from "@module/merchant/merchant.service.ts";
 import OrderService from "@module/order/order.service.ts";
 import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import FA from "fasy";
 
 import EmailWorker from "./email.worker.ts";
-import Env from "env.ts";
-import { auth } from "@auth/auth.ts";
 
 EventBus.on(EventType.ORDER_PLACED).subscribe({
  next: async (payload) => {
@@ -31,14 +29,11 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
     message: emailMessage,
    });
   } catch (err) {
-   const formatted = formatErrorPayload(
-    err instanceof Error ? err : new Error(String(err)),
-   );
-   console.error("[Background Event Error Intercepted]:", formatted.body);
+   logger.error({ err }, "[Background Event Error Intercepted]");
   }
  },
  error: (err) => {
-  console.error(err);
+  logger.error({ err });
  },
 });
 
@@ -64,14 +59,11 @@ EventBus.on(EventType.CART_LOW_STOCK_ALERT).subscribe({
     message: `"${productName}" is running low (${quantity} left)`,
    });
   } catch (err) {
-   const formatted = formatErrorPayload(
-    err instanceof Error ? err : new Error(String(err)),
-   );
-   console.error("[Notification Error]:", formatted.body);
+   logger.error({ err }, "[Notification Error]");
   }
  },
  error: (err) => {
-  console.error(err);
+  logger.error({ err });
  },
 });
 
@@ -80,23 +72,25 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
   try {
    const { orderId, productIds } = payload.payload;
 
-    await FA.concurrent.map(async (productId: string) => {
-     const [merchantForProduct, err] =
-      await MerchantService.getMerchantIdFromProductId(productId);
-     if (err || !merchantForProduct) throw err;
+   await FA.concurrent.map(async (productId: string) => {
+    const [merchantForProduct, err] =
+     await MerchantService.getMerchantIdFromProductId(productId);
+    if (err || !merchantForProduct) throw err;
 
-     const [userMerchant] = await db
-      .select({
-       businessName: merchant.businessName,
-       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-       },
-      })
-      .from(merchant)
-      .innerJoin(user, eq(merchant.userId, user.id))
-      .where(eq(merchant.id, merchantForProduct.id));
+    const [userMerchant] = await db
+     .select({
+      businessName: merchant.businessName,
+      user: {
+       id: user.id,
+       email: user.email,
+       name: user.name,
+      },
+     })
+     .from(merchant)
+     .innerJoin(user, eq(merchant.userId, user.id))
+     .where(
+      and(eq(merchant.id, merchantForProduct.id), isNull(merchant.deletedAt)),
+     );
 
     const emailMessage = `Hi ${userMerchant.user.name}, a purchase of #${orderId} has been made for your product`;
 
@@ -106,13 +100,10 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
     });
    }, productIds);
   } catch (err) {
-   const formatted = formatErrorPayload(
-    err instanceof Error ? err : new Error(String(err)),
-   );
-   console.error("[Background Event Error Intercepted]:", formatted.body);
+   logger.error({ err }, "[Background Event Error Intercepted]");
   }
  },
  error: (err) => {
-  console.error(err);
+  logger.error({ err });
  },
 });

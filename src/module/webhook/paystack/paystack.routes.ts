@@ -1,4 +1,5 @@
 /** @format */
+import asyncHandler from "@shared/middleware/async-handler.ts";
 import express, { Request, Response, Router } from "express";
 
 import { parsePaystackBody, verifyPaystackSignature } from "./middleware.ts";
@@ -9,14 +10,10 @@ const paystackWebhookRouter = Router().post(
  express.raw({ type: "application/json" }),
  parsePaystackBody,
  verifyPaystackSignature,
- async (req: Request, res: Response) => {
-  try {
-   await paystackWebhookHandler(req.body);
-   res.status(200).json({ status: "success" });
-  } catch {
-   res.status(200).json({ status: "success" });
-  }
- },
+ asyncHandler(async (req: Request, res: Response) => {
+  await paystackWebhookHandler(req, res);
+  res.status(200).json({ status: "success" });
+ }),
 );
 
 export default paystackWebhookRouter;

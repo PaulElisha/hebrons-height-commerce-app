@@ -5,6 +5,7 @@ import { category, subcategory } from "@schema/category.ts";
 import { merchant } from "@schema/merchant.ts";
 import { notification } from "@schema/notification.ts";
 import { order, orderItem } from "@schema/order.ts";
+import { outbox } from "@schema/outbox.ts";
 import { payment } from "@schema/payment.ts";
 import { product } from "@schema/product.ts";
 import { pushSubscription } from "@schema/push-subscription.ts";
@@ -21,6 +22,7 @@ export default {
  cartItem,
  category,
  notification,
+ outbox,
  pushSubscription,
  subcategory,
  order,

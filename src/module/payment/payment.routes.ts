@@ -1,4 +1,6 @@
 /** @format */
+import stripeClient from "@app/stripe.ts";
+import asyncHandler from "@shared/middleware/async-handler.ts";
 import authenticate from "@shared/middleware/authenticate.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { validate } from "@shared/middleware/validate.ts";
@@ -6,8 +8,6 @@ import { Request, Response, Router } from "express";
 
 import PaymentController from "./payment.controller.ts";
 import { CheckoutData } from "./payment.service.ts";
-import stripeClient from "@app/stripe.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
 
 class PaymentRoutes {
  router: Router;

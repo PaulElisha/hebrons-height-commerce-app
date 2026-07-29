@@ -5,10 +5,7 @@ import asyncHandler from "@shared/middleware/async-handler.ts";
 import { APIResponse, T } from "@shared/types.ts";
 import { createSession } from "better-sse";
 import { NextFunction, Request, Response } from "express";
-import z from "zod";
 
-import { Subscription } from "../webpush/pusher.ts";
-import WebPushService from "../webpush/webpush.service.ts";
 import NotificationService from "./notification.service.ts";
 
 export interface NotificationParams {
@@ -42,7 +39,7 @@ class NotificationController {
   ) => {
    const userId = req.user.id;
    const [count, err] = await NotificationService.getUnreadCount(userId);
-   if (err) return next(err);
+   if (err || !count) return next(err);
 
    const unread = count ?? 0;
 
@@ -103,12 +100,24 @@ class NotificationController {
    },
   });
 
+  const heartbeat = setInterval(() => {
+   res.write(": ping\n\n", (err) => {
+    if (err) {
+     subscription.unsubscribe();
+     clearInterval(heartbeat);
+     res.end();
+    }
+   });
+  }, 30_000).unref();
+
   session.on("disconnected", () => {
+   clearInterval(heartbeat);
    subscription.unsubscribe();
    res.end();
   });
 
   req.on("close", () => {
+   clearInterval(heartbeat);
    subscription.unsubscribe();
    res.end();
   });

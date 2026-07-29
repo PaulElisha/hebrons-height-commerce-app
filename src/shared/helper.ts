@@ -12,9 +12,8 @@ import {
  TCartAndItem,
  TCartItem,
  TMerchantProducts,
- TProductThreshold,
 } from "@shared/types.ts";
-import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import * as APIError from "./error/APIError.ts";
 import AppError from "./error/app-error.ts";
@@ -27,7 +26,13 @@ export async function fetchMerchantProductsFromDb(
    .select()
    .from(product)
    .innerJoin(merchant, eq(merchant.id, product.merchantId))
-   .where(and(eq(merchant.id, merchantId), isNull(product.deletedAt)));
+   .where(
+    and(
+     eq(merchant.id, merchantId),
+     isNull(product.deletedAt),
+     isNull(merchant.deletedAt),
+    ),
+   );
 
   return [
    {
@@ -49,7 +54,7 @@ export async function fetchMerchantProductsByUserId(
    .select()
    .from(product)
    .innerJoin(merchant, eq(merchant.id, product.merchantId))
-   .where(eq(merchant.userId, userId));
+   .where(and(eq(merchant.userId, userId), isNull(merchant.deletedAt)));
 
   return [
    {
@@ -67,7 +72,7 @@ export function merchantIdSubquery(userId: string) {
  return db
   .select({ id: merchant.id })
   .from(merchant)
-  .where(eq(merchant.userId, userId));
+  .where(and(eq(merchant.userId, userId), isNull(merchant.deletedAt)));
 }
 
 export async function getMerchantIdFromUser(
@@ -76,7 +81,7 @@ export async function getMerchantIdFromUser(
  const [relatedMerchant] = await db
   .select({ id: merchant?.id })
   .from(merchant)
-  .where(eq(merchant?.userId, userId))
+  .where(and(eq(merchant?.userId, userId), isNull(merchant.deletedAt)))
   .limit(1);
 
  if (!relatedMerchant)
@@ -92,7 +97,7 @@ export async function getMerchantIdFromProductId(
   .select()
   .from(product)
   .innerJoin(merchant, eq(product.merchantId, merchant.id))
-  .where(eq(product.id, productId));
+  .where(and(eq(product.id, productId), isNull(merchant.deletedAt)));
 
  if (!productMerchant)
   return [null, APIError.notFound("Merchant not found for this product")];
@@ -164,7 +169,7 @@ export async function validateOrderForCart(
 
   return [result, null];
  } catch (err) {
-  return [null, APIError.internalServer("Failed to validate order")];
+  return [null, APIError.badRequest("Order already created")];
  }
 }
 

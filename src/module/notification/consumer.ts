@@ -1,10 +1,10 @@
 /** @format */
+import logger from "@app/logger.ts";
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
 import { merchant } from "@schema/merchant.ts";
-import { formatErrorPayload } from "@shared/error/format-error.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import WebPushService from "../webpush/webpush.service.ts";
 import NotificationService from "./notification.service.ts";
@@ -20,14 +20,11 @@ EventBus.on(EventType.ORDER_STATUS_UPDATED).subscribe({
     "order_update",
    );
   } catch (err) {
-   const formatted = formatErrorPayload(
-    err instanceof Error ? err : new Error(String(err)),
-   );
-   console.error("[Notification Error]:", formatted.body);
+   logger.error({ err }, "[Notification Error]");
   }
  },
  error: (err) => {
-  console.error(err);
+  logger.error({ err });
  },
 });
 
@@ -42,14 +39,11 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
     "order_update",
    );
   } catch (e) {
-   const formatted = formatErrorPayload(
-    e instanceof Error ? e : new Error(String(e)),
-   );
-   console.error("[Notification Error]:", formatted.body);
+   logger.error({ err: e }, "[Notification Error]");
   }
  },
  error: (err) => {
-  console.error(err);
+  logger.error({ err });
  },
 });
 
@@ -60,7 +54,7 @@ EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
    const [merchantData] = await db
     .select({ userId: merchant.userId })
     .from(merchant)
-    .where(eq(merchant.id, merchantId))
+    .where(and(eq(merchant.id, merchantId), isNull(merchant.deletedAt)))
     .limit(1);
    if (!merchantData) return;
 
@@ -78,14 +72,11 @@ EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
     ),
    ]);
   } catch (err) {
-   const formatted = formatErrorPayload(
-    err instanceof Error ? err : new Error(String(err)),
-   );
-   console.error("[Notification Error]:", formatted.body);
+   logger.error({ err }, "[Notification Error]");
   }
  },
  error: (err) => {
-  console.error(err);
+  logger.error({ err });
  },
 });
 
@@ -107,14 +98,11 @@ EventBus.on(EventType.CART_LOW_STOCK_ALERT).subscribe({
     ),
    ]);
   } catch (err) {
-   const formatted = formatErrorPayload(
-    err instanceof Error ? err : new Error(String(err)),
-   );
-   console.error("[Notification Error]:", formatted.body);
+   logger.error({ err }, "[Notification Error]");
   }
  },
  error: (err) => {
-  console.error(err);
+  logger.error({ err });
  },
 });
 
@@ -143,13 +131,10 @@ EventBus.on(EventType.ORDER_CANCELLED).subscribe({
     ),
    ]);
   } catch (err) {
-   const formatted = formatErrorPayload(
-    err instanceof Error ? err : new Error(String(err)),
-   );
-   console.error("[Notification Error]:", formatted.body);
+   logger.error({ err }, "[Notification Error]");
   }
  },
  error: (err) => {
-  console.error(err);
+  logger.error({ err });
  },
 });

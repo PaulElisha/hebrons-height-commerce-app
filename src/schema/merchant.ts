@@ -31,6 +31,7 @@ export const merchant = pgTable(
    .notNull()
    .default("pending"),
   approvedAt: timestamp("approved_at", { mode: "date" }),
+  deletedAt: timestamp("deleted_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
  },

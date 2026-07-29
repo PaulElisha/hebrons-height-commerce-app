@@ -3,8 +3,8 @@ import db from "@db/db.ts";
 import { category, subcategory } from "@schema/category.ts";
 import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
-import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
+import AppError from "@shared/error/app-error.ts";
 import * as helper from "@shared/helper.ts";
 import {
  Pagination,
@@ -61,13 +61,13 @@ export const UpdateProductDto = z.object({
 });
 
 class ProductService {
-  getMerchantProducts = async (
-   userId: string,
-  ): Promise<Result<TMerchantProducts, AppError>> => {
-   const [data, err] = await helper.fetchMerchantProductsByUserId(userId);
-   if (err || !data) return [null, err];
-   return [data, null];
-  };
+ getMerchantProducts = async (
+  userId: string,
+ ): Promise<Result<TMerchantProducts, AppError>> => {
+  const [data, err] = await helper.fetchMerchantProductsByUserId(userId);
+  if (err || !data) return [null, err];
+  return [data, null];
+ };
 
  getSingleProduct = async (
   productId: string,
@@ -83,13 +83,13 @@ class ProductService {
   return [productDetails, null];
  };
 
-  getProductForMerchant = async (
-   merchantId: string,
-  ): Promise<Result<TMerchantProducts, AppError>> => {
-   const [data, err] = await helper.fetchMerchantProductsFromDb(merchantId);
-   if (err || !data) return [null, err];
-   return [data, null];
-  };
+ getProductForMerchant = async (
+  merchantId: string,
+ ): Promise<Result<TMerchantProducts, AppError>> => {
+  const [data, err] = await helper.fetchMerchantProductsFromDb(merchantId);
+  if (err || !data) return [null, err];
+  return [data, null];
+ };
 
  getLatestProducts = async (
   pagination: Pagination,

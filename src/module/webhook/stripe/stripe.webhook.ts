@@ -1,8 +1,10 @@
 /** @format */
 
+import logger from "@app/logger.ts";
 import stripeClient from "@app/stripe.ts";
 import HttpStatus from "@shared/enum/http.ts";
-import { EventBus, EventType } from "@shared/event-bus/index.ts";
+import { EventType } from "@shared/event-bus/index.ts";
+import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import Env from "env.ts";
 import { Request, Response } from "express";
 import Stripe from "stripe";
@@ -29,7 +31,7 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
    case "checkout.session.expired": {
     const session = event.data.object;
 
-    EventBus.publish({
+    await publishEvent({
      event_type: EventType.STRIPE_PAYMENT_VERIFIED,
      payload: {
       event: session,
@@ -40,7 +42,7 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
     break;
    }
    default:
-    console.log(`Event type not handled: ${event.type}`);
+    logger.warn({ eventType: event.type }, "Unhandled Stripe event type");
     break;
   }
 

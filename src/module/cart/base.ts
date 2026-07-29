@@ -3,7 +3,6 @@ import db from "@db/db.ts";
 import InventoryService from "@module/inventory/inventory.service.ts";
 import { cart, cartItem } from "@schema/cart.ts";
 import AppError from "@shared/error/app-error.ts";
-import * as APIError from "@shared/error/APIError.ts";
 import * as helper from "@shared/helper.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
 import { Mutex } from "async-mutex";
@@ -96,10 +95,7 @@ class CartBase {
 
   await this.calculateTotalAmount(userCart.id, userId);
 
-  const [cartData, cartErr] = await helper.getCartAndItems(
-   userCart.id,
-   userId,
-  );
+  const [cartData, cartErr] = await helper.getCartAndItems(userCart.id, userId);
   if (cartErr || !cartData) return [null, cartErr];
   return [cartData, null];
  }

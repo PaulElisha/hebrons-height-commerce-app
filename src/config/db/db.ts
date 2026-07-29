@@ -9,10 +9,7 @@ import * as schema from "./schema.ts";
 const createPool = () =>
  new Pool({
   connectionString: Env.DB_URL,
-  ssl:
-   Env.NODE_ENV === "production"
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: Env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
  });
 
 let client;
@@ -25,4 +22,5 @@ if (isProd()) {
 
 const pool = remember("dbPool", () => createPool());
 
+export { pool };
 export default drizzle(pool, { schema });

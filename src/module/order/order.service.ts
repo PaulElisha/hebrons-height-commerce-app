@@ -2,11 +2,13 @@
 
 import db from "@db/db.ts";
 import CartService from "@module/cart/cart.service.ts";
+import InventoryService from "@module/inventory/inventory.service.ts";
 import { user } from "@schema/auth.ts";
 import { order, orderItem } from "@schema/order.ts";
-import AppError from "@shared/error/app-error.ts";
-import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import * as APIError from "@shared/error/APIError.ts";
+import AppError from "@shared/error/app-error.ts";
+import { EventType } from "@shared/event-bus/index.ts";
+import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import * as helper from "@shared/helper.ts";
 import {
  Pagination,
@@ -34,7 +36,7 @@ import {
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
-import InventoryService from "@module/inventory/inventory.service.ts";
+
 const mutex = new Mutex();
 
 export interface TOrderStatusQuery {
@@ -92,10 +94,9 @@ class OrderService {
   const [data, e] = await CartService.getUserCart(userId, cartId);
   if (e || !data) return [null, e];
 
-    const [result, err] = await mutex.runExclusive(async () => {
-     const [orders, e] = await helper.validateOrderForCart(cartId, userId);
-     if (e) return [null, e];
-     if (orders && orders.length > 0) return [null, APIError.badRequest("Order already created")];
+  const [result, err] = await mutex.runExclusive(async () => {
+   const [orders, e] = await helper.validateOrderForCart(cartId, userId);
+   if (e || !orders) return [null, e];
 
    const itemResults = await FA.concurrent.map(async (v: TCartItem) => {
     const [productData, e] = await InventoryService.checkProductThreshold(
@@ -157,7 +158,7 @@ class OrderService {
   if (err) return [null, err];
 
   runOnTransactionCommit(() => {
-   EventBus.publish({
+   publishEvent({
     event_type: EventType.ORDER_PLACED,
     payload: {
      userId,
@@ -167,6 +168,8 @@ class OrderService {
     },
    });
   });
+
+  if (!result) return [null, null];
 
   return [result?.orderId, null];
  }
@@ -200,7 +203,7 @@ class OrderService {
    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-  if (!(result.length > 0)) return [null, APIError.notFound("order not found")];
+  if (result.length <= 0) return [null, APIError.notFound("order not found")];
 
   return [
    {
@@ -324,7 +327,7 @@ class OrderService {
   }
 
   runOnTransactionCommit(() => {
-   EventBus.publish({
+   publishEvent({
     event_type: EventType.ORDER_STATUS_UPDATED,
     payload: {
      userId: updatedOrder.userId,
@@ -377,7 +380,7 @@ class OrderService {
   ).map((item) => item.productId);
 
   runOnTransactionCommit(() => {
-   EventBus.publish({
+   publishEvent({
     event_type: EventType.ORDER_CANCELLED,
     payload: {
      productIds,

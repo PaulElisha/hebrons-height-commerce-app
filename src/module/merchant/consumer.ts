@@ -1,12 +1,12 @@
 /** @format */
-import { EventBus, EventType } from "@shared/event-bus/index.ts";
 
-EventBus.on(EventType.ORDER_PLACED).subscribe({
- next: async (payload) => {
-  // const { orderId, product_ids } = payload.payload;
-  // console.log("Inventory update for Order placement:", product_ids);
- },
- error: (err) => {
-  console.error(err);
- },
-});
+// /** @format */
+// import logger from "@shared/util/logger.ts";
+// import { EventBus, EventType } from "@shared/event-bus/index.ts";
+
+// EventBus.on(EventType.ORDER_PLACED).subscribe({
+//  next: async (_payload) => {},
+//  error: (err) => {
+//   logger.error({ err });
+//  },
+// });

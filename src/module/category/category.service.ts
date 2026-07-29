@@ -1,8 +1,8 @@
 /** @format */
 import db from "@db/db.ts";
 import { category, subcategory } from "@schema/category.ts";
-import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
+import AppError from "@shared/error/app-error.ts";
 import { Result, TCategory, TSubcategory } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import FA from "fasy";

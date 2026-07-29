@@ -4,16 +4,16 @@ import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
 import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
-import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
+import AppError from "@shared/error/app-error.ts";
+import * as helper from "@shared/helper.ts";
 import {
  Result,
  T,
  TAnalyticsResult,
  TMerchantWithUser,
 } from "@shared/types.ts";
-import * as helper from "@shared/helper.ts";
-import { and, count, desc, eq, isNotNull, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, isNull, sql, sum } from "drizzle-orm";
 import z from "zod";
 
 export const CreateMerchantDto = z.object({
@@ -31,20 +31,20 @@ export const UpdateMerchantDto = z.object({
 });
 
 class MerchantService {
-  getMerchantIdFromProductId = async (
-   productId: string,
-  ): Promise<Result<T<"merchant">, AppError>> => {
-   const [productMerchant] = await db
-    .select()
-    .from(product)
-    .innerJoin(merchant, eq(product.merchantId, merchant.id))
-    .where(eq(product.id, productId));
+ getMerchantIdFromProductId = async (
+  productId: string,
+ ): Promise<Result<T<"merchant">, AppError>> => {
+  const [productMerchant] = await db
+   .select()
+   .from(product)
+   .innerJoin(merchant, eq(product.merchantId, merchant.id))
+   .where(and(eq(product.id, productId), isNull(merchant.deletedAt)));
 
-   if (!productMerchant)
-    return [null, APIError.notFound("Merchant not found for this product")];
+  if (!productMerchant)
+   return [null, APIError.notFound("Merchant not found for this product")];
 
-   return [productMerchant.merchant, null];
-  };
+  return [productMerchant.merchant, null];
+ };
 
  getMerchantProfile = async (
   userId: string,
@@ -53,7 +53,7 @@ class MerchantService {
    .select()
    .from(merchant)
    .innerJoin(user, eq(merchant.userId, user.id))
-   .where(and(eq(merchant?.userId, userId), isNotNull(merchant?.id)))
+   .where(and(eq(merchant?.userId, userId), isNull(merchant.deletedAt)))
    .limit(1);
 
   if (!merchantProfile)
@@ -66,18 +66,6 @@ class MerchantService {
   userId: string,
   body: z.infer<typeof CreateMerchantDto>,
  ): Promise<Result<T<"merchant">, AppError>> => {
-  const [existing] = await db
-   .select()
-   .from(merchant)
-   .where(eq(merchant.userId, userId))
-   .limit(1);
-
-  if (existing)
-   return [
-    null,
-    APIError.badRequest("A merchant profile already exists for this user."),
-   ];
-
   const [newMerchant] = await db
    .insert(merchant)
    .values({
@@ -131,7 +119,8 @@ class MerchantService {
   merchantId: string,
  ): Promise<Result<void, AppError>> => {
   const [deletedMerchant] = await db
-   .delete(merchant)
+   .update(merchant)
+   .set({ deletedAt: new Date() })
    .where(and(eq(merchant.userId, userId), eq(merchant.id, merchantId)))
    .returning();
 

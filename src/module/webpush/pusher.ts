@@ -1,5 +1,6 @@
 /** @format */
 
+import logger from "@app/logger.ts";
 import { TPusher } from "@shared/types.ts";
 import webPush from "web-push";
 import z from "zod";
@@ -28,9 +29,9 @@ class Pusher<T extends TPusher> {
   webPush
    .sendNotification(subscription, payload)
    .then((response) =>
-    console.log("Notification sent successfully:", response.statusCode),
+    logger.info({ statusCode: response.statusCode }, "Notification sent"),
    )
-   .catch((error) => console.error("Error sending notification:", error));
+   .catch((error) => logger.error({ error }, "Error sending notification"));
  };
 }
 

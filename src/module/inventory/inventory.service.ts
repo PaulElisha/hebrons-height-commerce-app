@@ -3,9 +3,10 @@ import db from "@db/db.ts";
 import { cart, cartItem } from "@schema/cart.ts";
 import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
-import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import { EventBus, EventType } from "@shared/event-bus/index.ts";
+import AppError from "@shared/error/app-error.ts";
+import { EventType } from "@shared/event-bus/index.ts";
+import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, T, TProductThreshold } from "@shared/types.ts";
 import { and, eq, isNotNull, lt, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
@@ -80,10 +81,10 @@ class InventoryService {
      ),
     );
 
-   if (result.length === 0) return [null, null];
+   if (result.length <= 0) return [null, null];
 
    await FA.concurrent.map(async ({ userId, name, quantity }: any) => {
-    EventBus.publish({
+    await publishEvent({
      event_type: EventType.CART_LOW_STOCK_ALERT,
      payload: {
       productId,
@@ -100,9 +101,7 @@ class InventoryService {
   }
  };
 
- checkLowStock = async (
-  productId: string,
- ): Promise<Result<void, AppError>> => {
+ checkLowStock = async (productId: string): Promise<Result<void, AppError>> => {
   try {
    const [current] = await db
     .select({
@@ -117,7 +116,7 @@ class InventoryService {
    if (!current) return [null, null];
 
    if (current.quantity <= STOCK_THRESHOLDS[0]) {
-    EventBus.publish({
+    await publishEvent({
      event_type: EventType.LOW_STOCK_ALERT,
      payload: {
       productId,
@@ -192,8 +191,8 @@ class InventoryService {
     return [null, null];
    }
 
-    await this.checkLowStock(productId);
-    await this.checkUserStockAtIntervals(productId);
+   await this.checkLowStock(productId);
+   await this.checkUserStockAtIntervals(productId);
 
    return [updatedProduct, null];
   } catch (err) {

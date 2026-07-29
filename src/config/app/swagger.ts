@@ -130,7 +130,7 @@ const spec = {
     type: "object",
     properties: {
      id: { type: "string" },
-     merchantId: { type: "string" },
+     merchantId: { type: "string", nullable: true },
      name: { type: "string" },
      description: { type: "string" },
      image: { type: "string" },
@@ -237,10 +237,10 @@ const spec = {
      userId: { type: "string" },
      cartId: { type: "string" },
      subtotal: { type: "integer" },
-     serviceCharge: { type: "integer" },
-     deliveryFee: { type: "integer" },
-     taxAmount: { type: "integer" },
-     discountAmount: { type: "integer" },
+     serviceCharge: { type: "integer", nullable: true },
+     deliveryFee: { type: "integer", nullable: true },
+     taxAmount: { type: "integer", nullable: true },
+     discountAmount: { type: "integer", nullable: true },
      deliveryAddress: {
       type: "object",
       additionalProperties: { type: "string" },
@@ -369,11 +369,11 @@ const spec = {
       type: "string",
       enum: ["payment", "subscription", "setup"],
      },
-      metadata: {
-       type: "object",
-       description: "Optional metadata key-value pairs",
-       additionalProperties: true,
-      },
+     metadata: {
+      type: "object",
+      description: "Optional metadata key-value pairs",
+      additionalProperties: true,
+     },
     },
    },
    Category: {
@@ -434,10 +434,34 @@ const spec = {
     summary: "Health check endpoint",
     responses: {
      "200": {
-      description: "Welcome to Hebrons Height Commerce APP",
+      description: "Server is healthy",
       content: {
-       "text/plain": {
-        schema: { type: "string" },
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          db: { type: "string", example: "connected" },
+          uptime: { type: "integer", example: 1234 },
+          timestamp: { type: "string", format: "date-time" },
+         },
+        },
+       },
+      },
+     },
+     "503": {
+      description: "Service degraded — database disconnected",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "degraded" },
+          db: { type: "string", example: "disconnected" },
+          uptime: { type: "integer" },
+          timestamp: { type: "string", format: "date-time" },
+         },
+        },
        },
       },
      },
@@ -817,8 +841,8 @@ const spec = {
          description: { type: "string" },
          price: { type: "integer" },
          quantity: { type: "integer" },
-      category: { type: "string" },
-      subCategory: { type: "string" },
+         category: { type: "string" },
+         subCategory: { type: "string" },
          additionalData: {
           type: "object",
           additionalProperties: { type: "string" },
@@ -1371,12 +1395,12 @@ const spec = {
        },
       },
      },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-      "403": { description: "Forbidden — merchant only" },
-     },
+     "401": { description: "Unauthorized — invalid or missing session token" },
+     "403": { description: "Forbidden — merchant only" },
     },
    },
-   "/api/order/status": {
+  },
+  "/api/order/status": {
    get: {
     tags: ["Order"],
     summary: "Get user's orders filtered by status",
@@ -1681,10 +1705,10 @@ const spec = {
     },
    },
   },
-   "/api/webhook/stripe": {
-    post: {
-     tags: ["Webhook"],
-     summary: "Stripe webhook handler (checkout.session.completed/expired)",
+  "/api/webhook/stripe": {
+   post: {
+    tags: ["Webhook"],
+    summary: "Stripe webhook handler (checkout.session.completed/expired)",
     requestBody: {
      required: true,
      content: {
@@ -1715,10 +1739,10 @@ const spec = {
     },
    },
   },
-   "/api/webhook/paystack": {
-    post: {
-     tags: ["Webhook"],
-     summary: "Paystack webhook handler (charge.success/charge.failed)",
+  "/api/webhook/paystack": {
+   post: {
+    tags: ["Webhook"],
+    summary: "Paystack webhook handler (charge.success/charge.failed)",
     requestBody: {
      required: true,
      content: {
@@ -1790,96 +1814,96 @@ const spec = {
     },
    },
   },
-    "/api/webpush/subscribe": {
-     post: {
-      tags: ["WebPush"],
-      summary: "Subscribe browser to push notifications",
-      description:
-       "Triggers push notifications for: `inventory.low_stock`, `cart.low_stock`, `order.cancelled` events.",
-      security: [{ bearerAuth: [] }],
-     requestBody: {
-      required: true,
+  "/api/webpush/subscribe": {
+   post: {
+    tags: ["WebPush"],
+    summary: "Subscribe browser to push notifications",
+    description:
+     "Triggers push notifications for: `inventory.low_stock`, `cart.low_stock`, `order.cancelled` events.",
+    security: [{ bearerAuth: [] }],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        required: ["endpoint", "keys"],
+        properties: {
+         endpoint: { type: "string" },
+         keys: {
+          type: "object",
+          required: ["auth", "p256dh"],
+          properties: {
+           auth: { type: "string" },
+           p256dh: { type: "string" },
+          },
+         },
+        },
+       },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description: "Subscribed successfully",
       content: {
        "application/json": {
         schema: {
          type: "object",
-         required: ["endpoint", "keys"],
          properties: {
-          endpoint: { type: "string" },
-          keys: {
-           type: "object",
-           required: ["auth", "p256dh"],
-           properties: {
-            auth: { type: "string" },
-            p256dh: { type: "string" },
-           },
-          },
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "subscribed successfully" },
          },
         },
        },
       },
      },
-     responses: {
-      "200": {
-       description: "Subscribed successfully",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "subscribed successfully" },
-          },
-         },
-        },
-       },
-      },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-     },
+     "401": { description: "Unauthorized — invalid or missing session token" },
     },
    },
-   "/api/webpush/unsubscribe": {
-    post: {
-     tags: ["WebPush"],
-     summary: "Unsubscribe browser from push notifications",
-     security: [{ bearerAuth: [] }],
-     requestBody: {
-      required: true,
+  },
+  "/api/webpush/unsubscribe": {
+   post: {
+    tags: ["WebPush"],
+    summary: "Unsubscribe browser from push notifications",
+    security: [{ bearerAuth: [] }],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        required: ["endpoint"],
+        properties: {
+         endpoint: { type: "string" },
+        },
+       },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description: "Unsubscribed successfully",
       content: {
        "application/json": {
         schema: {
          type: "object",
-         required: ["endpoint"],
          properties: {
-          endpoint: { type: "string" },
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "unsubscribed successfully" },
          },
         },
        },
       },
      },
-     responses: {
-      "200": {
-       description: "Unsubscribed successfully",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "unsubscribed successfully" },
-          },
-         },
-        },
-       },
-      },
-      "401": { description: "Unauthorized — invalid or missing session token" },
-     },
+     "401": { description: "Unauthorized — invalid or missing session token" },
     },
    },
-   "/api/category": {
-    get: {
-     tags: ["Category"],
-     summary: "Get all categories with subcategories",
+  },
+  "/api/category": {
+   get: {
+    tags: ["Category"],
+    summary: "Get all categories with subcategories",
     responses: {
      "200": {
       description: "Categories fetched successfully",
@@ -2105,14 +2129,14 @@ const spec = {
   "/api/notification/stream": {
    get: {
     tags: ["Notification"],
-     summary: "SSE stream for real-time notification events",
-     description:
-      "Listens for events: `order_placed`, `order_status_updated`, `inventory.low_stock`, `cart.low_stock`, `order_cancelled`. The frontend uses EventSource.addEventListener to handle each event type.",
-     security: [{ bearerAuth: [] }],
-     responses: {
-      "200": {
-       description:
-        "SSE stream connected — events pushed with event types: order_placed, order_status_updated, inventory.low_stock, cart.low_stock, order_cancelled",
+    summary: "SSE stream for real-time notification events",
+    description:
+     "Listens for events: `order_placed`, `order_status_updated`, `inventory.low_stock`, `cart.low_stock`, `order_cancelled`. The frontend uses EventSource.addEventListener to handle each event type.",
+    security: [{ bearerAuth: [] }],
+    responses: {
+     "200": {
+      description:
+       "SSE stream connected — events pushed with event types: order_placed, order_status_updated, inventory.low_stock, cart.low_stock, order_cancelled",
       content: {
        "text/event-stream": {
         schema: { type: "string" },
