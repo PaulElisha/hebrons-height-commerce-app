@@ -1,8 +1,8 @@
 /** @format */
-import logger from "@app/logger.ts";
 import db from "@db/db.ts";
 import MerchantService from "@module/merchant/merchant.service.ts";
 import OrderService from "@module/order/order.service.ts";
+import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import { user } from "@schema/auth.ts";
 import { merchant } from "@schema/merchant.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
@@ -12,9 +12,9 @@ import FA from "fasy";
 import EmailWorker from "./email.worker.ts";
 
 EventBus.on(EventType.ORDER_PLACED).subscribe({
- next: async (payload) => {
-  try {
-   const { userId, orderId } = payload.payload;
+ next: async ({ payload }) => {
+  await consumeOutboxEvent(payload.outboxId, async (p) => {
+   const { userId, orderId } = p as { userId: string; orderId: string };
 
    const [orderDetails, err] = await OrderService.getOrderWithUser(
     userId,
@@ -22,55 +22,39 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
    );
    if (err || !orderDetails) throw err;
 
-   const emailMessage = `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`;
-
    await EmailWorker({
     user: orderDetails.user,
-    message: emailMessage,
+    message: `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`,
    });
-  } catch (err) {
-   logger.error({ err }, "[Background Event Error Intercepted]");
-  }
- },
- error: (err) => {
-  logger.error({ err });
+  });
  },
 });
 
 EventBus.on(EventType.CART_LOW_STOCK_ALERT).subscribe({
- next: async (payload) => {
-  try {
-   const { userId, productName, productId, quantity } = payload.payload;
+ next: async ({ payload }) => {
+  await consumeOutboxEvent(payload.outboxId, async (p) => {
+   const pp = p as { userId: string; productName: string; quantity: number };
    const [userDetails] = await db
-    .select({
-     name: user.name,
-     email: user.email,
-    })
+    .select({ name: user.name, email: user.email })
     .from(user)
-    .where(eq(user.id, userId))
+    .where(eq(user.id, pp.userId))
     .limit(1);
 
    await EmailWorker({
-    user: {
-     id: userId,
-     name: userDetails.name,
-     email: userDetails.email,
-    },
-    message: `"${productName}" is running low (${quantity} left)`,
+    user: { id: pp.userId, name: userDetails.name, email: userDetails.email },
+    message: `"${pp.productName}" is running low (${pp.quantity} left)`,
    });
-  } catch (err) {
-   logger.error({ err }, "[Notification Error]");
-  }
- },
- error: (err) => {
-  logger.error({ err });
+  });
  },
 });
 
 EventBus.on(EventType.ORDER_PLACED).subscribe({
- next: async (payload) => {
-  try {
-   const { orderId, productIds } = payload.payload;
+ next: async ({ payload }) => {
+  await consumeOutboxEvent(payload.outboxId, async (p) => {
+   const { orderId, productIds } = p as {
+    orderId: string;
+    productIds: string[];
+   };
 
    await FA.concurrent.map(async (productId: string) => {
     const [merchantForProduct, err] =
@@ -80,11 +64,7 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
     const [userMerchant] = await db
      .select({
       businessName: merchant.businessName,
-      user: {
-       id: user.id,
-       email: user.email,
-       name: user.name,
-      },
+      user: { id: user.id, email: user.email, name: user.name },
      })
      .from(merchant)
      .innerJoin(user, eq(merchant.userId, user.id))
@@ -92,18 +72,11 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
       and(eq(merchant.id, merchantForProduct.id), isNull(merchant.deletedAt)),
      );
 
-    const emailMessage = `Hi ${userMerchant.user.name}, a purchase of #${orderId} has been made for your product`;
-
     await EmailWorker({
      user: userMerchant.user,
-     message: emailMessage,
+     message: `Hi ${userMerchant.user.name}, a purchase of #${orderId} has been made for your product`,
     });
    }, productIds);
-  } catch (err) {
-   logger.error({ err }, "[Background Event Error Intercepted]");
-  }
- },
- error: (err) => {
-  logger.error({ err });
+  });
  },
 });

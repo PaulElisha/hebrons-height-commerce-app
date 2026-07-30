@@ -1,62 +1,66 @@
 /** @format */
-import logger from "@app/logger.ts";
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
+import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import { merchant } from "@schema/merchant.ts";
 import { EventBus, EventType } from "@shared/event-bus/index.ts";
 import { and, eq, isNull } from "drizzle-orm";
 
 import WebPushService from "../webpush/webpush.service.ts";
 import NotificationService from "./notification.service.ts";
+import logger from "@app/logger.ts";
 
 EventBus.on(EventType.ORDER_STATUS_UPDATED).subscribe({
- next: async (payload) => {
-  try {
-   const { userId, orderId, status, message } = payload.payload;
+ next: async ({ payload }) => {
+  await consumeOutboxEvent(payload.outboxId, async (p) => {
+   const { userId, orderId, status, message } = p as {
+    userId: string;
+    orderId: string;
+    status: string;
+    message?: string;
+   };
+
    await NotificationService.createNotification(
     userId,
     `Order #${orderId.slice(0, 8)}`,
     message ?? `Your order is now ${status.replace("_", " ")}`,
     "order_update",
    );
-  } catch (err) {
-   logger.error({ err }, "[Notification Error]");
-  }
- },
- error: (err) => {
-  logger.error({ err });
+  });
  },
 });
 
 EventBus.on(EventType.ORDER_PLACED).subscribe({
- next: async (payload) => {
-  try {
-   const { userId, orderId } = payload.payload;
+ next: async ({ payload }) => {
+  await consumeOutboxEvent(payload.outboxId, async (p) => {
+   const { userId, orderId } = p as { userId: string; orderId: string };
+
    await NotificationService.createNotification(
     userId,
     "Order Placed",
     `Your order #${orderId.slice(0, 8)} has been placed successfully`,
     "order_update",
    );
-  } catch (e) {
-   logger.error({ err: e }, "[Notification Error]");
-  }
- },
- error: (err) => {
-  logger.error({ err });
+  });
  },
 });
 
 EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
- next: async (payload) => {
-  try {
-   const { merchantId, productName, productId, quantity } = payload.payload;
+ next: async ({ payload }) => {
+  await consumeOutboxEvent(payload.outboxId, async (p) => {
+   const { merchantId, productName, quantity } = p as {
+    merchantId: string;
+    productName: string;
+    quantity: number;
+   };
+
    const [merchantData] = await db
     .select({ userId: merchant.userId })
     .from(merchant)
     .where(and(eq(merchant.id, merchantId), isNull(merchant.deletedAt)))
     .limit(1);
-   if (!merchantData) return;
+
+   if (!merchantData) return logger.info("Merchant data not found");
 
    await Promise.all([
     NotificationService.createNotification(
@@ -71,19 +75,19 @@ EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
      `"${productName}" is running low (${quantity} left)`,
     ),
    ]);
-  } catch (err) {
-   logger.error({ err }, "[Notification Error]");
-  }
- },
- error: (err) => {
-  logger.error({ err });
+  });
  },
 });
 
 EventBus.on(EventType.CART_LOW_STOCK_ALERT).subscribe({
- next: async (payload) => {
-  try {
-   const { userId, productName, productId, quantity } = payload.payload;
+ next: async ({ payload }) => {
+  await consumeOutboxEvent(payload.outboxId, async (p) => {
+   const { userId, productName, quantity } = p as {
+    userId: string;
+    productName: string;
+    quantity: number;
+   };
+
    await Promise.all([
     NotificationService.createNotification(
      userId,
@@ -97,25 +101,21 @@ EventBus.on(EventType.CART_LOW_STOCK_ALERT).subscribe({
      `"${productName}" is running low (${quantity} left)`,
     ),
    ]);
-  } catch (err) {
-   logger.error({ err }, "[Notification Error]");
-  }
- },
- error: (err) => {
-  logger.error({ err });
+  });
  },
 });
 
 EventBus.on(EventType.ORDER_CANCELLED).subscribe({
- next: async (payload) => {
-  try {
-   const { orderId } = payload.payload;
+ next: async ({ payload }) => {
+  await consumeOutboxEvent(payload.outboxId, async (p) => {
+   const { userId, orderId } = p as { userId: string; orderId: string };
 
    const [orderDetails, err] = await OrderService.getOrderWithUser(
-    payload.payload.userId,
+    userId,
     orderId,
    );
-   if (err || !orderDetails) return;
+
+   if (err || !orderDetails) return logger.error(err);
 
    await Promise.all([
     NotificationService.createNotification(
@@ -130,11 +130,6 @@ EventBus.on(EventType.ORDER_CANCELLED).subscribe({
      `Your order #${orderId.slice(0, 8)} has been cancelled`,
     ),
    ]);
-  } catch (err) {
-   logger.error({ err }, "[Notification Error]");
-  }
- },
- error: (err) => {
-  logger.error({ err });
+  });
  },
 });
