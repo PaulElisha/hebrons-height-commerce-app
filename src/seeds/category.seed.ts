@@ -75,6 +75,8 @@ export async function seedCategories() {
    }
   }
  }
+
+ process.exit(0);
 }
 
 seedCategories()

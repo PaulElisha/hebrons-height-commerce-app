@@ -21,7 +21,7 @@ export const consumeOutboxEvent = async (
 
  try {
   await cb(event.payload as Record<string, unknown>);
-  await OutboxService.ack(outboxId);
+  await OutboxService.update(outboxId);
 
   logger.info(
    { outboxId, eventType: event.eventType },
@@ -59,7 +59,7 @@ class OutboxService {
   return [row, null];
  }
 
- static async ack(outboxId: string): Promise<void> {
+ static async update(outboxId: string): Promise<void> {
   await db
    .update(outbox)
    .set({ processedAt: new Date() })

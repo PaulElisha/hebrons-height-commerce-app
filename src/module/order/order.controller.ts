@@ -35,7 +35,7 @@ class OrderController {
 
    const [orderId, err] = await OrderService.placeOrder(userId, cartId, body);
 
-   if (err) return next(err);
+   if (err || !orderId) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

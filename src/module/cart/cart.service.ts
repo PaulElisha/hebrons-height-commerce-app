@@ -61,11 +61,9 @@ class CartService {
    .select()
    .from(cart)
    .leftJoin(cartItem, eq(cart.id, cartItem.cartId))
-   .where(and(eq(cart.userId, userId), eq(cart.id, cartId)))
-   .limit(1);
+   .where(and(eq(cart.userId, userId), eq(cart.id, cartId)));
 
-  if (result.length === 0 || !result[0].cart)
-   return [null, APIError.notFound("Cart not found")];
+  if (result.length <= 0) return [null, APIError.notFound("Cart not found")];
 
   return [
    {
