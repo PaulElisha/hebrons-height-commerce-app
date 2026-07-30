@@ -16,24 +16,39 @@ class OrderRouter {
  }
 
  initializeRoutes() {
-  const userRoutes = Router();
-  userRoutes.use(roleGuard("user"));
-  userRoutes.get("/status", OrderController.getUserOrderByStatus);
-  userRoutes.get("/:orderId", OrderController.getOrderDetails);
-  userRoutes.post(
+  this.router.get(
+   "/merchant",
+   roleGuard("merchant"),
+   OrderController.getMerchantOrders,
+  );
+  this.router.put(
+   "/:orderId/status",
+   roleGuard("merchant"),
+   OrderController.updateOrderStatus,
+  );
+
+  this.router.get(
+   "/status",
+   roleGuard("user"),
+   OrderController.getUserOrderByStatus,
+  );
+  this.router.get(
+   "/:orderId",
+   roleGuard("user"),
+   OrderController.getOrderDetails,
+  );
+  this.router.post(
    "/:cartId",
+   roleGuard("user"),
    validate(CreateOrderDto),
    OrderController.placeOrder,
   );
-  userRoutes.put("/:orderId", OrderController.cancelOrder);
-  userRoutes.delete("/:orderId", OrderController.deleteOrderItem);
-  this.router.use(userRoutes);
-
-  const merchantRoutes = Router();
-  merchantRoutes.use(roleGuard("merchant"));
-  merchantRoutes.get("/merchant", OrderController.getMerchantOrders);
-  merchantRoutes.put("/:orderId/status", OrderController.updateOrderStatus);
-  this.router.use(merchantRoutes);
+  this.router.put("/:orderId", roleGuard("user"), OrderController.cancelOrder);
+  this.router.delete(
+   "/:orderId",
+   roleGuard("user"),
+   OrderController.deleteOrderItem,
+  );
  }
 }
 

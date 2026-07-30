@@ -40,7 +40,7 @@ import z from "zod";
 const mutex = new Mutex();
 
 export interface TOrderStatusQuery {
- status: string;
+ status?: string;
 }
 
 export interface TOrderFilter {
@@ -176,7 +176,7 @@ class OrderService {
 
  getUserOrderByStatus = async (
   userId: string,
-  status: string,
+  status?: string,
  ): Promise<Result<TOrderJoinRow[], AppError>> => {
   const result = await db
    .select()
