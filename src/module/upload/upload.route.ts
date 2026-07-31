@@ -10,7 +10,7 @@ class UploadRouter {
  constructor() {
   this.router = Router();
   this.router.use(authenticate);
-  this.router.use(roleGuard("user"));
+  this.router.use(roleGuard("user", "merchant"));
   this.initializeRoutes();
  }
 
