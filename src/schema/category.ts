@@ -1,6 +1,6 @@
 /** @format */
 
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const category = pgTable("category", {
  id: text("id")
@@ -12,13 +12,17 @@ export const category = pgTable("category", {
  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
 
-export const subcategory = pgTable("subcategory", {
- id: text("id")
-  .primaryKey()
-  .$defaultFn(() => crypto.randomUUID()),
- categoryId: text("category_id")
-  .notNull()
-  .references(() => category.id, { onDelete: "cascade" }),
- name: text("name").notNull(),
- createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-});
+export const subcategory = pgTable(
+ "subcategory",
+ {
+  id: text("id")
+   .primaryKey()
+   .$defaultFn(() => crypto.randomUUID()),
+  categoryId: text("category_id")
+   .notNull()
+   .references(() => category.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+ },
+ (t) => [index("subcategory_category_name_idx").on(t.categoryId, t.name)],
+);

@@ -3,6 +3,7 @@
 import { sql } from "drizzle-orm";
 import {
  check,
+ index,
  integer,
  pgTable,
  text,
@@ -73,5 +74,7 @@ export const payment = pgTable(
     sql`, `,
    )})`,
   ),
+  index("payment_reference_idx").on(table.paymentReference),
+  index("payment_user_idx").on(table.userId),
  ],
 );

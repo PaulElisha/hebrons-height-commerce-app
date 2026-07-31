@@ -37,5 +37,8 @@ export const cartItem = pgTable(
   quantity: integer("quantity").notNull(),
   totalItemPrice: integer("total_item_price"),
  },
- (t) => [index("cartMealUnq").on(t.cartId, t.productId)],
+  (t) => [
+   index("cartMealUnq").on(t.cartId, t.productId),
+   index("cart_item_product_idx").on(t.productId),
+  ],
 );

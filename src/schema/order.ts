@@ -3,6 +3,7 @@
 import { sql } from "drizzle-orm";
 import {
  check,
+ index,
  integer,
  jsonb,
  pgTable,
@@ -96,21 +97,32 @@ export const order = pgTable(
     sql`, `,
    )})`,
   ),
+  index("order_user_status_idx").on(table.userId, table.orderStatus),
+  index("order_cart_idx").on(table.cartId),
+  index("order_status_created_idx").on(table.orderStatus, table.createdAt),
  ],
 );
 
-export const orderItem = pgTable("orderItem", {
- id: text("id")
-  .primaryKey()
-  .$defaultFn(() => crypto.randomUUID()),
- orderId: text("order_id")
-  .notNull()
-  .references(() => order.id),
- merchantId: text("merchant_id")
-  .notNull()
-  .references(() => merchant.id),
- productId: text("product_id").notNull(),
- quantity: integer("quantity").notNull(),
- unitPrice: integer("unit_price").notNull(),
- lineTotal: integer("line_total"),
-});
+export const orderItem = pgTable(
+ "orderItem",
+ {
+  id: text("id")
+   .primaryKey()
+   .$defaultFn(() => crypto.randomUUID()),
+  orderId: text("order_id")
+   .notNull()
+   .references(() => order.id),
+  merchantId: text("merchant_id")
+   .notNull()
+   .references(() => merchant.id),
+  productId: text("product_id").notNull(),
+  quantity: integer("quantity").notNull(),
+  unitPrice: integer("unit_price").notNull(),
+  lineTotal: integer("line_total"),
+ },
+ (table) => [
+  index("order_item_order_idx").on(table.orderId),
+  index("order_item_merchant_idx").on(table.merchantId),
+  index("order_item_product_idx").on(table.productId),
+ ],
+);

@@ -3,6 +3,7 @@
 import { sql } from "drizzle-orm";
 import {
  check,
+ index,
  integer,
  jsonb,
  pgTable,
@@ -52,6 +53,20 @@ export const product = pgTable(
     productStatuses.map((s) => sql.raw(`'${s}'`)),
     sql`, `,
    )})`,
+  ),
+  index("product_merchant_idx").on(table.merchantId),
+  index("product_category_subcategory_idx").on(
+   table.category,
+   table.subCategory,
+  ),
+  index("product_subcategory_id_idx").on(table.subCategoryId),
+  index("product_listing_idx")
+   .on(table.status, table.createdAt)
+   .where(sql`${table.deletedAt} IS NULL`),
+  index("product_search_idx").using(
+   "gin",
+   table.name.op("gin_trgm_ops"),
+   table.description.op("gin_trgm_ops"),
   ),
  ],
 );

@@ -13,6 +13,7 @@ export default defineConfig({
   "./src/schema/category.ts",
   "./src/schema/notification.ts",
   "./src/schema/push-subscription.ts",
+  "./src/schema/outbox.ts",
  ],
  dialect: "postgresql",
  dbCredentials: {

@@ -1,7 +1,7 @@
 /** @format */
 
 import { sql } from "drizzle-orm";
-import { check, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { check, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.ts";
 
@@ -43,5 +43,6 @@ export const merchant = pgTable(
     sql`, `,
    )})`,
   ),
+  index("merchant_approval_status_idx").on(table.approvalStatus),
  ],
 );
