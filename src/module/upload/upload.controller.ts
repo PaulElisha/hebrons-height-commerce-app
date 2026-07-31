@@ -1,14 +1,14 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { APIResponse } from "@shared/types.ts";
+import { APIResponse, AssetType } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 
 import UploadService from "./upload.service.ts";
 import type { UploadResult } from "./upload.service.ts";
 
-interface UploadBody {
- folder: "product_images" | "avatar" | "product_videos";
+export interface UploadBody {
+ folder: AssetType;
 }
 
 class UploadController {
@@ -19,7 +19,8 @@ class UploadController {
    next: NextFunction,
   ): Promise<Response | void> => {
    const [uploadResult, err] = await UploadService.generateUploadSignature(
-    req.body.folder,
+    req.body,
+    req.user.id,
    );
 
    if (err || !uploadResult) return next(err);

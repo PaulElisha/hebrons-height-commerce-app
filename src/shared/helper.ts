@@ -6,6 +6,7 @@ import { merchant } from "@schema/merchant.ts";
 import { order } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
 import {
+ AssetType,
  Pagination,
  Result,
  T,
@@ -145,10 +146,8 @@ export const checkItemExistsInCart = async (
  return existingItem[0];
 };
 
-export function createPublicId(
- folder: "product_images" | "additional_images" | "avatar" | "product_videos",
-) {
- return `${folder}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+export function createPublicId(folder: AssetType, userId: string) {
+ return `${folder}-${userId}`;
 }
 
 export async function validateOrderForCart(

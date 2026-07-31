@@ -5,14 +5,9 @@ import crypto from "crypto";
 import Env from "env.ts";
 import { NextFunction, Request, Response } from "express";
 
-export function parsePaystackBody(
- req: Request,
- _res: Response,
- next: NextFunction,
-) {
+export function parseRawBody(req: Request, _res: Response, next: NextFunction) {
  try {
-  req.rawBody = req.body.toString("utf8");
-  req.body = JSON.parse(req.rawBody);
+  req.body = JSON.parse(req.body.toString("utf8"));
  } catch {
   return next(APIError.badRequest("Invalid JSON payload"));
  }
@@ -33,7 +28,7 @@ export const verifyPaystackSignature = async (
 
   const hash = crypto
    .createHmac("sha512", Env.PAYSTACK_SECRET_KEY)
-   .update(req.rawBody)
+   .update(req.body)
    .digest("hex");
 
   if (hash !== signature) {

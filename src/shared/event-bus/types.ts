@@ -13,5 +13,5 @@ export interface IEventBus<EventContract> {
  on(
   event: (typeof EventType)[keyof typeof EventType],
  ): Observable<EventContract>;
- subscribe(userId: string): Observable<EventContract>;
+ subscribe(): Observable<EventContract>;
 }

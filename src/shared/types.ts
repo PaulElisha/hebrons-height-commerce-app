@@ -113,11 +113,7 @@ export interface UploadImage {
 
 export type UploadImages = UploadImage[];
 
-export type AssetType =
- | "product_images"
- | "additional_images"
- | "avatar"
- | "product_videos";
+export type AssetType = "profile" | "product" | "business" | "additional";
 
 export interface TProductThreshold {
  price: number;

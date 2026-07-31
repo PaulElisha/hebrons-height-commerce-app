@@ -34,13 +34,8 @@ export class Bus implements IEventBus<EventContract> {
   );
  }
 
- subscribe(userId: string): Observable<EventContract> {
+ subscribe(): Observable<EventContract> {
   return this.eventBus$.asObservable().pipe(
-   filter(
-    (update) =>
-     update?.payload?.userId === userId ||
-     update?.payload?.merchantId === userId,
-   ),
    map(
     (update): EventContract => ({
      event_type: update.event_type,

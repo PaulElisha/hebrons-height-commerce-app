@@ -10,15 +10,8 @@ declare global {
   interface Request {
    user: Session["user"];
    session: Session["session"];
-
-   upload_image: UploadImage;
-
-   upload_images: UploadImages;
-
-   file: Express.Multer.File;
-   files: Express.Multer.File[];
-
-   rawBody: string;
+   upload_image?: UploadImage;
+   upload_images?: UploadImages;
   }
  }
 }

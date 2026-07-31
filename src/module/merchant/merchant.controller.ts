@@ -10,17 +10,14 @@ import {
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
 
-import MerchantService, { UpdateMerchantDto } from "./merchant.service.ts";
+import MerchantService, {
+ CreateMerchantDto,
+ UpdateMerchantDto,
+} from "./merchant.service.ts";
 
 export interface MerchantParams {
  merchantId?: string;
 }
-
-export const CreateMerchantSchema = z.object({
- businessName: z.string(),
- businessDescription: z.string(),
- address: z.string(),
-});
 
 class MerchantController {
  getMerchantProfile = asyncHandler(
@@ -44,18 +41,17 @@ class MerchantController {
 
  createMerchantProfile = asyncHandler(
   async (
-   req: Request<any, any, z.infer<typeof CreateMerchantSchema>>,
+   req: Request<any, any, z.infer<typeof CreateMerchantDto>>,
    res: Response<APIResponse<T<"merchant">>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
    const body = req.body;
-   const businessLogo = req.upload_image.url;
 
-   const [data, err] = await MerchantService.createMerchantProfile(userId, {
-    ...body,
-    businessLogo,
-   });
+   const [data, err] = await MerchantService.createMerchantProfile(
+    userId,
+    body,
+   );
 
    if (err || !data) return next(err);
 

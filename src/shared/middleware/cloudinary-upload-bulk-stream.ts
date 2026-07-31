@@ -20,7 +20,7 @@ export const cloudinaryUploadBulkStream = (folder: AssetType) => {
 
    const results = await FA.concurrent.map(async (file: any) => {
     return new Promise((res, rej) => {
-     const publicId = createPublicId(folder);
+     const publicId = createPublicId(folder, req.user.id);
 
      const streams = cloudinary.uploader.upload_stream(
       {

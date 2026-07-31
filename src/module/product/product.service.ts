@@ -41,7 +41,6 @@ export interface TProductFilter {
 export const CreateProductDto = z.object({
  name: z.string(),
  description: z.string(),
- image: z.string(),
  price: z.number(),
  quantity: z.number(),
  category: z.string(),
@@ -201,7 +200,7 @@ class ProductService {
     merchantId: targetMerchantId,
     name: body.name,
     description: body.description,
-    image: body.image,
+    image: "",
     price: body.price,
     quantity: body.quantity,
     categoryId,
@@ -213,64 +212,6 @@ class ProductService {
    .returning();
 
   return [newProduct, null];
- };
-
- uploadAdditionalMediaForProduct = async (
-  userId: string,
-  productId: string,
-  uploadedImages: UploadImages,
- ): Promise<Result<T<"product">, AppError>> => {
-  const [existingProduct, err] = await helper.getMerchantProduct(
-   userId,
-   productId,
-  );
-  if (err || !existingProduct) return [null, err];
-
-  const imageLinks = uploadedImages.map((img) => img.url);
-
-  const [updatedImages] = await db
-   .update(product)
-   .set({
-    additionalImages: imageLinks,
-   })
-   .where(eq(product.id, productId))
-   .returning();
-
-  if (!updatedImages)
-   return [
-    null,
-    APIError.notFound("Product not found or not owned by merchant"),
-   ];
-
-  return [updatedImages, null];
- };
-
- updatePrimaryImage = async (
-  userId: string,
-  productId: string,
-  primaryImageUrl: string,
- ): Promise<Result<T<"product">, AppError>> => {
-  const [updatedProductImage] = await db
-   .update(product)
-   .set({
-    image: primaryImageUrl,
-    updatedAt: new Date(),
-   })
-   .where(
-    and(
-     eq(product.id, productId),
-     inArray(product.merchantId, helper.merchantIdSubquery(userId)),
-    ),
-   )
-   .returning();
-
-  if (!updatedProductImage)
-   return [
-    null,
-    APIError.notFound("Product not found or not owned by merchant"),
-   ];
-
-  return [updatedProductImage, null];
  };
 
  updateProduct = async (

@@ -2,6 +2,7 @@
 import HttpStatus from "@shared/enum/http.ts";
 import { EventBus } from "@shared/event-bus/index.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
+import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import { APIResponse, T } from "@shared/types.ts";
 import { createSession } from "better-sse";
 import { NextFunction, Request, Response } from "express";
@@ -91,9 +92,12 @@ class NotificationController {
 
   const session = await createSession(req, res);
 
-  const subscription = EventBus.subscribe(userId).subscribe({
-   next: (payload) => {
-    session.push(payload.payload, payload.event_type);
+  const subscription = EventBus.subscribe().subscribe({
+   next: async ({ payload }) => {
+    await consumeOutboxEvent(payload.outboxId, async (p) => {
+     if (p.userId !== userId && p.merchantId !== userId) return;
+     session.push(p, payload.event_type);
+    });
    },
    error: (err) => {
     session.push(err.message);

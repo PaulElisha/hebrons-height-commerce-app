@@ -7,10 +7,8 @@ import upload from "@shared/middleware/multer-upload.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
-import ProductController, {
- CreateProductSchema,
-} from "./product.controller.ts";
-import { UpdateProductDto } from "./product.service.ts";
+import ProductController from "./product.controller.ts";
+import { CreateProductDto, UpdateProductDto } from "./product.service.ts";
 
 class ProductRouter {
  router: Router;
@@ -45,26 +43,8 @@ class ProductRouter {
    "/",
    authenticate,
    roleGuard("merchant"),
-   upload.single("file"),
-   validate(CreateProductSchema),
-   cloudinaryUploadStream("product_images"),
+   validate(CreateProductDto),
    ProductController.createProduct,
-  );
-  this.router.put(
-   "/additional-images/:productId",
-   authenticate,
-   roleGuard("merchant"),
-   upload.array("files", 5),
-   cloudinaryUploadBulkStream("additional_images"),
-   ProductController.uploadAdditionalMediaForProduct,
-  );
-  this.router.put(
-   "/primary-image/:productId",
-   authenticate,
-   roleGuard("merchant"),
-   upload.single("file"),
-   cloudinaryUploadStream("product_images"),
-   ProductController.updatePrimaryImage,
   );
   this.router.put(
    "/:productId",

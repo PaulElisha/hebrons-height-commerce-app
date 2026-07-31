@@ -41,9 +41,6 @@ class InventoryService {
 
   const { quantity: currentQuantity, price } = productData;
 
-  if (currentQuantity <= 0)
-   return [null, APIError.notFound("Product is out of stock")];
-
   const allocatedQuantity = await db
    .select({ totalQuantity: sum(cartItem.quantity) })
    .from(cartItem)

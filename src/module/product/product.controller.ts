@@ -15,21 +15,14 @@ import {
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
 
-import ProductService, { TProductFilter } from "./product.service.ts";
+import ProductService, {
+ CreateProductDto,
+ TProductFilter,
+} from "./product.service.ts";
 
 export interface ProductParams {
  productId?: string;
 }
-
-export const CreateProductSchema = z.object({
- name: z.string(),
- description: z.string(),
- price: z.coerce.number(),
- quantity: z.coerce.number(),
- category: z.string(),
- subCategory: z.string(),
- additionalData: z.record(z.string(), z.string()),
-});
 
 class ProductController {
  getMerchantProduct = asyncHandler(
@@ -177,18 +170,14 @@ class ProductController {
 
  createProduct = asyncHandler(
   async (
-   req: Request<any, any, z.infer<typeof CreateProductSchema>>,
+   req: Request<any, any, z.infer<typeof CreateProductDto>>,
    res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
   ): Promise<any> => {
    const userId = req.user.id;
    const body = req.body;
-   const image = req.upload_image.url;
 
-   const [data, err] = await ProductService.createProduct(userId, {
-    ...body,
-    image,
-   });
+   const [data, err] = await ProductService.createProduct(userId, body);
 
    if (err || !data) return next(err);
 
@@ -214,58 +203,6 @@ class ProductController {
     userId,
     productId,
     body,
-   );
-
-   if (err || !data) return next(err);
-
-   return res.status(HttpStatus.OK).json({
-    status: "ok",
-    message: "product updated successfully",
-    data,
-   });
-  },
- );
-
- uploadAdditionalMediaForProduct = asyncHandler(
-  async (
-   req: Request<ProductParams>,
-   res: Response<APIResponse<T<"product">>>,
-   next: NextFunction,
-  ): Promise<any> => {
-   const userId = req.user.id;
-   const productId = String(req.params.productId);
-   const imageUrls = req.upload_images;
-
-   const [data, err] = await ProductService.uploadAdditionalMediaForProduct(
-    userId,
-    productId,
-    imageUrls,
-   );
-
-   if (err || !data) return next(err);
-
-   return res.status(HttpStatus.OK).json({
-    status: "ok",
-    message: "product updated successfully",
-    data,
-   });
-  },
- );
-
- updatePrimaryImage = asyncHandler(
-  async (
-   req: Request<ProductParams>,
-   res: Response<APIResponse<T<"product">>>,
-   next: NextFunction,
-  ) => {
-   const userId = req.user.id;
-   const productId = String(req.params.productId);
-   const primaryImageUrl = req.upload_image.url;
-
-   const [data, err] = await ProductService.updatePrimaryImage(
-    userId,
-    productId,
-    primaryImageUrl,
    );
 
    if (err || !data) return next(err);

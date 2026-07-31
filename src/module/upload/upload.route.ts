@@ -10,13 +10,13 @@ class UploadRouter {
  constructor() {
   this.router = Router();
   this.router.use(authenticate);
+  this.router.use(roleGuard("user"));
   this.initializeRoutes();
  }
 
  initializeRoutes() {
   this.router.post(
    "/cloudinary-signature",
-   roleGuard("user"),
    UploadController.generateUploadSignature,
   );
  }

@@ -13,7 +13,7 @@ export const cloudinaryUploadStream = (folder: AssetType) => {
   }
 
   try {
-   const publicId = createPublicId(folder);
+   const publicId = createPublicId(folder, req.user.id);
    const stream = cloudinary.uploader.upload_stream(
     {
      folder: folder,

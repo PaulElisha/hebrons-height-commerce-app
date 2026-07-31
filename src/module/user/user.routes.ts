@@ -35,19 +35,14 @@ class UserRouter {
 
   this.router.put(
    "/update",
-   upload.single("file"),
-   cloudinaryUploadStream("avatar"),
    asyncHandler(async (req: Request, res: Response<APIResponse<T<"user">>>) => {
     const body = req.body;
     const userId = req.user.id;
-    const image = req.upload_image.url;
 
     const updateData: Record<string, any> = {};
 
     if (body.name !== undefined) updateData.name = body.name;
     if (body.email !== undefined) updateData.email = body.email;
-    if (image !== undefined) updateData.image = image;
-    updateData.updatedAt = new Date();
 
     const [updatedUser] = await db
      .update(user)

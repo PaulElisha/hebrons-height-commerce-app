@@ -18,7 +18,6 @@ import z from "zod";
 
 export const CreateMerchantDto = z.object({
  businessName: z.string(),
- businessLogo: z.string(),
  businessDescription: z.string(),
  address: z.string(),
 });
@@ -71,7 +70,7 @@ class MerchantService {
    .values({
     userId: userId,
     businessName: body.businessName,
-    businessLogo: body.businessLogo || "",
+    businessLogo: "",
     businessDescription: body.businessDescription,
     address: body.address,
    })

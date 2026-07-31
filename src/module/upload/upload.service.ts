@@ -3,8 +3,9 @@ import cloudinary from "@app/cloudinary.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { createPublicId } from "@shared/helper.ts";
-import { Result } from "@shared/types.ts";
+import { AssetType, Result } from "@shared/types.ts";
 import Env from "env.ts";
+import { UploadBody } from "./upload.controller.ts";
 
 export interface UploadResult {
  public_id: string;
@@ -17,14 +18,16 @@ export interface UploadResult {
 
 class UploadService {
  generateUploadSignature = async (
-  folder: "product_images" | "avatar" | "product_videos",
+  body: UploadBody,
+  userId: string,
  ): Promise<Result<UploadResult, AppError>> => {
   try {
-   const publicId = createPublicId(folder);
+   const timestamp = Math.floor(Date.now() / 1000);
+   const publicId = createPublicId(body.folder, userId);
    const signature = cloudinary.utils.api_sign_request(
     {
      timestamp: Math.floor(Date.now() / 1000),
-     folder: `${folder}/${publicId}`,
+     folder: `${body.folder}/${publicId}`,
      public_id: publicId,
      unique_filename: false,
      overwrite: true,
@@ -39,9 +42,9 @@ class UploadService {
     {
      signature,
      public_id: publicId,
-     folder: `hhg-${folder}`,
+     folder: body.folder,
      url: `https://api.cloudinary.com/v1_1/${Env.CLOUDINARY_CLOUD_NAME}/images/upload`,
-     timestamp: Math.floor(Date.now() / 1000),
+     timestamp,
      apiKey: Env.CLOUDINARY_KEY,
     },
     null,

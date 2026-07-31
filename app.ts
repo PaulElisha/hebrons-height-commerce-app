@@ -40,6 +40,7 @@ import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
+import cloudinaryWebhookRouter from "@module/webhook/cloudinary/cloudinary.route.ts";
 
 dns.setDefaultResultOrder("ipv4first");
 
@@ -75,6 +76,7 @@ class App {
  initializeWebhooks() {
   this.app.use("/api/webhook", stripeWebhookRouter);
   this.app.use("/api/webhook", paystackWebhookRouter);
+  this.app.use("/api/webhook", cloudinaryWebhookRouter);
  }
 
  initializeApiRoutes() {
