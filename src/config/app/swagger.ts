@@ -561,17 +561,39 @@ const spec = {
      },
     },
    },
-   UploadResult: {
-    type: "object",
-    properties: {
-     public_id: { type: "string" },
-     url: { type: "string" },
-     folder: { type: "string" },
-     signature: { type: "string" },
-     timestamp: { type: "integer" },
-     apiKey: { type: "string" },
+    UploadResult: {
+     type: "object",
+     properties: {
+      public_id: {
+       type: "string",
+       description: "Cloudinary public ID, formatted as `<folder>-<userId>` (e.g. `product-8f3c...`)",
+       example: "product-8f3c2a1b",
+      },
+      url: {
+       type: "string",
+       format: "uri",
+       description: "Cloudinary upload endpoint — POST the file here with `file`, `folder`, `public_id`, `signature`, `timestamp`, `api_key` (form-data)",
+       example: "https://api.cloudinary.com/v1_1/<cloud_name>/images/upload",
+      },
+      folder: {
+       type: "string",
+       enum: ["profile", "product", "business", "additional"],
+       description: "Echo of the asset type sent in the request",
+      },
+      signature: {
+       type: "string",
+       description: "Signed upload signature — send as `signature` with the upload request",
+      },
+      timestamp: {
+       type: "integer",
+       description: "Unix timestamp the signature was generated for — send as `timestamp` with the upload request",
+      },
+      apiKey: {
+       type: "string",
+       description: "Cloudinary API key — send as `api_key` with the upload request",
+      },
+     },
     },
-   },
   },
  },
  paths: {
@@ -3078,6 +3100,8 @@ const spec = {
    post: {
     tags: ["Upload"],
     summary: "Generate a Cloudinary upload signature",
+    description:
+     "Get the signed params needed to upload an image directly to Cloudinary. Flow: 1) POST this endpoint with an asset type (folder). 2) Upload the file to the returned `url` (Cloudinary) as form-data: `file`, `folder`, `public_id`, `signature`, `timestamp`, `api_key`. 3) Cloudinary notifies the server via the webhook and the related record (user image / product image / business logo / product additional images) is updated automatically — no further API call needed.",
     security: [{ bearerAuth: [] }],
     requestBody: {
      required: true,
@@ -3090,7 +3114,14 @@ const spec = {
          folder: {
           type: "string",
           enum: ["profile", "product", "business", "additional"],
-          description: "Upload folder type",
+          description:
+           "Asset type — literal values are: `profile` (user avatar image), `product` (product main image), `business` (merchant business logo), `additional` (extra images for a product). The webhook dispatches on this value.",
+          "x-enumDescriptions": [
+           { value: "profile", description: "User avatar — updates the authenticated user's `image`" },
+           { value: "product", description: "Product main image — updates the product's `image`" },
+           { value: "business", description: "Merchant business logo — updates the merchant's `businessLogo`" },
+           { value: "additional", description: "Extra product image — appends to the product's `additionalImages`" },
+          ],
          },
         },
        },
