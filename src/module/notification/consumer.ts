@@ -1,4 +1,5 @@
 /** @format */
+import logger from "@app/logger.ts";
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
@@ -8,7 +9,6 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import WebPushService from "../webpush/webpush.service.ts";
 import NotificationService from "./notification.service.ts";
-import logger from "@app/logger.ts";
 
 EventBus.on(EventType.ORDER_STATUS_UPDATED).subscribe({
  next: async ({ payload }) => {

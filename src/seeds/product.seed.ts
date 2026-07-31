@@ -1,15 +1,14 @@
 /** @format */
 
 import "../../env.ts";
-import { and, eq } from "drizzle-orm";
 
 import db from "@db/db.ts";
 import { account, user } from "@schema/auth.ts";
 import { category, subcategory } from "@schema/category.ts";
 import { merchant } from "@schema/merchant.ts";
 import { product } from "@schema/product.ts";
-
 import { hashPassword } from "@shared/util/password.ts";
+import { and, eq } from "drizzle-orm";
 
 const DEMO_USER = {
  id: crypto.randomUUID(),

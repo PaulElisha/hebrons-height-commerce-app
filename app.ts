@@ -19,11 +19,11 @@ import categoryRouter from "@module/category/category.route.ts";
 import merchantRouter from "@module/merchant/merchant.route.ts";
 import notificationRouter from "@module/notification/notification.route.ts";
 import orderRouter from "@module/order/order.route.ts";
-import OutboxService from "@module/outbox/outbox.service.ts";
 import paymentRouter from "@module/payment/payment.routes.ts";
 import productRouter from "@module/product/product.route.ts";
 import uploadRouter from "@module/upload/upload.route.ts";
 import userRouter from "@module/user/user.routes.ts";
+import cloudinaryWebhookRouter from "@module/webhook/cloudinary/cloudinary.route.ts";
 import paystackWebhookRouter from "@module/webhook/paystack/paystack.routes.ts";
 import stripeWebhookRouter from "@module/webhook/stripe/stripe.route.ts";
 import webpushRouter from "@module/webpush/webpush.route.ts";
@@ -40,7 +40,6 @@ import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
-import cloudinaryWebhookRouter from "@module/webhook/cloudinary/cloudinary.route.ts";
 
 dns.setDefaultResultOrder("ipv4first");
 

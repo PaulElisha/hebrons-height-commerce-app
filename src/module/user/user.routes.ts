@@ -4,8 +4,6 @@ import authenticate from "@middleware/authenticate.ts";
 import { user } from "@schema/auth.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { cloudinaryUploadStream } from "@shared/middleware/cloudinary-upload-stream.ts";
-import upload from "@shared/middleware/multer-upload.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { APIResponse, T } from "@shared/types.ts";
 import { and, eq, isNotNull } from "drizzle-orm";

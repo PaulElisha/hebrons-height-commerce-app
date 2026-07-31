@@ -1,8 +1,8 @@
 /** @format */
+import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import { EventBus } from "@shared/event-bus/index.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
-import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import { APIResponse, T } from "@shared/types.ts";
 import { createSession } from "better-sse";
 import { NextFunction, Request, Response } from "express";

@@ -1,7 +1,5 @@
 /** @format */
 import authenticate from "@middleware/authenticate.ts";
-import { cloudinaryUploadStream } from "@middleware/cloudinary-upload-stream.ts";
-import upload from "@middleware/multer-upload.ts";
 import roleGuard from "@middleware/role-guard.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";

@@ -3,8 +3,9 @@ import cloudinary from "@app/cloudinary.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { createPublicId } from "@shared/helper.ts";
-import { AssetType, Result } from "@shared/types.ts";
+import { Result } from "@shared/types.ts";
 import Env from "env.ts";
+
 import { UploadBody } from "./upload.controller.ts";
 
 export interface UploadResult {

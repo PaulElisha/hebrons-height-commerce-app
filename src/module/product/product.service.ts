@@ -15,7 +15,6 @@ import {
  TPaginatedProducts,
  TProductWithMerchant,
  TSubcategory,
- UploadImages,
 } from "@shared/types.ts";
 import {
  and,
