@@ -561,6 +561,18 @@ const spec = {
      },
     },
    },
+    AssetType: {
+     type: "string",
+     enum: ["profile", "product", "business", "additional"],
+     description:
+      "Asset type for Cloudinary uploads — literal values: `profile` (user avatar image), `product` (product main image), `business` (merchant business logo), `additional` (extra images for a product). The webhook dispatches on this value.",
+     "x-enumDescriptions": [
+      { value: "profile", description: "User avatar — updates the authenticated user's `image`" },
+      { value: "product", description: "Product main image — updates the product's `image`" },
+      { value: "business", description: "Merchant business logo — updates the merchant's `businessLogo`" },
+      { value: "additional", description: "Extra product image — appends to the product's `additionalImages`" },
+     ],
+    },
     UploadResult: {
      type: "object",
      properties: {
@@ -575,11 +587,7 @@ const spec = {
        description: "Cloudinary upload endpoint — POST the file here with `file`, `folder`, `public_id`, `signature`, `timestamp`, `api_key` (form-data)",
        example: "https://api.cloudinary.com/v1_1/<cloud_name>/images/upload",
       },
-      folder: {
-       type: "string",
-       enum: ["profile", "product", "business", "additional"],
-       description: "Echo of the asset type sent in the request",
-      },
+      folder: { $ref: "#/components/schemas/AssetType" },
       signature: {
        type: "string",
        description: "Signed upload signature — send as `signature` with the upload request",
@@ -3112,16 +3120,7 @@ const spec = {
         required: ["folder"],
         properties: {
          folder: {
-          type: "string",
-          enum: ["profile", "product", "business", "additional"],
-          description:
-           "Asset type — literal values are: `profile` (user avatar image), `product` (product main image), `business` (merchant business logo), `additional` (extra images for a product). The webhook dispatches on this value.",
-          "x-enumDescriptions": [
-           { value: "profile", description: "User avatar — updates the authenticated user's `image`" },
-           { value: "product", description: "Product main image — updates the product's `image`" },
-           { value: "business", description: "Merchant business logo — updates the merchant's `businessLogo`" },
-           { value: "additional", description: "Extra product image — appends to the product's `additionalImages`" },
-          ],
+          $ref: "#/components/schemas/AssetType",
          },
         },
        },
