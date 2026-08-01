@@ -10,9 +10,9 @@ import { Result } from "@shared/types.ts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import FA from "fasy";
 
-export const consumeOutboxEvent = async (
+export const consumeOutboxEvent = async <T = Record<string, unknown>>(
  outboxId: string,
- cb: (payload: Record<string, unknown>) => Promise<void>,
+ cb: (payload: T) => Promise<void>,
 ) => {
  const [event, e] = await OutboxService.fetchById(outboxId);
 
@@ -20,7 +20,7 @@ export const consumeOutboxEvent = async (
   return logger.info("Event already processed");
 
  try {
-  await cb(event.payload as Record<string, unknown>);
+  await cb(event.payload as T);
   await OutboxService.update(outboxId);
 
   logger.info(

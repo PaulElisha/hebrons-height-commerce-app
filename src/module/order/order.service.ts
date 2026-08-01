@@ -27,7 +27,6 @@ import {
  desc,
  eq,
  inArray,
- isNotNull,
  lt,
  ne,
  SQL,
@@ -241,7 +240,7 @@ class OrderService {
   const [totalCountResult] = await db
    .select({ totalCount: count() })
    .from(order)
-   .where(and(...filters, isNotNull(order.id)));
+   .where(and(...filters));
 
   const totalOrders = Number(totalCountResult?.totalCount);
   const totalPages = Math.ceil(totalOrders / limit);
@@ -383,6 +382,7 @@ class OrderService {
    publishEvent({
     event_type: EventType.ORDER_CANCELLED,
     payload: {
+     userId: cancelledOrder.userId,
      productIds,
      orderId: cancelledOrder.id,
     },

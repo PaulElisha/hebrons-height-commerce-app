@@ -159,7 +159,7 @@ class ProductService {
   const [totalCountResult] = await db
    .select({ totalCount: count() })
    .from(product)
-   .where(and(...filters, isNotNull(product.id)));
+   .where(and(...filters));
 
   const totalProducts = Number(totalCountResult?.totalCount);
   const totalPages = Math.ceil(totalProducts / limit);

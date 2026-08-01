@@ -8,7 +8,6 @@ import { order, orderItem } from "@schema/order.ts";
 import { outbox } from "@schema/outbox.ts";
 import { payment } from "@schema/payment.ts";
 import { product } from "@schema/product.ts";
-import { pushSubscription } from "@schema/push-subscription.ts";
 
 export default {
  user,
@@ -23,7 +22,6 @@ export default {
  category,
  notification,
  outbox,
- pushSubscription,
  subcategory,
  order,
  orderItem,

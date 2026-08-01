@@ -1,10 +1,14 @@
 /** @format */
+import db from "@db/db.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
+import { merchant } from "@schema/merchant.ts";
+import { order } from "@schema/order.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import { EventBus } from "@shared/event-bus/index.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import { APIResponse, T } from "@shared/types.ts";
 import { createSession } from "better-sse";
+import { and, eq, isNull } from "drizzle-orm";
 import { NextFunction, Request, Response } from "express";
 
 import NotificationService from "./notification.service.ts";
@@ -12,6 +16,42 @@ import NotificationService from "./notification.service.ts";
 export interface NotificationParams {
  notificationId: string;
 }
+
+const resolveRecipientUserId = async (
+ payload: Record<string, unknown>,
+): Promise<string | null> => {
+ if (payload.userId) return payload.userId as string;
+
+ if (payload.merchantId) {
+  const [merchantData] = await db
+   .select({ userId: merchant.userId })
+   .from(merchant)
+   .where(
+    and(
+     eq(merchant.id, payload.merchantId as string),
+     isNull(merchant.deletedAt),
+    ),
+   )
+   .limit(1);
+
+  if (merchantData) return merchantData.userId;
+ }
+
+ const orderId =
+  (payload.orderId as string) ?? (payload.event as any)?.metadata?.orderId;
+
+ if (orderId) {
+  const [orderData] = await db
+   .select({ userId: order.userId })
+   .from(order)
+   .where(eq(order.id, orderId))
+   .limit(1);
+
+  if (orderData) return orderData.userId;
+ }
+
+ return null;
+};
 
 class NotificationController {
  getNotifications = asyncHandler(
@@ -95,7 +135,8 @@ class NotificationController {
   const subscription = EventBus.subscribe().subscribe({
    next: async ({ payload }) => {
     await consumeOutboxEvent(payload.outboxId, async (p) => {
-     if (p.userId !== userId && p.merchantId !== userId) return;
+     const recipient = await resolveRecipientUserId(p);
+     if (recipient !== userId) return;
      session.push(p, payload.event_type);
     });
    },

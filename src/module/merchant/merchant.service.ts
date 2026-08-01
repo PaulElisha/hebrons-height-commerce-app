@@ -13,7 +13,7 @@ import {
  TAnalyticsResult,
  TMerchantWithUser,
 } from "@shared/types.ts";
-import { and, count, desc, eq, isNotNull, isNull, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, isNull, sql, sum } from "drizzle-orm";
 import z from "zod";
 
 export const CreateMerchantDto = z.object({
@@ -98,13 +98,7 @@ class MerchantService {
   const [updatedMerchant] = await db
    .update(merchant)
    .set(updateData)
-   .where(
-    and(
-     eq(merchant.userId, userId),
-     eq(merchant.id, merchantId),
-     isNotNull(merchant.id),
-    ),
-   )
+   .where(and(eq(merchant.userId, userId), eq(merchant.id, merchantId)))
    .returning();
 
   if (!updatedMerchant)

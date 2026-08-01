@@ -26,7 +26,6 @@ import userRouter from "@module/user/user.routes.ts";
 import cloudinaryWebhookRouter from "@module/webhook/cloudinary/cloudinary.route.ts";
 import paystackWebhookRouter from "@module/webhook/paystack/paystack.routes.ts";
 import stripeWebhookRouter from "@module/webhook/stripe/stripe.route.ts";
-import webpushRouter from "@module/webpush/webpush.route.ts";
 import { toNodeHandler } from "better-auth/node";
 import cookieParser from "cookie-parser";
 import dns from "dns";
@@ -106,7 +105,6 @@ class App {
   this.app.use("/api/merchant", merchantRouter);
   this.app.use("/api/category", categoryRouter);
   this.app.use("/api/notification", notificationRouter);
-  this.app.use("/api/webpush", webpushRouter);
   this.app.use("/api/product", productRouter);
   this.app.use("/api/cart", cartRouter);
   this.app.use("/api/order", orderRouter);

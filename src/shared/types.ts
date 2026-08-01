@@ -251,12 +251,6 @@ export interface TAnalyticsResult {
  periodCounts: { date: string; count: number; revenue: number }[];
 }
 
-export interface TPusher {
- email: string;
- pubKey: string;
- privKey: string;
-}
-
 export interface TPayment {
  email: string;
  amount: number | null;

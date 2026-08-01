@@ -6,7 +6,7 @@ import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { APIResponse, T } from "@shared/types.ts";
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Request, Response, Router } from "express";
 
 class UserRouter {
@@ -45,7 +45,7 @@ class UserRouter {
     const [updatedUser] = await db
      .update(user)
      .set(updateData)
-     .where(and(eq(user.id, userId), isNotNull(user.id)))
+     .where(eq(user.id, userId))
      .returning();
 
     return res.status(HttpStatus.OK).json({

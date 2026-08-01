@@ -6,7 +6,7 @@ import AppError from "@shared/error/app-error.ts";
 import * as helper from "@shared/helper.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
 import { Mutex } from "async-mutex";
-import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 
 import CartActions from "./dispatcher.ts";
@@ -27,7 +27,7 @@ class CartBase {
     subtotal: sql<number>`COALESCE(SUM(${cartItem.totalItemPrice}), 0)`,
    })
    .from(cartItem)
-   .where(and(eq(cartItem.cartId, cartId), isNotNull(cartItem.id)));
+   .where(eq(cartItem.cartId, cartId));
 
   await db
    .update(cart)
