@@ -37,7 +37,7 @@ class UserRouter {
     const body = req.body;
     const userId = req.user.id;
 
-    const updateData: Record<string, any> = {};
+    const updateData: Partial<typeof user.$inferInsert> = {};
 
     if (body.name !== undefined) updateData.name = body.name;
     if (body.email !== undefined) updateData.email = body.email;

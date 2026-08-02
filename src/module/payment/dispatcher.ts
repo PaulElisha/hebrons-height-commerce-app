@@ -13,9 +13,21 @@ import Env from "env.ts";
 import FA from "fasy";
 import z from "zod";
 
-import { CheckoutData, PaymentResponse } from "./payment.service.ts";
+import {
+ CheckoutData,
+ PaymentCheckoutResult,
+ PaymentResponse,
+} from "./payment.service.ts";
 
-export const FetchRail: Record<string, (...any: any[]) => any> = {
+type Rail = z.infer<typeof CheckoutData>["rail"];
+
+type RailHandler = (
+ userId: string,
+ orderId: string,
+ data: z.infer<typeof CheckoutData>,
+) => Promise<Result<z.infer<typeof PaymentResponse>, AppError>>;
+
+export const FetchRail: Record<Rail, RailHandler> = {
  initializePaystackCheckout: async (
   userId: string,
   orderId: string,
@@ -62,7 +74,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
 
   const responseData = await response.json();
 
-  const res = {
+  const res: PaymentCheckoutResult = {
    email: data.email,
    mode: data.mode,
    rail: data.rail,
@@ -132,7 +144,7 @@ export const FetchRail: Record<string, (...any: any[]) => any> = {
      return [null, APIError.internalServer("Stripe payment failed")];
     }
 
-    const res = {
+    const res: PaymentCheckoutResult = {
      email: data.email,
      mode: data.mode,
      rail: data.rail,

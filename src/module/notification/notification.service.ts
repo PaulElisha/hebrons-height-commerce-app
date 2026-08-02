@@ -1,6 +1,6 @@
 /** @format */
 import db from "@db/db.ts";
-import { notification } from "@schema/notification.ts";
+import { notification, NotificationType } from "@schema/notification.ts";
 import AppError from "@shared/error/app-error.ts";
 import { Result, T } from "@shared/types.ts";
 import { and, count, desc, eq } from "drizzle-orm";
@@ -58,7 +58,7 @@ class NotificationService {
   userId: string,
   title: string,
   message: string,
-  type: "order_update" | "stock_alert" | "system",
+  type: NotificationType,
  ): Promise<Result<T<"notification">, AppError>> => {
   const [created] = await db
    .insert(notification)

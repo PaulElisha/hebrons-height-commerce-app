@@ -13,27 +13,27 @@ import z from "zod";
 
 import { FetchRail } from "./dispatcher.ts";
 
-export const PaymentData = z.object({
- email: z.string().email(),
- amount: z.number().positive(),
- currency: z.string(),
- paymentProvider: z.string(),
- rail: z.string(),
- callback_url: z.url().optional(),
- checkout_url: z.string(),
- access_code: z.string().optional(),
- reference: z.string().optional(),
- mode: z.custom<Stripe.Checkout.SessionCreateParams.Mode>().optional(),
-});
-
 export const CheckoutData = z.object({
  email: z.string().email(),
  currency: z.string(),
- rail: z.string(),
+ rail: z.enum(["initializePaystackCheckout", "initializeStripeCheckout"]),
  metadata: z.record(z.string(), z.any()).optional(),
  callback_url: z.url().optional(),
  mode: z.custom<Stripe.Checkout.SessionCreateParams.Mode>().optional(),
 });
+
+export const PaymentData = CheckoutData.extend({
+ amount: z.number().positive().optional(),
+ paymentProvider: z.string(),
+ checkout_url: z.string(),
+ access_code: z.string().optional(),
+ reference: z.string().optional(),
+});
+
+export type PaymentCheckoutResult = Omit<
+ z.infer<typeof PaymentData>,
+ "paymentProvider"
+> & { callbackUrl?: string };
 
 export const PaymentResponse = z.object({
  checkout_url: z.string().url(),
@@ -47,16 +47,12 @@ class PaymentService {
   orderId: string,
   checkout: z.infer<typeof CheckoutData>,
  ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
-  const rail = checkout.rail;
+  const [paymentResponse, err] = await FetchRail[checkout.rail](
+   userId,
+   orderId,
+   checkout,
+  );
 
-  const callback = FetchRail[rail];
-  let paymentResponse, err;
-
-  if (typeof rail === "string" && rail == "initializePaystackCheckout") {
-   [paymentResponse, err] = await callback(userId, orderId, checkout);
-  } else if (typeof rail === "string" && rail == "initializeStripeCheckout") {
-   [paymentResponse, err] = await callback(userId, orderId, checkout);
-  }
   return [paymentResponse, err];
  };
 

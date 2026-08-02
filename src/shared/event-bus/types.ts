@@ -1,8 +1,7 @@
 /** @format */
-import type { PaymentData } from "@module/payment/payment.service.ts";
+import type { PaymentCheckoutResult } from "@module/payment/payment.service.ts";
 import type { Observable } from "rxjs";
 import type Stripe from "stripe";
-import type z from "zod";
 
 import { EventType } from "./config.ts";
 
@@ -53,10 +52,7 @@ export interface CartLowStockAlertPayload {
  quantity: number;
 }
 
-export type PaymentInitializedData = Omit<
- z.infer<typeof PaymentData>,
- "paymentProvider"
->;
+export type PaymentInitializedData = Omit<PaymentCheckoutResult, "callbackUrl">;
 
 export interface PaystackPaymentInitializedPayload {
  paystackData: PaymentInitializedData;

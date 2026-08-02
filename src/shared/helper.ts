@@ -153,7 +153,7 @@ export function createPublicId(folder: AssetType, userId: string) {
 export async function validateOrderForCart(
  cartId: string,
  userId: string,
-): Promise<Result<any[], AppError>> {
+): Promise<Result<T<"order">[], AppError>> {
  try {
   const result = await db
    .select()

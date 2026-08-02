@@ -21,30 +21,26 @@ import {
  TOrderWithUser,
 } from "@shared/types.ts";
 import { Mutex } from "async-mutex";
-import {
- and,
- count,
- desc,
- eq,
- inArray,
- lt,
- ne,
- SQL,
- sql,
-} from "drizzle-orm";
+import { and, count, desc, eq, inArray, lt, ne, SQL, sql } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
 
 const mutex = new Mutex();
 
-export interface TOrderStatusQuery {
- status?: string;
-}
+export const OrderStatusQuery = z.object({
+ status: z.string().optional(),
+});
+export type TOrderStatusQuery = z.infer<typeof OrderStatusQuery>;
 
-export interface TOrderFilter {
- status?: string;
-}
+export const OrderFilter = z.object({
+ status: z.string().optional(),
+});
+export type TOrderFilter = z.infer<typeof OrderFilter>;
+
+export const UpdateOrderStatusDto = z.object({
+ status: z.enum(["out_for_delivery", "delivered"]),
+});
 
 export const CreateOrderDto = z.object({
  deliveryAddress: z.object({
@@ -282,7 +278,7 @@ class OrderService {
  async updateOrderStatus(
   userId: string,
   orderId: string,
-  status: "out_for_delivery" | "delivered",
+  status: z.infer<typeof UpdateOrderStatusDto>["status"],
  ): Promise<Result<T<"order">, AppError>> {
   const [orderItemForMerchant] = await db
    .select()

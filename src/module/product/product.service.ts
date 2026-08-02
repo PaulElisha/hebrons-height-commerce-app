@@ -31,11 +31,12 @@ import {
 import FA from "fasy";
 import z from "zod";
 
-export interface TProductFilter {
- search?: string;
- category?: string;
- subCategory?: string;
-}
+export const ProductFilter = z.object({
+ search: z.string().optional(),
+ category: z.string().optional(),
+ subCategory: z.string().optional(),
+});
+export type TProductFilter = z.infer<typeof ProductFilter>;
 
 export const CreateProductDto = z.object({
  name: z.string(),
@@ -235,7 +236,7 @@ class ProductService {
     APIError.notFound("Product not found or not owned by merchant"),
    ];
 
-  const updateData: Record<string, any> = {};
+  const updateData: Partial<typeof product.$inferInsert> = {};
 
   if (body.name !== undefined) updateData.name = body.name;
   if (body.description !== undefined) updateData.description = body.description;

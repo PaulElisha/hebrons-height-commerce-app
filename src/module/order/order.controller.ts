@@ -16,6 +16,7 @@ import OrderService, {
  CreateOrderDto,
  TOrderFilter,
  TOrderStatusQuery,
+ UpdateOrderStatusDto,
 } from "./order.service.ts";
 
 export interface OrderParams {
@@ -127,7 +128,7 @@ class OrderController {
 
  updateOrderStatus = asyncHandler(
   async (
-   req: Request<OrderParams, {}, { status: "out_for_delivery" | "delivered" }>,
+   req: Request<OrderParams, {}, z.infer<typeof UpdateOrderStatusDto>>,
    res: Response<APIResponse<T<"order">>>,
    next: NextFunction,
   ): Promise<any> => {
