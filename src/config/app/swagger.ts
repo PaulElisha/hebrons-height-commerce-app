@@ -595,7 +595,8 @@ const spec = {
    },
     UploadResult: {
      type: "object",
-     description: "Raw Cloudinary image upload response",
+     description:
+      "Full Cloudinary image upload response. The upload signature is generated and consumed entirely server-side — this payload is Cloudinary's result, not a client-side signature.",
      properties: {
       asset_id: {
        type: "string",
@@ -607,6 +608,17 @@ const spec = {
        description:
         "Cloudinary public ID, formatted as `<folder>-<userId>` (e.g. `product-8f3c...`)",
        example: "product-8f3c2a1b",
+      },
+      version: { type: "integer", description: "Cloudinary asset version" },
+      version_id: { type: "string", description: "Cloudinary version ID" },
+      signature: {
+       type: "string",
+       description: "Signature Cloudinary returns for the upload",
+      },
+      type: {
+       type: "string",
+       description: "Asset type (upload)",
+       example: "upload",
       },
       secure_url: {
        type: "string",
@@ -627,10 +639,20 @@ const spec = {
       bytes: { type: "integer", description: "File size in bytes" },
       width: { type: "integer" },
       height: { type: "integer" },
+      etag: { type: "string", description: "ETag of the uploaded asset" },
+      placeholder: { type: "boolean" },
       created_at: { type: "string", format: "date-time" },
       folder: {
        type: "string",
        description: "Cloudinary folder the image was uploaded into",
+      },
+      original_filename: {
+       type: "string",
+       description: "Original filename of the uploaded image",
+      },
+      api_key: {
+       type: "string",
+       description: "API key used for the upload (Cloudinary response metadata)",
       },
      },
     },
@@ -3102,14 +3124,15 @@ const spec = {
      },
      responses: {
       "201": {
-       description: "Image uploaded successfully — Cloudinary upload result",
+       description:
+        "Image uploaded to Cloudinary — full Cloudinary upload response (the signature is generated server-side and never exposed to the client)",
        content: {
         "application/json": {
          schema: {
           type: "object",
           properties: {
            status: { type: "string", example: "ok" },
-           message: { type: "string", example: "signature created" },
+           message: { type: "string", example: "image uploaded successfully" },
            data: { $ref: "#/components/schemas/UploadResult" },
           },
          },

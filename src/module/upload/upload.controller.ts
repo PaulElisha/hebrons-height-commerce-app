@@ -46,7 +46,7 @@ class UploadController {
 
    return res.status(HttpStatus.CREATED).json({
     status: "ok",
-    message: "signature created",
+    message: "image uploaded successfully",
     data,
    });
   },
