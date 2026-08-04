@@ -3,12 +3,14 @@ import authenticate from "@middleware/authenticate.ts";
 import { Router } from "express";
 
 import NotificationController from "./notification.controller.ts";
+import roleGuard from "@shared/middleware/role-guard.ts";
 
 class NotificationRouter {
  router: Router;
  constructor() {
   this.router = Router();
   this.router.use(authenticate);
+  this.router.use(roleGuard("user", "merchant"));
   this.initializeRoutes();
  }
 

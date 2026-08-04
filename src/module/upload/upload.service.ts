@@ -27,7 +27,7 @@ class UploadService {
    const publicId = createPublicId(body.folder, userId);
    const signature = cloudinary.utils.api_sign_request(
     {
-     timestamp: Math.floor(Date.now() / 1000),
+     timestamp,
      folder: `${body.folder}/${publicId}`,
      public_id: publicId,
      unique_filename: false,
@@ -44,7 +44,7 @@ class UploadService {
      signature,
      public_id: publicId,
      folder: body.folder,
-     url: `https://api.cloudinary.com/v1_1/${Env.CLOUDINARY_CLOUD_NAME}/images/upload`,
+     url: `https://api.cloudinary.com/v1_1/${Env.CLOUDINARY_CLOUD_NAME}/image/upload`,
      timestamp,
      apiKey: Env.CLOUDINARY_KEY,
     },
