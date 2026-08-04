@@ -52,7 +52,7 @@ export interface CartLowStockAlertPayload {
  quantity: number;
 }
 
-export type PaymentInitializedData = Omit<PaymentCheckoutResult, "callbackUrl">;
+export type PaymentInitializedData = Omit<PaymentCheckoutResult, "metadata">;
 
 export interface PaystackPaymentInitializedPayload {
  paystackData: PaymentInitializedData;

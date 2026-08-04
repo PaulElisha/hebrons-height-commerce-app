@@ -15,10 +15,7 @@ class UploadRouter {
  }
 
  initializeRoutes() {
-  this.router.post(
-   "/cloudinary-signature",
-   UploadController.generateUploadSignature,
-  );
+  this.router.post("/upload-image", UploadController.uploadImage);
  }
 }
 

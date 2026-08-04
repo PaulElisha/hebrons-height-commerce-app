@@ -481,7 +481,10 @@ const spec = {
      },
      attempts: { type: "integer", nullable: true },
      mode: { type: "string", nullable: true },
-     rail: { type: "string" },
+     rail: {
+      type: "string",
+      enum: ["initializePaystackCheckout", "initializeStripeCheckout"],
+     },
      callbackUrl: { type: "string", nullable: true },
      paymentReference: { type: "string" },
      paymentProvider: { type: "string", nullable: true },
@@ -520,20 +523,38 @@ const spec = {
      },
     },
    },
-   CheckoutResult: {
-    type: "object",
-    properties: {
-     checkout_url: { type: "string" },
-     reference: {
-      type: "string",
-      description: "Paystack reference or Stripe session ID",
-     },
-     access_code: {
-      type: "string",
-      description: "Paystack access code (Paystack only)",
+    CheckoutResult: {
+     type: "object",
+     required: ["email", "currency", "rail", "checkout_url"],
+     properties: {
+      email: { type: "string", format: "email" },
+      amount: {
+       type: "integer",
+       nullable: true,
+       description: "Amount charged — Paystack rail only (absent for Stripe)",
+      },
+      currency: { type: "string" },
+      rail: {
+       type: "string",
+       enum: ["initializePaystackCheckout", "initializeStripeCheckout"],
+      },
+      mode: {
+       type: "string",
+       enum: ["payment", "subscription", "setup"],
+       nullable: true,
+      },
+      callbackUrl: { type: "string", format: "uri", nullable: true },
+      checkout_url: { type: "string", format: "uri" },
+      reference: {
+       type: "string",
+       description: "Paystack reference or Stripe session ID",
+      },
+      access_code: {
+       type: "string",
+       description: "Paystack access code (Paystack only)",
+      },
      },
     },
-   },
    Notification: {
     type: "object",
     properties: {
@@ -572,40 +593,47 @@ const spec = {
      },
     ],
    },
-   UploadResult: {
-    type: "object",
-    properties: {
-     public_id: {
-      type: "string",
-      description:
-       "Cloudinary public ID, formatted as `<folder>-<userId>` (e.g. `product-8f3c...`)",
-      example: "product-8f3c2a1b",
-     },
-     url: {
-      type: "string",
-      format: "uri",
-      description:
-       "Cloudinary upload endpoint — POST the file here with `file`, `folder`, `public_id`, `signature`, `timestamp`, `api_key` (form-data)",
-      example: "https://api.cloudinary.com/v1_1/<cloud_name>/images/upload",
-     },
-     folder: { $ref: "#/components/schemas/AssetType" },
-     signature: {
-      type: "string",
-      description:
-       "Signed upload signature — send as `signature` with the upload request",
-     },
-     timestamp: {
-      type: "integer",
-      description:
-       "Unix timestamp the signature was generated for — send as `timestamp` with the upload request",
-     },
-     apiKey: {
-      type: "string",
-      description:
-       "Cloudinary API key — send as `api_key` with the upload request",
+    UploadResult: {
+     type: "object",
+     description: "Raw Cloudinary image upload response",
+     properties: {
+      asset_id: {
+       type: "string",
+       description: "Cloudinary asset ID",
+       example: "f4c8a1b2c3d4e5f6a7b8c9d0",
+      },
+      public_id: {
+       type: "string",
+       description:
+        "Cloudinary public ID, formatted as `<folder>-<userId>` (e.g. `product-8f3c...`)",
+       example: "product-8f3c2a1b",
+      },
+      secure_url: {
+       type: "string",
+       format: "uri",
+       description: "HTTPS URL of the uploaded image",
+      },
+      url: {
+       type: "string",
+       format: "uri",
+       description: "HTTP URL of the uploaded image",
+      },
+      format: { type: "string", description: "Image format (e.g. png, jpg)" },
+      resource_type: {
+       type: "string",
+       description: "Cloudinary resource type (image)",
+       example: "image",
+      },
+      bytes: { type: "integer", description: "File size in bytes" },
+      width: { type: "integer" },
+      height: { type: "integer" },
+      created_at: { type: "string", format: "date-time" },
+      folder: {
+       type: "string",
+       description: "Cloudinary folder the image was uploaded into",
+      },
      },
     },
-   },
   },
  },
  paths: {
@@ -1539,31 +1567,32 @@ const spec = {
         },
        },
       },
-      {
-       event: "payment.paystack.checkout.initialized",
-       description: "A Paystack checkout was initialized for the user's order.",
-       data: {
-        type: "object",
-        required: ["userId", "orderId", "paystackData"],
-        properties: {
-         userId: { type: "string", description: "Recipient user ID" },
-         orderId: { type: "string" },
-         paystackData: {
-          type: "object",
-          required: ["email", "rail", "currency", "checkout_url"],
-          properties: {
-           email: { type: "string", format: "email" },
-           rail: { type: "string" },
-           currency: { type: "string" },
-           callbackUrl: { type: "string" },
-           checkout_url: { type: "string", format: "uri" },
-           reference: { type: "string" },
-           access_code: { type: "string" },
+       {
+        event: "payment.paystack.checkout.initialized",
+        description: "A Paystack checkout was initialized for the user's order.",
+        data: {
+         type: "object",
+         required: ["userId", "orderId", "paystackData"],
+         properties: {
+          userId: { type: "string", description: "Recipient user ID" },
+          orderId: { type: "string" },
+          paystackData: {
+           type: "object",
+           required: ["email", "rail", "currency", "checkout_url"],
+           properties: {
+            email: { type: "string", format: "email" },
+            amount: { type: "integer", description: "Amount charged" },
+            rail: { type: "string" },
+            currency: { type: "string" },
+            callbackUrl: { type: "string" },
+            checkout_url: { type: "string", format: "uri" },
+            reference: { type: "string" },
+            access_code: { type: "string" },
+           },
           },
          },
         },
        },
-      },
       {
        event: "payment.stripe.checkout.verified",
        description:
@@ -3045,66 +3074,77 @@ const spec = {
     },
    },
   },
-  "/api/upload/cloudinary-signature": {
-   post: {
-    tags: ["Upload"],
-    summary: "Generate a Cloudinary upload signature",
-    description:
-     "Get the signed params needed to upload an image directly to Cloudinary. Flow: 1) POST this endpoint with an asset type (folder). 2) Upload the file to the returned `url` (Cloudinary) as form-data: `file`, `folder`, `public_id`, `signature`, `timestamp`, `api_key`. 3) Cloudinary notifies the server via the webhook and the related record (user image / product image / business logo / product additional images) is updated automatically — no further API call needed.",
-    security: [{ bearerAuth: [] }],
-    requestBody: {
-     required: true,
-     content: {
-      "application/json": {
-       schema: {
-        type: "object",
-        required: ["folder"],
-        properties: {
-         folder: {
-          $ref: "#/components/schemas/AssetType",
-         },
-        },
-       },
-      },
-     },
-    },
-    responses: {
-     "201": {
-      description: "Upload signature created",
+   "/api/upload/upload-image": {
+    post: {
+     tags: ["Upload"],
+     summary: "Upload an image to Cloudinary (server-side)",
+     description:
+      "Uploads an image to Cloudinary on the server. Send `{ file, folder }` in the request body — the server signs the request, forwards it to Cloudinary, and returns Cloudinary's upload result. Cloudinary then notifies the server via webhook and the related record (user avatar / product image / business logo / product additional images) is updated automatically — no further API call needed.",
+     security: [{ bearerAuth: [] }],
+     requestBody: {
+      required: true,
       content: {
        "application/json": {
         schema: {
          type: "object",
+         required: ["file", "folder"],
          properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "signature created" },
-          data: { $ref: "#/components/schemas/UploadResult" },
+          file: {
+           type: "string",
+           description:
+            "Image to upload — base64 data URI (e.g. `data:image/png;base64,...`) or public image URL",
+          },
+          folder: { $ref: "#/components/schemas/AssetType" },
          },
         },
        },
       },
      },
-     "401": {
-      description: "Unauthorized — invalid or missing session token",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+     responses: {
+      "201": {
+       description: "Image uploaded successfully — Cloudinary upload result",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "signature created" },
+           data: { $ref: "#/components/schemas/UploadResult" },
+          },
+         },
+        },
+       },
       },
-     },
-     "403": {
-      description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "400": {
+       description: "Validation failed",
+       content: {
+        "application/json": {
+         schema: { $ref: "#/components/schemas/ValidationError" },
+        },
+       },
       },
-     },
-     "500": {
-      description: "Failed to generate upload signature",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "401": {
+       description: "Unauthorized — invalid or missing session token",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+      "403": {
+       description: "Forbidden — user or merchant role required",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+      "500": {
+       description: "Failed to upload image to Cloudinary",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
   "/api/webhook/stripe": {
    post: {
     tags: ["Webhook"],
