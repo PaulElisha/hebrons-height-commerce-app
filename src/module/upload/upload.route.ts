@@ -16,11 +16,7 @@ class UploadRouter {
  }
 
  initializeRoutes() {
-  this.router.post(
-   "/upload-image",
-   upload.single("file"),
-   UploadController.uploadImage,
-  );
+  this.router.post("/upload-image", UploadController.uploadImage);
  }
 }
 
