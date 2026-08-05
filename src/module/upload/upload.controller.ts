@@ -13,27 +13,6 @@ export interface UploadBody {
 }
 
 class UploadController {
- // generateUploadSignature = asyncHandler(
- //  async (
- //   req: Request<any, any, UploadBody>,
- //   res: Response<APIResponse<UploadResult>>,
- //   next: NextFunction,
- //  ): Promise<Response | void> => {
- //   const [uploadResult, err] = await UploadService.generateUploadSignature(
- //    req.body,
- //    req.user.id,
- //   );
-
- //   if (err || !uploadResult) return next(err);
-
- //   return res.status(HttpStatus.CREATED).json({
- //    status: "ok",
- //    message: "signature created",
- //    data: uploadResult,
- //   });
- //  },
- // );
-
  uploadImage = asyncHandler(
   async (
    req: Request<any, any, UploadData>,

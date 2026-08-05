@@ -41,6 +41,7 @@ export type TProductFilter = z.infer<typeof ProductFilter>;
 export const CreateProductDto = z.object({
  name: z.string(),
  description: z.string(),
+ image: z.string(),
  price: z.number(),
  quantity: z.number(),
  category: z.string(),
@@ -200,7 +201,7 @@ class ProductService {
     merchantId: targetMerchantId,
     name: body.name,
     description: body.description,
-    image: "",
+    image: body.image,
     price: body.price,
     quantity: body.quantity,
     categoryId,

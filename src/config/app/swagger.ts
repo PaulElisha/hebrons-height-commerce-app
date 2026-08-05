@@ -113,15 +113,16 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-   CreateMerchantDto: {
-    type: "object",
-    required: ["businessName", "businessDescription", "address"],
-    properties: {
-     businessName: { type: "string" },
-     businessDescription: { type: "string" },
-     address: { type: "string" },
+    CreateMerchantDto: {
+     type: "object",
+     required: ["businessName", "businessLogo", "businessDescription", "address"],
+     properties: {
+      businessName: { type: "string" },
+      businessLogo: { type: "string", description: "URL of the business logo" },
+      businessDescription: { type: "string" },
+      address: { type: "string" },
+     },
     },
-   },
    UpdateMerchantDto: {
     type: "object",
     properties: {
@@ -234,37 +235,39 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-   CreateProductDto: {
-    type: "object",
-    required: [
-     "name",
-     "description",
-     "price",
-     "quantity",
-     "category",
-     "subCategory",
-     "additionalData",
-    ],
-    properties: {
-     name: { type: "string" },
-     description: { type: "string" },
-     price: { type: "integer" },
-     quantity: { type: "integer" },
-     category: {
-      type: "string",
-      description: "Must match an existing category name",
-     },
-     subCategory: {
-      type: "string",
-      description: "Must match an existing subcategory name",
-     },
-     additionalData: {
-      type: "object",
-      additionalProperties: { type: "string" },
-      description: "Required — additional product data as key-value map",
+    CreateProductDto: {
+     type: "object",
+     required: [
+      "name",
+      "description",
+      "image",
+      "price",
+      "quantity",
+      "category",
+      "subCategory",
+      "additionalData",
+     ],
+     properties: {
+      name: { type: "string" },
+      description: { type: "string" },
+      image: { type: "string", description: "URL of the product image" },
+      price: { type: "integer" },
+      quantity: { type: "integer" },
+      category: {
+       type: "string",
+       description: "Must match an existing category name",
+      },
+      subCategory: {
+       type: "string",
+       description: "Must match an existing subcategory name",
+      },
+      additionalData: {
+       type: "object",
+       additionalProperties: { type: "string" },
+       description: "Required — additional product data as key-value map",
+      },
      },
     },
-   },
    UpdateProductDto: {
     type: "object",
     properties: {
@@ -288,19 +291,20 @@ const spec = {
      {
       type: "object",
       properties: {
-       merchant: {
-        type: "object",
-        nullable: true,
-        properties: {
-         id: { type: "string" },
-         businessName: { type: "string" },
-         businessLogo: { type: "string" },
-         approvalStatus: {
-          type: "string",
-          enum: ["pending", "approved", "rejected"],
+        merchant: {
+         type: "object",
+         nullable: true,
+         properties: {
+          id: { type: "string" },
+          businessName: { type: "string" },
+          businessLogo: { type: "string" },
+          status: {
+           type: "string",
+           enum: ["pending", "approved", "rejected"],
+           description: "Merchant approval status",
+          },
          },
         },
-       },
       },
      },
     ],
@@ -335,18 +339,17 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-   CartItem: {
-    type: "object",
-    properties: {
-     id: { type: "string" },
-     userId: { type: "string" },
-     cartId: { type: "string" },
-     productId: { type: "string" },
-     price: { type: "integer" },
-     quantity: { type: "integer" },
-     totalItemPrice: { type: "integer", nullable: true },
+    CartItem: {
+     type: "object",
+     properties: {
+      id: { type: "string" },
+      cartId: { type: "string" },
+      productId: { type: "string" },
+      price: { type: "integer" },
+      quantity: { type: "integer" },
+      totalItemPrice: { type: "integer", nullable: true },
+     },
     },
-   },
    CartAndItems: {
     type: "object",
     properties: {
@@ -595,20 +598,39 @@ const spec = {
    },
     UploadResult: {
      type: "object",
-     description: "Uploaded image reference returned to the client",
-     required: ["url", "publicId"],
+     description:
+      "Full Cloudinary upload response returned by the upload endpoint",
+     required: ["public_id", "secure_url"],
      properties: {
-      url: {
+      asset_id: { type: "string", description: "Cloudinary asset ID" },
+      public_id: { type: "string", description: "Cloudinary public ID" },
+      version: { type: "integer", description: "Cloudinary asset version" },
+      version_id: { type: "string", description: "Cloudinary version ID" },
+      signature: { type: "string", description: "Cloudinary response signature" },
+      width: { type: "integer" },
+      height: { type: "integer" },
+      format: { type: "string", description: "Image format (e.g. png, jpg)" },
+      resource_type: {
+       type: "string",
+       description: "Cloudinary resource type (image)",
+       example: "image",
+      },
+      created_at: { type: "string", format: "date-time" },
+      tags: { type: "array", items: { type: "string" } },
+      bytes: { type: "integer", description: "File size in bytes" },
+      type: { type: "string", description: "Asset type (upload)", example: "upload" },
+      etag: { type: "string" },
+      placeholder: { type: "boolean" },
+      url: { type: "string", format: "uri", description: "HTTP URL of the uploaded image" },
+      secure_url: {
        type: "string",
        format: "uri",
-       description: "Secure URL of the uploaded image (Cloudinary)",
+       description: "HTTPS URL of the uploaded image",
       },
-      publicId: {
-       type: "string",
-       description:
-        "Cloudinary public ID, formatted as `<folder>-<userId>` (e.g. `product-8f3c...`)",
-       example: "product-8f3c2a1b",
-      },
+      asset_folder: { type: "string" },
+      display_name: { type: "string" },
+      original_filename: { type: "string" },
+      api_key: { type: "string", description: "API key used for the upload" },
      },
     },
   },
@@ -942,20 +964,34 @@ const spec = {
     },
    },
   },
-  "/api/docs": {
-   get: {
-    tags: ["Docs"],
-    summary: "Swagger UI documentation",
-    responses: {
-     "200": {
-      description: "Swagger UI HTML",
-      content: {
-       "text/html": { schema: { type: "string" } },
+   "/api/docs": {
+    get: {
+     tags: ["Docs"],
+     summary: "Swagger UI documentation",
+     responses: {
+      "200": {
+       description: "Swagger UI HTML",
+       content: {
+        "text/html": { schema: { type: "string" } },
+       },
       },
      },
     },
    },
-  },
+   "/api/docs.json": {
+    get: {
+     tags: ["Docs"],
+     summary: "Raw OpenAPI specification (JSON)",
+     responses: {
+      "200": {
+       description: "The full OpenAPI spec served as JSON",
+       content: {
+        "application/json": { schema: { type: "object" } },
+       },
+      },
+     },
+    },
+   },
   "/api/user/profile": {
    get: {
     tags: ["User"],
@@ -3054,22 +3090,22 @@ const spec = {
    "/api/upload/upload-image": {
     post: {
      tags: ["Upload"],
-     summary: "Upload an image to Cloudinary (multipart form-data)",
+     summary: "Upload an image to Cloudinary (server-side)",
      description:
-      "Uploads an image file directly to Cloudinary on the server. Send a `multipart/form-data` request with a `file` field (the image, max 5MB) and a `folder` field (asset type). The server streams the file to Cloudinary and returns the uploaded image's URL and public ID. Cloudinary then notifies the server via webhook and the related record (user avatar / product image / business logo / product additional images) is updated automatically — no further API call needed.",
+      "Uploads an image to Cloudinary on the server. Send `{ file, folder }` in the JSON request body — `file` is the image as a base64 data URI (e.g. `data:image/png;base64,...`) or a public image URL, `folder` is the asset type. The server signs the request and forwards it to Cloudinary, then returns Cloudinary's full upload result. Cloudinary then notifies the server via webhook and the related record (user avatar / product image / business logo / product additional images) is updated automatically — no further API call needed.",
      security: [{ bearerAuth: [] }],
      requestBody: {
       required: true,
       content: {
-       "multipart/form-data": {
+       "application/json": {
         schema: {
          type: "object",
          required: ["file", "folder"],
          properties: {
           file: {
            type: "string",
-           format: "binary",
-           description: "Image file to upload (max 5MB)",
+           description:
+            "Image to upload — base64 data URI (e.g. `data:image/png;base64,...`) or public image URL",
           },
           folder: { $ref: "#/components/schemas/AssetType" },
          },
@@ -3079,7 +3115,8 @@ const spec = {
      },
      responses: {
       "201": {
-       description: "Image uploaded to Cloudinary",
+       description:
+        "Image uploaded to Cloudinary — full Cloudinary upload response (the signature is generated server-side and never exposed to the client)",
        content: {
         "application/json": {
          schema: {
@@ -3090,14 +3127,6 @@ const spec = {
            data: { $ref: "#/components/schemas/UploadResult" },
           },
          },
-        },
-       },
-      },
-      "422": {
-       description: "No file uploaded — the `file` field is required",
-       content: {
-        "application/json": {
-         schema: { $ref: "#/components/schemas/Error" },
         },
        },
       },
