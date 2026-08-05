@@ -80,7 +80,6 @@ class UploadService {
      public_id: publicId,
      unique_filename: false,
      overwrite: true,
-     resource_type: "auto",
      tags: ["upload"],
      context: "alt=upload",
     },
