@@ -76,7 +76,7 @@ class UploadService {
    signature = cloudinary.utils.api_sign_request(
     {
      timestamp,
-     folder: `${body.folder}/${publicId}`,
+     folder: `${body.folder}`,
      public_id: publicId,
      unique_filename: false,
      overwrite: true,
