@@ -70,6 +70,8 @@ class UploadService {
  ): Promise<Result<any, AppError>> => {
   const timestamp = Math.floor(Date.now() / 1000);
   const publicId = createPublicId(body.folder, userId);
+  const notification_url =
+   "https://hebrons-height-commerce-app.onrender.com/api/webhook/cloudinary";
   let signature;
 
   try {
@@ -82,6 +84,7 @@ class UploadService {
      overwrite: true,
      tags: ["upload"],
      context: "alt=upload",
+     notification_url,
     },
     Env.CLOUDINARY_SECRET,
    );
@@ -102,6 +105,7 @@ class UploadService {
   formData.append("timestamp", timestamp.toString());
   formData.append("api_key", Env.CLOUDINARY_KEY);
   formData.append("signature", signature);
+  formData.append("notification_url", notification_url);
 
   try {
    const response = await fetch(
