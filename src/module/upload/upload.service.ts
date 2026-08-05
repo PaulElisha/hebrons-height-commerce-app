@@ -97,7 +97,6 @@ class UploadService {
   formData.append("public_id", publicId);
   formData.append("unique_filename", "false");
   formData.append("overwrite", "true");
-  formData.append("resource_type", "auto");
   formData.append("tags", "upload");
   formData.append("context", "alt=upload");
   formData.append("timestamp", timestamp.toString());
