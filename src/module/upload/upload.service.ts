@@ -91,22 +91,38 @@ class UploadService {
    return [null, error];
   }
 
+  const formData = new FormData();
+
+  formData.append("file", body.file);
+  formData.append("folder", body.folder);
+  formData.append("public_id", publicId);
+  formData.append("unique_filename", "false");
+  formData.append("overwrite", "true");
+  formData.append("resource_type", "auto");
+  formData.append("tags", "upload");
+  formData.append("context", "alt=upload");
+  formData.append("timestamp", timestamp.toString());
+  formData.append("api_key", Env.CLOUDINARY_KEY);
+  formData.append("signature", signature);
+
   try {
    const response = await fetch(
     `https://api.cloudinary.com/v1_1/${Env.CLOUDINARY_CLOUD_NAME}/image/upload`,
     {
      method: "POST",
-     body: {
-      file: body.file,
-      folder: body.folder,
-      publicId,
-      unique_filename: "false",
-      timestamp,
-      api_key: Env.CLOUDINARY_KEY,
-      signature,
-     } as any,
+     body: formData,
     },
    );
+
+   if (!response.ok) {
+    const errorData = await response.json().catch((e) => e);
+    logger.error("Cloudinary API rejected upload", errorData);
+    return [
+     null,
+     APIError.internalServer(errorData.error?.message || "Upload rejected"),
+    ];
+   }
+
    const data = await response.json();
    return [data, null];
   } catch (error: any) {

@@ -6,17 +6,34 @@ import { AssetType } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 import streamifier from "streamifier";
 
-export const cloudinaryUploadStream = (folder: AssetType) => {
+const ASSET_TYPES: AssetType[] = ["profile", "product", "business", "additional"];
+
+export const cloudinaryUploadStream = (folder?: AssetType) => {
  return (req: Request, res: Response, next: NextFunction) => {
+  const targetFolder: AssetType | undefined =
+   folder ?? (req.body.folder as AssetType | undefined);
+
+  if (!targetFolder) {
+   return next(APIError.badRequest("folder is required"));
+  }
+
+  if (!ASSET_TYPES.includes(targetFolder)) {
+   return next(
+    APIError.badRequest(
+     "folder must be one of: profile, product, business, additional",
+    ),
+   );
+  }
+
   if (!req.file) {
    return next(APIError.badRequest("No file uploaded"));
   }
 
   try {
-   const publicId = createPublicId(folder, req.user.id);
+   const publicId = createPublicId(targetFolder, req.user.id);
    const stream = cloudinary.uploader.upload_stream(
     {
-     folder: folder,
+     folder: targetFolder,
      public_id: publicId,
      resource_type: "auto",
     },

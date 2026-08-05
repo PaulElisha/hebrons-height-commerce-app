@@ -595,64 +595,19 @@ const spec = {
    },
     UploadResult: {
      type: "object",
-     description:
-      "Full Cloudinary image upload response. The upload signature is generated and consumed entirely server-side — this payload is Cloudinary's result, not a client-side signature.",
+     description: "Uploaded image reference returned to the client",
+     required: ["url", "publicId"],
      properties: {
-      asset_id: {
+      url: {
        type: "string",
-       description: "Cloudinary asset ID",
-       example: "f4c8a1b2c3d4e5f6a7b8c9d0",
+       format: "uri",
+       description: "Secure URL of the uploaded image (Cloudinary)",
       },
-      public_id: {
+      publicId: {
        type: "string",
        description:
         "Cloudinary public ID, formatted as `<folder>-<userId>` (e.g. `product-8f3c...`)",
        example: "product-8f3c2a1b",
-      },
-      version: { type: "integer", description: "Cloudinary asset version" },
-      version_id: { type: "string", description: "Cloudinary version ID" },
-      signature: {
-       type: "string",
-       description: "Signature Cloudinary returns for the upload",
-      },
-      type: {
-       type: "string",
-       description: "Asset type (upload)",
-       example: "upload",
-      },
-      secure_url: {
-       type: "string",
-       format: "uri",
-       description: "HTTPS URL of the uploaded image",
-      },
-      url: {
-       type: "string",
-       format: "uri",
-       description: "HTTP URL of the uploaded image",
-      },
-      format: { type: "string", description: "Image format (e.g. png, jpg)" },
-      resource_type: {
-       type: "string",
-       description: "Cloudinary resource type (image)",
-       example: "image",
-      },
-      bytes: { type: "integer", description: "File size in bytes" },
-      width: { type: "integer" },
-      height: { type: "integer" },
-      etag: { type: "string", description: "ETag of the uploaded asset" },
-      placeholder: { type: "boolean" },
-      created_at: { type: "string", format: "date-time" },
-      folder: {
-       type: "string",
-       description: "Cloudinary folder the image was uploaded into",
-      },
-      original_filename: {
-       type: "string",
-       description: "Original filename of the uploaded image",
-      },
-      api_key: {
-       type: "string",
-       description: "API key used for the upload (Cloudinary response metadata)",
       },
      },
     },
@@ -3099,22 +3054,22 @@ const spec = {
    "/api/upload/upload-image": {
     post: {
      tags: ["Upload"],
-     summary: "Upload an image to Cloudinary (server-side)",
+     summary: "Upload an image to Cloudinary (multipart form-data)",
      description:
-      "Uploads an image to Cloudinary on the server. Send `{ file, folder }` in the request body — the server signs the request, forwards it to Cloudinary, and returns Cloudinary's upload result. Cloudinary then notifies the server via webhook and the related record (user avatar / product image / business logo / product additional images) is updated automatically — no further API call needed.",
+      "Uploads an image file directly to Cloudinary on the server. Send a `multipart/form-data` request with a `file` field (the image, max 5MB) and a `folder` field (asset type). The server streams the file to Cloudinary and returns the uploaded image's URL and public ID. Cloudinary then notifies the server via webhook and the related record (user avatar / product image / business logo / product additional images) is updated automatically — no further API call needed.",
      security: [{ bearerAuth: [] }],
      requestBody: {
       required: true,
       content: {
-       "application/json": {
+       "multipart/form-data": {
         schema: {
          type: "object",
          required: ["file", "folder"],
          properties: {
           file: {
            type: "string",
-           description:
-            "Image to upload — base64 data URI (e.g. `data:image/png;base64,...`) or public image URL",
+           format: "binary",
+           description: "Image file to upload (max 5MB)",
           },
           folder: { $ref: "#/components/schemas/AssetType" },
          },
@@ -3124,8 +3079,7 @@ const spec = {
      },
      responses: {
       "201": {
-       description:
-        "Image uploaded to Cloudinary — full Cloudinary upload response (the signature is generated server-side and never exposed to the client)",
+       description: "Image uploaded to Cloudinary",
        content: {
         "application/json": {
          schema: {
@@ -3139,11 +3093,11 @@ const spec = {
         },
        },
       },
-      "400": {
-       description: "Validation failed",
+      "422": {
+       description: "No file uploaded — the `file` field is required",
        content: {
         "application/json": {
-         schema: { $ref: "#/components/schemas/ValidationError" },
+         schema: { $ref: "#/components/schemas/Error" },
         },
        },
       },

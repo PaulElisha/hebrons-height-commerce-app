@@ -1,5 +1,6 @@
 /** @format */
 import authenticate from "@middleware/authenticate.ts";
+import upload from "@shared/middleware/multer-upload.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { Router } from "express";
 
@@ -15,7 +16,11 @@ class UploadRouter {
  }
 
  initializeRoutes() {
-  this.router.post("/upload-image", UploadController.uploadImage);
+  this.router.post(
+   "/upload-image",
+   upload.single("file"),
+   UploadController.uploadImage,
+  );
  }
 }
 
