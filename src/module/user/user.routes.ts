@@ -6,7 +6,7 @@ import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { APIResponse, T } from "@shared/types.ts";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Request, Response, Router } from "express";
 
 class UserRouter {

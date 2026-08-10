@@ -5,8 +5,7 @@ import { APIResponse, AssetType } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 
 import UploadService from "./upload.service.ts";
-import type { UploadData, UploadResult } from "./upload.service.ts";
-import * as APIError from "@shared/error/APIError.ts";
+import type { UploadData } from "./upload.service.ts";
 
 export interface UploadBody {
  folder: AssetType;

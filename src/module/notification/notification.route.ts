@@ -1,9 +1,9 @@
 /** @format */
 import authenticate from "@middleware/authenticate.ts";
+import roleGuard from "@shared/middleware/role-guard.ts";
 import { Router } from "express";
 
 import NotificationController from "./notification.controller.ts";
-import roleGuard from "@shared/middleware/role-guard.ts";
 
 class NotificationRouter {
  router: Router;

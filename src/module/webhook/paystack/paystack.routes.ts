@@ -8,8 +8,8 @@ import { paystackWebhookHandler } from "./paystack.webhook.ts";
 const paystackWebhookRouter = Router().post(
  "/paystack",
  express.raw({ type: "application/json" }),
- parseRawBody,
  verifyPaystackSignature,
+ parseRawBody,
  asyncHandler(async (req: Request, res: Response) => {
   await paystackWebhookHandler(req, res);
  }),

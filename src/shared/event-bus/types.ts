@@ -7,6 +7,7 @@ import { EventType } from "./config.ts";
 
 export interface EventContract {
  event_type: string;
+ userId?: string;
  payload: any;
 }
 

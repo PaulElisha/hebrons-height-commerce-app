@@ -26,6 +26,16 @@ EventBus.on(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
    },
   );
  },
+ error: (err: unknown) => {
+  const msg = err instanceof Error ? err?.message : String(err);
+
+  logger.error(
+   { err: msg },
+   "Error consuming Paystack payment initialized event",
+  );
+
+  throw err;
+ },
 });
 
 EventBus.on(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
@@ -38,6 +48,13 @@ EventBus.on(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
     logger.info({}, "[...Paystack verification completed]");
    },
   );
+ },
+ error: (err: unknown) => {
+  const msg = err instanceof Error ? err?.message : String(err);
+
+  logger.error({ err: msg }, "Error consuming Paystack payment verified event");
+
+  throw err;
  },
 });
 
@@ -56,6 +73,16 @@ EventBus.on(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
    },
   );
  },
+ error: (err: unknown) => {
+  const msg = err instanceof Error ? err?.message : String(err);
+
+  logger.error(
+   { err: msg },
+   "Error consuming Stripe payment initialized event",
+  );
+
+  throw err;
+ },
 });
 
 EventBus.on(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
@@ -71,5 +98,12 @@ EventBus.on(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
     logger.info({}, "[...Stripe verification completed]");
    },
   );
+ },
+ error: (err: unknown) => {
+  const msg = err instanceof Error ? err?.message : String(err);
+
+  logger.error({ err: msg }, "Error consuming Stripe payment verified event");
+
+  throw err;
  },
 });

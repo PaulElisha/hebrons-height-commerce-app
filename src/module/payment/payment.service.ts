@@ -6,7 +6,7 @@ import { payment } from "@schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { Result, T } from "@shared/types.ts";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import Stripe from "stripe";
 import z from "zod";
@@ -68,20 +68,49 @@ class PaymentService {
 
   await db.select().from(order).where(eq(order.id, orderId)).for("update");
 
+  const [existingPayment] = await db
+   .select()
+   .from(payment)
+   .where(eq(payment.orderId, orderId))
+   .limit(1);
+
+  if (existingPayment) {
+   if (existingPayment.status === "paid") return [existingPayment, null];
+
+   if (
+    data.order.orderStatus === "cancelled" ||
+    data.order.paymentStatus === "cancelled"
+   ) {
+    return [null, APIError.badRequest("Invalid order")];
+   }
+
+   const [updatedPayment] = await db
+    .update(payment)
+    .set({
+     email: paymentData.email,
+     amount: paymentData.amount,
+     currency: paymentData.currency,
+     mode: paymentData.mode,
+     rail: paymentData.rail,
+     callbackUrl: paymentData.callback_url,
+     paymentReference: paymentData.reference,
+     paymentProvider: paymentData.paymentProvider,
+     accessCode: paymentData.access_code,
+     authorizationUrl: paymentData.checkout_url,
+     status: existingPayment.status === "failed" ? "pending" : existingPayment.status,
+     updatedAt: new Date(),
+    })
+    .where(eq(payment.id, existingPayment.id))
+    .returning();
+
+   return [updatedPayment ?? existingPayment, null];
+  }
+
   if (
    data.order.orderStatus !== "pending" &&
    data.order.paymentStatus !== "pending"
   ) {
    return [null, APIError.badRequest("Invalid order")];
-  }
-
-  const [paymentExists] = await db
-   .select()
-   .from(payment)
-   .where(and(eq(payment.orderId, orderId)));
-
-  if (paymentExists) {
-   return [null, APIError.badRequest("Payment already created")];
   }
 
   const [paymentCreated] = await db

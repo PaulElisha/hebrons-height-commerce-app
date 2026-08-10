@@ -155,8 +155,8 @@ class OrderService {
   runOnTransactionCommit(() => {
    publishEvent({
     event_type: EventType.ORDER_PLACED,
+    userId,
     payload: {
-     userId,
      cartId,
      orderId: result?.orderId,
      productIds: result?.productIds,
@@ -324,8 +324,8 @@ class OrderService {
   runOnTransactionCommit(() => {
    publishEvent({
     event_type: EventType.ORDER_STATUS_UPDATED,
+    userId: updatedOrder.userId,
     payload: {
-     userId: updatedOrder.userId,
      orderId,
      status,
      message: `Your order is now ${status.replace("_", " ")}`,
@@ -377,8 +377,8 @@ class OrderService {
   runOnTransactionCommit(() => {
    publishEvent({
     event_type: EventType.ORDER_CANCELLED,
+    userId: cancelledOrder.userId,
     payload: {
-     userId: cancelledOrder.userId,
      productIds,
      orderId: cancelledOrder.id,
     },

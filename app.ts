@@ -1,4 +1,5 @@
 /** @format */
+import "@module/cart/consumer.ts";
 import "@module/email/consumer.ts";
 import "@module/inventory/consumer.ts";
 import "@module/merchant/consumer.ts";
@@ -39,6 +40,9 @@ import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
+import { notificationBroker } from "@module/notification/broker.ts";
+import { EventBus } from "@shared/event-bus/index.ts";
+import OutboxService from "@module/outbox/outbox.service.ts";
 
 dns.setDefaultResultOrder("ipv4first");
 
@@ -130,17 +134,25 @@ class App {
    logger.info(`Server is running on ${Env.BASE_URL}`);
   });
 
-  // OutboxService.replayUnprocessed().then((count) => {
-  //  if (count > 0) logger.info(`Replayed ${count} unprocessed outbox events.`);
-  // });
+  EventBus.subscribe().subscribe({
+   next: ({ userId, payload, event_type }) => {
+    if (!userId) return;
 
-  // const outboxTimer = setInterval(() => {
-  //  OutboxService.replayUnprocessed();
-  // }, 5_000).unref();
+    notificationBroker.sendToUser(userId, payload, event_type);
+   },
+  });
+
+  OutboxService.replayUnprocessed().then((count) => {
+   if (count > 0) logger.info(`Replayed ${count} unprocessed outbox events.`);
+  });
+
+  const outboxTimer = setInterval(() => {
+   OutboxService.replayUnprocessed();
+  }, 5_000).unref();
 
   const shutdown = (signal: string) => {
    logger.info({ signal }, "Shutting down gracefully...");
-   //  clearInterval(outboxTimer);
+   clearInterval(outboxTimer);
 
    server.close(() => {
     logger.info("HTTP server closed.");

@@ -14,21 +14,21 @@ export const consumeOutboxEvent = async <T = Record<string, unknown>>(
  outboxId: string,
  cb: (payload: T) => Promise<void>,
 ) => {
- const [event, e] = await OutboxService.fetchById(outboxId);
+ const [outboxEvent, e] = await OutboxService.fetchById(outboxId);
 
- if (e || !event || typeof event.processedAt === null)
-  return logger.info("Event already processed");
+ if (e || !outboxEvent) return logger.info("Event already processed");
 
  try {
-  await cb(event.payload as T);
+  await cb(outboxEvent.payload as T);
   await OutboxService.update(outboxId);
 
   logger.info(
-   { outboxId, eventType: event.eventType },
+   { outboxId, eventType: outboxEvent.eventType },
    "Outbox event processed",
   );
  } catch (err) {
-  const msg = err instanceof Error ? err.message : "Unknown error";
+  const msg = err instanceof Error ? err?.message : String(err);
+
   logger.error({ err, outboxId }, "Outbox event failed");
   await OutboxService.markFailed(outboxId, msg);
  }

@@ -26,6 +26,10 @@ export const verifyPaystackSignature = async (
    return next(APIError.badRequest("Missing Paystack signature"));
   }
 
+  if (!Buffer.isBuffer(req.body)) {
+   return next(APIError.badRequest("Invalid webhook body"));
+  }
+
   const hash = crypto
    .createHmac("sha512", Env.PAYSTACK_SECRET_KEY)
    .update(req.body)

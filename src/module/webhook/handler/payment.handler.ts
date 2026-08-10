@@ -1,11 +1,9 @@
 /** @format */
 
 import db from "@db/db.ts";
-import CartBase from "@module/cart/base.ts";
 import PaymentService, {
  PaymentData,
 } from "@module/payment/payment.service.ts";
-import { cartItem } from "@schema/cart.ts";
 import { order } from "@schema/order.ts";
 import { payment } from "@schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
@@ -109,12 +107,6 @@ class WebhookHandler {
    })
    .where(eq(order.id, paymentRecord.orderId))
    .returning();
-
-  await db.delete(cartItem).where(eq(cartItem.userId, paymentRecord.userId));
-  await CartBase.calculateTotalAmount(
-   updatedOrder.cartId,
-   paymentRecord.userId,
-  );
 
   return [{ payment: updatedPayment, order: updatedOrder }, null];
  }

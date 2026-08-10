@@ -1,57 +1,16 @@
 /** @format */
-import db from "@db/db.ts";
-import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
-import { merchant } from "@schema/merchant.ts";
-import { order } from "@schema/order.ts";
 import HttpStatus from "@shared/enum/http.ts";
-import { EventBus } from "@shared/event-bus/index.ts";
 import asyncHandler from "@shared/middleware/async-handler.ts";
 import { APIResponse, T } from "@shared/types.ts";
 import { createSession } from "better-sse";
-import { and, eq, isNull } from "drizzle-orm";
 import { NextFunction, Request, Response } from "express";
 
+import { notificationBroker } from "./broker.ts";
 import NotificationService from "./notification.service.ts";
 
 export interface NotificationParams {
  notificationId: string;
 }
-
-const resolveRecipientUserId = async (
- payload: Record<string, unknown>,
-): Promise<string | null> => {
- if (payload.userId) return payload.userId as string;
-
- if (payload.merchantId) {
-  const [merchantData] = await db
-   .select({ userId: merchant.userId })
-   .from(merchant)
-   .where(
-    and(
-     eq(merchant.id, payload.merchantId as string),
-     isNull(merchant.deletedAt),
-    ),
-   )
-   .limit(1);
-
-  if (merchantData) return merchantData.userId;
- }
-
- const orderId =
-  (payload.orderId as string) ?? (payload.event as any)?.metadata?.orderId;
-
- if (orderId) {
-  const [orderData] = await db
-   .select({ userId: order.userId })
-   .from(order)
-   .where(eq(order.id, orderId))
-   .limit(1);
-
-  if (orderData) return orderData.userId;
- }
-
- return null;
-};
 
 class NotificationController {
  getNotifications = asyncHandler(
@@ -132,40 +91,30 @@ class NotificationController {
 
   const session = await createSession(req, res);
 
-  const subscription = EventBus.subscribe().subscribe({
-   next: async ({ payload }) => {
-    await consumeOutboxEvent(payload.outboxId, async (p) => {
-     const recipient = await resolveRecipientUserId(p);
-     if (recipient !== userId) return;
-     session.push(p, payload.event_type);
-    });
+  const subscription = notificationBroker.listenToUserEvents(userId).subscribe({
+   next: ({ data, eventType }) => {
+    session.push(data, eventType);
    },
-   error: (err) => {
-    session.push(err.message);
+   error: (err: unknown) => {
+    const msg = err instanceof Error ? err?.message : String(err);
+    session.push(msg, "error_event");
    },
   });
 
   const heartbeat = setInterval(() => {
    res.write(": ping\n\n", (err) => {
-    if (err) {
-     subscription.unsubscribe();
-     clearInterval(heartbeat);
-     res.end();
-    }
+    if (err) cleanUp();
    });
   }, 30_000).unref();
 
-  session.on("disconnected", () => {
+  function cleanUp() {
    clearInterval(heartbeat);
    subscription.unsubscribe();
    res.end();
-  });
+  }
 
-  req.on("close", () => {
-   clearInterval(heartbeat);
-   subscription.unsubscribe();
-   res.end();
-  });
+  session.on("disconnected", cleanUp);
+  req.on("close", cleanUp);
  };
 }
 

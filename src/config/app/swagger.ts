@@ -113,16 +113,21 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-    CreateMerchantDto: {
-     type: "object",
-     required: ["businessName", "businessLogo", "businessDescription", "address"],
-     properties: {
-      businessName: { type: "string" },
-      businessLogo: { type: "string", description: "URL of the business logo" },
-      businessDescription: { type: "string" },
-      address: { type: "string" },
-     },
+   CreateMerchantDto: {
+    type: "object",
+    required: [
+     "businessName",
+     "businessLogo",
+     "businessDescription",
+     "address",
+    ],
+    properties: {
+     businessName: { type: "string" },
+     businessLogo: { type: "string", description: "URL of the business logo" },
+     businessDescription: { type: "string" },
+     address: { type: "string" },
     },
+   },
    UpdateMerchantDto: {
     type: "object",
     properties: {
@@ -235,39 +240,39 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-    CreateProductDto: {
-     type: "object",
-     required: [
-      "name",
-      "description",
-      "image",
-      "price",
-      "quantity",
-      "category",
-      "subCategory",
-      "additionalData",
-     ],
-     properties: {
-      name: { type: "string" },
-      description: { type: "string" },
-      image: { type: "string", description: "URL of the product image" },
-      price: { type: "integer" },
-      quantity: { type: "integer" },
-      category: {
-       type: "string",
-       description: "Must match an existing category name",
-      },
-      subCategory: {
-       type: "string",
-       description: "Must match an existing subcategory name",
-      },
-      additionalData: {
-       type: "object",
-       additionalProperties: { type: "string" },
-       description: "Required — additional product data as key-value map",
-      },
+   CreateProductDto: {
+    type: "object",
+    required: [
+     "name",
+     "description",
+     "image",
+     "price",
+     "quantity",
+     "category",
+     "subCategory",
+     "additionalData",
+    ],
+    properties: {
+     name: { type: "string" },
+     description: { type: "string" },
+     image: { type: "string", description: "URL of the product image" },
+     price: { type: "integer" },
+     quantity: { type: "integer" },
+     category: {
+      type: "string",
+      description: "Must match an existing category name",
+     },
+     subCategory: {
+      type: "string",
+      description: "Must match an existing subcategory name",
+     },
+     additionalData: {
+      type: "object",
+      additionalProperties: { type: "string" },
+      description: "Required — additional product data as key-value map",
      },
     },
+   },
    UpdateProductDto: {
     type: "object",
     properties: {
@@ -291,20 +296,20 @@ const spec = {
      {
       type: "object",
       properties: {
-        merchant: {
-         type: "object",
-         nullable: true,
-         properties: {
-          id: { type: "string" },
-          businessName: { type: "string" },
-          businessLogo: { type: "string" },
-          status: {
-           type: "string",
-           enum: ["pending", "approved", "rejected"],
-           description: "Merchant approval status",
-          },
+       merchant: {
+        type: "object",
+        nullable: true,
+        properties: {
+         id: { type: "string" },
+         businessName: { type: "string" },
+         businessLogo: { type: "string" },
+         status: {
+          type: "string",
+          enum: ["pending", "approved", "rejected"],
+          description: "Merchant approval status",
          },
         },
+       },
       },
      },
     ],
@@ -339,17 +344,17 @@ const spec = {
      updatedAt: { type: "string", format: "date-time" },
     },
    },
-    CartItem: {
-     type: "object",
-     properties: {
-      id: { type: "string" },
-      cartId: { type: "string" },
-      productId: { type: "string" },
-      price: { type: "integer" },
-      quantity: { type: "integer" },
-      totalItemPrice: { type: "integer", nullable: true },
-     },
+   CartItem: {
+    type: "object",
+    properties: {
+     id: { type: "string" },
+     cartId: { type: "string" },
+     productId: { type: "string" },
+     price: { type: "integer" },
+     quantity: { type: "integer" },
+     totalItemPrice: { type: "integer", nullable: true },
     },
+   },
    CartAndItems: {
     type: "object",
     properties: {
@@ -526,38 +531,38 @@ const spec = {
      },
     },
    },
-    CheckoutResult: {
-     type: "object",
-     required: ["email", "currency", "rail", "checkout_url"],
-     properties: {
-      email: { type: "string", format: "email" },
-      amount: {
-       type: "integer",
-       nullable: true,
-       description: "Amount charged — Paystack rail only (absent for Stripe)",
-      },
-      currency: { type: "string" },
-      rail: {
-       type: "string",
-       enum: ["initializePaystackCheckout", "initializeStripeCheckout"],
-      },
-      mode: {
-       type: "string",
-       enum: ["payment", "subscription", "setup"],
-       nullable: true,
-      },
-      callbackUrl: { type: "string", format: "uri", nullable: true },
-      checkout_url: { type: "string", format: "uri" },
-      reference: {
-       type: "string",
-       description: "Paystack reference or Stripe session ID",
-      },
-      access_code: {
-       type: "string",
-       description: "Paystack access code (Paystack only)",
-      },
+   CheckoutResult: {
+    type: "object",
+    required: ["email", "currency", "rail", "checkout_url"],
+    properties: {
+     email: { type: "string", format: "email" },
+     amount: {
+      type: "integer",
+      nullable: true,
+      description: "Amount charged — Paystack rail only (absent for Stripe)",
+     },
+     currency: { type: "string" },
+     rail: {
+      type: "string",
+      enum: ["initializePaystackCheckout", "initializeStripeCheckout"],
+     },
+     mode: {
+      type: "string",
+      enum: ["payment", "subscription", "setup"],
+      nullable: true,
+     },
+     callbackUrl: { type: "string", format: "uri", nullable: true },
+     checkout_url: { type: "string", format: "uri" },
+     reference: {
+      type: "string",
+      description: "Paystack reference or Stripe session ID",
+     },
+     access_code: {
+      type: "string",
+      description: "Paystack access code (Paystack only)",
      },
     },
+   },
    Notification: {
     type: "object",
     properties: {
@@ -596,43 +601,54 @@ const spec = {
      },
     ],
    },
-    UploadResult: {
-     type: "object",
-     description:
-      "Full Cloudinary upload response returned by the upload endpoint",
-     required: ["public_id", "secure_url"],
-     properties: {
-      asset_id: { type: "string", description: "Cloudinary asset ID" },
-      public_id: { type: "string", description: "Cloudinary public ID" },
-      version: { type: "integer", description: "Cloudinary asset version" },
-      version_id: { type: "string", description: "Cloudinary version ID" },
-      signature: { type: "string", description: "Cloudinary response signature" },
-      width: { type: "integer" },
-      height: { type: "integer" },
-      format: { type: "string", description: "Image format (e.g. png, jpg)" },
-      resource_type: {
-       type: "string",
-       description: "Cloudinary resource type (image)",
-       example: "image",
-      },
-      created_at: { type: "string", format: "date-time" },
-      tags: { type: "array", items: { type: "string" } },
-      bytes: { type: "integer", description: "File size in bytes" },
-      type: { type: "string", description: "Asset type (upload)", example: "upload" },
-      etag: { type: "string" },
-      placeholder: { type: "boolean" },
-      url: { type: "string", format: "uri", description: "HTTP URL of the uploaded image" },
-      secure_url: {
-       type: "string",
-       format: "uri",
-       description: "HTTPS URL of the uploaded image",
-      },
-      asset_folder: { type: "string" },
-      display_name: { type: "string" },
-      original_filename: { type: "string" },
-      api_key: { type: "string", description: "API key used for the upload" },
+   UploadResult: {
+    type: "object",
+    description:
+     "Full Cloudinary upload response returned by the upload endpoint",
+    required: ["public_id", "secure_url"],
+    properties: {
+     asset_id: { type: "string", description: "Cloudinary asset ID" },
+     public_id: { type: "string", description: "Cloudinary public ID" },
+     version: { type: "integer", description: "Cloudinary asset version" },
+     version_id: { type: "string", description: "Cloudinary version ID" },
+     signature: {
+      type: "string",
+      description: "Cloudinary response signature",
      },
+     width: { type: "integer" },
+     height: { type: "integer" },
+     format: { type: "string", description: "Image format (e.g. png, jpg)" },
+     resource_type: {
+      type: "string",
+      description: "Cloudinary resource type (image)",
+      example: "image",
+     },
+     created_at: { type: "string", format: "date-time" },
+     tags: { type: "array", items: { type: "string" } },
+     bytes: { type: "integer", description: "File size in bytes" },
+     type: {
+      type: "string",
+      description: "Asset type (upload)",
+      example: "upload",
+     },
+     etag: { type: "string" },
+     placeholder: { type: "boolean" },
+     url: {
+      type: "string",
+      format: "uri",
+      description: "HTTP URL of the uploaded image",
+     },
+     secure_url: {
+      type: "string",
+      format: "uri",
+      description: "HTTPS URL of the uploaded image",
+     },
+     asset_folder: { type: "string" },
+     display_name: { type: "string" },
+     original_filename: { type: "string" },
+     api_key: { type: "string", description: "API key used for the upload" },
     },
+   },
   },
  },
  paths: {
@@ -964,34 +980,75 @@ const spec = {
     },
    },
   },
-   "/api/docs": {
-    get: {
-     tags: ["Docs"],
-     summary: "Swagger UI documentation",
-     responses: {
-      "200": {
-       description: "Swagger UI HTML",
-       content: {
-        "text/html": { schema: { type: "string" } },
+  "/api/auth/session": {
+   get: {
+    tags: ["Authentication"],
+    summary: "Get the current session and user (better-auth)",
+    description:
+     "Returns the active session for the request cookie/Bearer token, or null when unauthenticated.",
+    responses: {
+     "200": {
+      description: "Session data or null",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         nullable: true,
+         properties: {
+          session: { $ref: "#/components/schemas/Session" },
+          user: { $ref: "#/components/schemas/User" },
+         },
+        },
        },
       },
      },
     },
    },
-   "/api/docs.json": {
-    get: {
-     tags: ["Docs"],
-     summary: "Raw OpenAPI specification (JSON)",
-     responses: {
-      "200": {
-       description: "The full OpenAPI spec served as JSON",
-       content: {
-        "application/json": { schema: { type: "object" } },
+  },
+  "/api/auth/user": {
+   get: {
+    tags: ["Authentication"],
+    summary: "Get the currently authenticated user (better-auth)",
+    responses: {
+     "200": {
+      description: "Authenticated user or null",
+      content: {
+       "application/json": {
+        schema: { $ref: "#/components/schemas/User" },
        },
       },
      },
     },
    },
+  },
+  "/api/docs": {
+   get: {
+    tags: ["Docs"],
+    summary: "Swagger UI documentation",
+    responses: {
+     "200": {
+      description: "Swagger UI HTML",
+      content: {
+       "text/html": { schema: { type: "string" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/docs.json": {
+   get: {
+    tags: ["Docs"],
+    summary: "Raw OpenAPI specification (JSON)",
+    responses: {
+     "200": {
+      description: "The full OpenAPI spec served as JSON",
+      content: {
+       "application/json": { schema: { type: "object" } },
+      },
+     },
+    },
+   },
+  },
   "/api/user/profile": {
    get: {
     tags: ["User"],
@@ -1421,7 +1478,7 @@ const spec = {
     tags: ["Notification"],
     summary: "SSE stream for real-time events",
     description:
-     "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Events are only delivered to the authenticated user — the recipient is resolved from `userId`, `merchantId` or `orderId` in the payload, so merchants receive `inventory.low_stock` (matched by their business `merchantId`) and users receive order/payment events. See the `x-sse-events` extension below for the full list of event names and payload shapes the frontend should listen for.",
+     "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the payload itself no longer contains the `userId` (it moved to the event envelope) but always includes an `outboxId` that correlates to the underlying outbox row. Events without a top-level `userId` (`inventory.low_stock`, payment *verified* webhook events, etc.) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
     security: [{ bearerAuth: [] }],
     responses: {
      "200": {
@@ -1450,12 +1507,15 @@ const spec = {
        description: "A new order was placed by the user.",
        data: {
         type: "object",
-        required: ["userId", "cartId", "orderId", "productIds"],
+        required: ["cartId", "orderId", "productIds", "outboxId"],
         properties: {
-         userId: { type: "string", description: "Recipient user ID" },
          cartId: { type: "string" },
          orderId: { type: "string" },
          productIds: { type: "array", items: { type: "string" } },
+         outboxId: {
+          type: "string",
+          description: "Correlates to the underlying outbox row",
+         },
         },
        },
       },
@@ -1465,9 +1525,8 @@ const spec = {
         "An order's status changed (e.g. out_for_delivery, delivered).",
        data: {
         type: "object",
-        required: ["userId", "orderId", "status"],
+        required: ["orderId", "status", "outboxId"],
         properties: {
-         userId: { type: "string", description: "Recipient user ID" },
          orderId: { type: "string" },
          status: {
           type: "string",
@@ -1482,6 +1541,10 @@ const spec = {
           ],
          },
          message: { type: "string", description: "Human-readable update" },
+         outboxId: {
+          type: "string",
+          description: "Correlates to the underlying outbox row",
+         },
         },
        },
       },
@@ -1490,52 +1553,13 @@ const spec = {
        description: "An order was cancelled.",
        data: {
         type: "object",
-        required: ["userId", "orderId", "productIds"],
+        required: ["orderId", "productIds", "outboxId"],
         properties: {
-         userId: { type: "string", description: "Recipient user ID" },
          orderId: { type: "string" },
          productIds: { type: "array", items: { type: "string" } },
-        },
-       },
-      },
-      {
-       event: "order.accepted",
-       description:
-        "An order was accepted by the merchant (reserved event type).",
-       data: { type: "object" },
-      },
-      {
-       event: "order.rejected",
-       description:
-        "An order was rejected by the merchant (reserved event type).",
-       data: { type: "object" },
-      },
-      {
-       event: "order.pending",
-       description: "An order is pending (reserved event type).",
-       data: { type: "object" },
-      },
-      {
-       event: "inventory.update",
-       description: "Inventory was updated (reserved event type).",
-       data: { type: "object" },
-      },
-      {
-       event: "inventory.low_stock",
-       description:
-        "A product is running low on stock (delivered to the merchant).",
-       data: {
-        type: "object",
-        required: ["productId", "productName", "quantity", "merchantId"],
-        properties: {
-         productId: { type: "string" },
-         productName: { type: "string" },
-         quantity: { type: "integer" },
-         merchantId: {
+         outboxId: {
           type: "string",
-          nullable: true,
-          description:
-           "Business ID of the merchant — used to route the event to the merchant's user account",
+          description: "Correlates to the underlying outbox row",
          },
         },
        },
@@ -1545,12 +1569,15 @@ const spec = {
        description: "A product in the user's cart is running low on stock.",
        data: {
         type: "object",
-        required: ["productId", "userId", "productName", "quantity"],
+        required: ["productId", "productName", "quantity", "outboxId"],
         properties: {
          productId: { type: "string" },
-         userId: { type: "string", description: "Recipient user ID" },
          productName: { type: "string" },
          quantity: { type: "integer" },
+         outboxId: {
+          type: "string",
+          description: "Correlates to the underlying outbox row",
+         },
         },
        },
       },
@@ -1560,9 +1587,8 @@ const spec = {
         "A Stripe checkout session was created for the user's order.",
        data: {
         type: "object",
-        required: ["userId", "orderId", "stripeData"],
+        required: ["orderId", "stripeData", "outboxId"],
         properties: {
-         userId: { type: "string", description: "Recipient user ID" },
          orderId: { type: "string" },
          stripeData: {
           type: "object",
@@ -1577,77 +1603,38 @@ const spec = {
            reference: { type: "string" },
           },
          },
-        },
-       },
-      },
-       {
-        event: "payment.paystack.checkout.initialized",
-        description: "A Paystack checkout was initialized for the user's order.",
-        data: {
-         type: "object",
-         required: ["userId", "orderId", "paystackData"],
-         properties: {
-          userId: { type: "string", description: "Recipient user ID" },
-          orderId: { type: "string" },
-          paystackData: {
-           type: "object",
-           required: ["email", "rail", "currency", "checkout_url"],
-           properties: {
-            email: { type: "string", format: "email" },
-            amount: { type: "integer", description: "Amount charged" },
-            rail: { type: "string" },
-            currency: { type: "string" },
-            callbackUrl: { type: "string" },
-            checkout_url: { type: "string", format: "uri" },
-            reference: { type: "string" },
-            access_code: { type: "string" },
-           },
-          },
-         },
-        },
-       },
-      {
-       event: "payment.stripe.checkout.verified",
-       description:
-        "A Stripe checkout session was completed or expired (webhook).",
-       data: {
-        type: "object",
-        required: ["event", "eventType"],
-        properties: {
-         event: {
-          type: "object",
-          description:
-           "Full Stripe Checkout.Session object (id, amount_total, payment_intent, ...)",
-         },
-         eventType: {
+         outboxId: {
           type: "string",
-          enum: ["checkout.session.completed", "checkout.session.expired"],
+          description: "Correlates to the underlying outbox row",
          },
         },
        },
       },
       {
-       event: "payment.paystack.checkout.verified",
-       description: "A Paystack charge succeeded or failed (webhook).",
+       event: "payment.paystack.checkout.initialized",
+       description: "A Paystack checkout was initialized for the user's order.",
        data: {
         type: "object",
-        required: ["event"],
+        required: ["orderId", "paystackData", "outboxId"],
         properties: {
-         event: {
+         orderId: { type: "string" },
+         paystackData: {
           type: "object",
-          required: ["event", "data"],
+          required: ["email", "rail", "currency", "checkout_url"],
           properties: {
-           event: { type: "string", enum: ["charge.success", "charge.failed"] },
-           data: {
-            type: "object",
-            properties: {
-             reference: { type: "string" },
-             amount: { type: "integer" },
-             paid_at: { type: "string", format: "date-time" },
-            },
-           },
+           email: { type: "string", format: "email" },
+           amount: { type: "integer", description: "Amount charged" },
+           rail: { type: "string" },
+           currency: { type: "string" },
+           callbackUrl: { type: "string" },
+           checkout_url: { type: "string", format: "uri" },
+           reference: { type: "string" },
+           access_code: { type: "string" },
           },
-          description: "Paystack webhook body",
+         },
+         outboxId: {
+          type: "string",
+          description: "Correlates to the underlying outbox row",
          },
         },
        },
@@ -3087,70 +3074,70 @@ const spec = {
     },
    },
   },
-   "/api/upload/upload-image": {
-    post: {
-     tags: ["Upload"],
-     summary: "Upload an image to Cloudinary (server-side)",
-     description:
-      "Uploads an image to Cloudinary on the server. Send `{ file, folder }` in the JSON request body — `file` is the image as a base64 data URI (e.g. `data:image/png;base64,...`) or a public image URL, `folder` is the asset type. The server signs the request and forwards it to Cloudinary, then returns Cloudinary's full upload result. Cloudinary then notifies the server via webhook and the related record (user avatar / product image / business logo / product additional images) is updated automatically — no further API call needed.",
-     security: [{ bearerAuth: [] }],
-     requestBody: {
-      required: true,
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         required: ["file", "folder"],
-         properties: {
-          file: {
-           type: "string",
-           description:
-            "Image to upload — base64 data URI (e.g. `data:image/png;base64,...`) or public image URL",
-          },
-          folder: { $ref: "#/components/schemas/AssetType" },
+  "/api/upload/upload-image": {
+   post: {
+    tags: ["Upload"],
+    summary: "Upload an image to Cloudinary (server-side)",
+    description:
+     "Uploads an image to Cloudinary on the server. Send `{ file, folder }` in the JSON request body — `file` is the image as a base64 data URI (e.g. `data:image/png;base64,...`) or a public image URL, `folder` is the asset type. The server signs the request and forwards it to Cloudinary, then returns Cloudinary's full upload result. Cloudinary then notifies the server via webhook and the related record (user avatar / product image / business logo / product additional images) is updated automatically — no further API call needed.",
+    security: [{ bearerAuth: [] }],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: {
+        type: "object",
+        required: ["file", "folder"],
+        properties: {
+         file: {
+          type: "string",
+          description:
+           "Image to upload — base64 data URI (e.g. `data:image/png;base64,...`) or public image URL",
          },
+         folder: { $ref: "#/components/schemas/AssetType" },
         },
-       },
-      },
-     },
-     responses: {
-      "201": {
-       description:
-        "Image uploaded to Cloudinary — full Cloudinary upload response (the signature is generated server-side and never exposed to the client)",
-       content: {
-        "application/json": {
-         schema: {
-          type: "object",
-          properties: {
-           status: { type: "string", example: "ok" },
-           message: { type: "string", example: "image uploaded successfully" },
-           data: { $ref: "#/components/schemas/UploadResult" },
-          },
-         },
-        },
-       },
-      },
-      "401": {
-       description: "Unauthorized — invalid or missing session token",
-       content: {
-        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-       },
-      },
-      "403": {
-       description: "Forbidden — user or merchant role required",
-       content: {
-        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-       },
-      },
-      "500": {
-       description: "Failed to upload image to Cloudinary",
-       content: {
-        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
        },
       },
      },
     },
+    responses: {
+     "201": {
+      description:
+       "Image uploaded to Cloudinary — full Cloudinary upload response (the signature is generated server-side and never exposed to the client)",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "image uploaded successfully" },
+          data: { $ref: "#/components/schemas/UploadResult" },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — user or merchant role required",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "500": {
+      description: "Failed to upload image to Cloudinary",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
    },
+  },
   "/api/webhook/stripe": {
    post: {
     tags: ["Webhook"],

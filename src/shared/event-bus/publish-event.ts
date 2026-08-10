@@ -5,9 +5,17 @@ import { EventBus } from "@shared/event-bus/index.ts";
 import type { EventContract } from "@shared/event-bus/types.ts";
 
 export async function publishEvent(event: EventContract) {
- const outboxEvent = await OutboxService.save(event);
+ const outboxEvent = await OutboxService.save({
+  event_type: event.event_type,
+  payload: {
+   ...event.payload,
+   ...(event.userId ? { userId: event.userId } : {}),
+  },
+ });
+
  EventBus.publish({
   event_type: event.event_type,
-  payload: { outboxId: outboxEvent.id },
+  userId: event.userId,
+  payload: { ...event.payload, outboxId: outboxEvent.id },
  });
 }

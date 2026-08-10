@@ -53,7 +53,7 @@ class InventoryService {
    : 0;
 
   if (currentAllocatedTotal + 1 > currentQuantity)
-   return [null, APIError.internalServer("Product threshold exceeded")];
+   return [null, APIError.internalServer("Out of stock")];
 
   return [Number(price), null];
  };
@@ -83,9 +83,9 @@ class InventoryService {
    await FA.concurrent.map(async ({ userId, name, quantity }: any) => {
     await publishEvent({
      event_type: EventType.CART_LOW_STOCK_ALERT,
+     userId,
      payload: {
       productId,
-      userId,
       productName: name,
       quantity: quantity,
      },
