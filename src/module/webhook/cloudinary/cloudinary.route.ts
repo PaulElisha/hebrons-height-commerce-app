@@ -1,5 +1,5 @@
 /** @format */
-import asyncHandler from "@shared/middleware/async-handler.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import express, { NextFunction, Request, Response, Router } from "express";
 
 import { cloudinaryWebhookHandler } from "./cloudinary.webhook.ts";

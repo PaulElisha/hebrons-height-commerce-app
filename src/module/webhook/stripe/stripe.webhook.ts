@@ -19,10 +19,12 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
    sig,
    Env.STRIPE_WEBHOOK_SECRET,
   );
- } catch (error: any) {
+ } catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+
   return res
    .status(HttpStatus.BAD_REQUEST)
-   .send(`Webhook Error: ${error.message}`);
+   .send(`Webhook Error: ${message}`);
  }
 
  try {
@@ -47,9 +49,11 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
   }
 
   return res.status(HttpStatus.OK).json({ received: true });
- } catch (error: any) {
+ } catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+
   return res
    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-   .send(`Webhook Error ${error?.message}`);
+   .send(`Webhook Error ${message}`);
  }
 };

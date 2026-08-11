@@ -2,20 +2,23 @@
 
 import { OrderParams } from "@module/order/order.controller.ts";
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import { APIResponse } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
 
-import PaymentService, { CheckoutData } from "./payment.service.ts";
+import PaymentService, {
+ CheckoutData,
+ PaymentCheckoutResult,
+} from "./payment.service.ts";
 
 class PaymentController {
  initialize = asyncHandler(
   async (
    req: Request<OrderParams, {}, z.infer<typeof CheckoutData>>,
-   res: Response<APIResponse<any>>,
+   res: Response<APIResponse<PaymentCheckoutResult>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const orderId = String(req.params.orderId);
    const body = req.body;

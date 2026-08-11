@@ -16,7 +16,6 @@ import z from "zod";
 import {
  CheckoutData,
  PaymentCheckoutResult,
- PaymentResponse,
 } from "./payment.service.ts";
 
 type Rail = z.infer<typeof CheckoutData>["rail"];
@@ -25,14 +24,14 @@ type RailHandler = (
  userId: string,
  orderId: string,
  data: z.infer<typeof CheckoutData>,
-) => Promise<Result<z.infer<typeof PaymentResponse>, AppError>>;
+) => Promise<Result<PaymentCheckoutResult, AppError>>;
 
 export const FetchRail: Record<Rail, RailHandler> = {
  initializePaystackCheckout: async (
   userId: string,
   orderId: string,
   data: z.infer<typeof CheckoutData>,
- ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
+ ): Promise<Result<PaymentCheckoutResult, AppError>> => {
   const [orderWithUser, err] = await OrderService.getOrderWithUser(
    userId,
    orderId,
@@ -102,7 +101,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
   userId: string,
   orderId: string,
   data: z.infer<typeof CheckoutData>,
- ): Promise<Result<z.infer<typeof PaymentResponse>, AppError>> => {
+  ): Promise<Result<PaymentCheckoutResult, AppError>> => {
   const [orderData, err] = await OrderService.getOrderDetails(userId, orderId);
 
   if (err || !orderData) return [null, err];
@@ -120,11 +119,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
          .select({ name: product.name })
          .from(product)
          .where(eq(product.id, i.productId))
-         .then((res) => {
-          if (res.length <= 0)
-           return [null, APIError.internalServer("Unknown product")];
-          return res[0].name;
-         }),
+         .then((res) => res[0]?.name ?? "Unknown product"),
        },
        unit_amount: Math.round(i.unitPrice * Env.SCALER),
       },
@@ -164,7 +159,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
      },
     });
 
-    return [{ checkout_url: session.url }, null];
+    return [res, null];
    });
  },
 };

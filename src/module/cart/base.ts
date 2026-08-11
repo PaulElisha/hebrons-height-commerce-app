@@ -3,6 +3,7 @@ import db from "@db/db.ts";
 import InventoryService from "@module/inventory/inventory.service.ts";
 import { cart, cartItem } from "@schema/cart.ts";
 import AppError from "@shared/error/app-error.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import * as helper from "@shared/helper.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
 import { Mutex } from "async-mutex";
@@ -38,7 +39,9 @@ class CartBase {
  }
 
  @Transactional()
- async modifyCart(userIntent: Intent): Promise<Result<TCartAndItem, AppError>> {
+ async modifyCart(
+  userIntent: Intent,
+ ): Promise<Result<TCartAndItem, AppError>> {
   const { userId, productId, intent } = userIntent;
 
   let [userCart] = await db
@@ -53,23 +56,32 @@ class CartBase {
 
   const callback = CartActions[intent];
 
+  if (!callback)
+   return [null, APIError.badRequest(`invalid cart action: ${intent}`)];
+
   const [result, err] = await mutex.runExclusive(async () => {
-   if (typeof intent === "string" && intent == "add") {
+   if (intent == "add") {
     const existingItem = await helper.checkItemExistsInCart(
      userCart.id,
      productId,
     );
 
     if (existingItem)
-     return [{ cart: userCart, cart_items: [existingItem] }, null];
+     return await helper.getCartAndItems(userCart.id, userId);
 
     const [price, err] =
      await InventoryService.checkInventoryThreshold(productId);
 
     if (err || !price) return [null, err];
 
-    await callback(userCart.id, userId, productId, Number(price));
-   } else if (typeof intent === "string" && intent == "increment") {
+    const [, actionErr] = await callback(
+     userCart.id,
+     userId,
+     productId,
+     Number(price),
+    );
+    if (actionErr) return [null, actionErr];
+   } else if (intent == "increment") {
     const existingItem = await helper.checkItemExistsInCart(
      userCart.id,
      productId,
@@ -82,9 +94,11 @@ class CartBase {
      if (err || !price) return [null, err];
     }
 
-    await callback(userCart.id, userId, productId);
+    const [, actionErr] = await callback(userCart.id, userId, productId);
+    if (actionErr) return [null, actionErr];
    } else {
-    await callback(userCart.id, userId, productId);
+    const [, actionErr] = await callback(userCart.id, userId, productId);
+    if (actionErr) return [null, actionErr];
    }
 
    return [null, null];

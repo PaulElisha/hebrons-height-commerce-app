@@ -4,7 +4,10 @@ import { MailSubject } from "@module/email/email.service.ts";
 import type { MailData, MailerCallback, TUser } from "@shared/types.ts";
 import type { Transporter } from "nodemailer";
 
-export const MailAction: Record<string, MailerCallback<any, TUser>> = {
+export const MailAction: Record<
+ string,
+ MailerCallback<Transporter, TUser>
+> = {
  sendOrderMemo: (transporter: Transporter, data: MailData<TUser>) => {
   const { user, message } = data;
   return transporter.sendMail({

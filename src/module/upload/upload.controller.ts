@@ -1,21 +1,16 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
-import { APIResponse, AssetType } from "@shared/types.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
+import { APIResponse } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 
-import UploadService from "./upload.service.ts";
-import type { UploadData } from "./upload.service.ts";
-
-export interface UploadBody {
- folder: AssetType;
-}
+import UploadService, { UploadData, UploadResult } from "./upload.service.ts";
 
 class UploadController {
  uploadImage = asyncHandler(
   async (
-   req: Request<any, any, UploadData>,
-   res: Response<APIResponse<any>>,
+   req: Request<{}, {}, UploadData>,
+   res: Response<APIResponse<UploadResult>>,
    next: NextFunction,
   ) => {
    const [data, err] = await UploadService.uploadImage(req.user.id, req.body);

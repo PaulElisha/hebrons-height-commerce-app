@@ -2,18 +2,18 @@
 import type { NextFunction, Request, Response } from "express";
 
 export type AsyncHandler<
- P = any,
- ResBody = any,
- ReqBody = any,
- ReqQuery = any,
+ P = unknown,
+ ResBody = unknown,
+ ReqBody = unknown,
+ ReqQuery = unknown,
 > = (
  req: Request<P, ResBody, ReqBody, ReqQuery>,
  res: Response,
  next: NextFunction,
-) => Promise<any>;
+) => Promise<void | Response>;
 
 const asyncHandler =
- <P = any, ResBody = any, ReqBody = any, ReqQuery = any>(
+ <P = unknown, ResBody = unknown, ReqBody = unknown, ReqQuery = unknown>(
   controller: AsyncHandler<P, ResBody, ReqBody, ReqQuery>,
  ) =>
  (

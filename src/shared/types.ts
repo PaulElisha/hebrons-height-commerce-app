@@ -51,7 +51,7 @@ export interface TCartItem {
 
 export type TCartAndItem = {
  cart: TCart;
- cart_items: TCartItem[];
+ cart_items: (TCartItem & { product: T<"product"> })[];
 };
 
 export interface TOrder {
@@ -88,6 +88,11 @@ export type TOrderAndItems = {
 export type TOrderJoinRow = {
  orders: T<"order">;
  orderItem: T<"orderItems">;
+};
+
+export type TUserOrderWithItems = {
+ orders: T<"order">;
+ order_items: (T<"orderItems"> & { product: T<"product"> })[];
 };
 
 export type TMerchantProducts = {
@@ -273,8 +278,8 @@ export interface TPayment {
 }
 
 export interface TPaymentVerificationResult {
- payment: any;
- order?: any;
+ payment: T<"payment">;
+ order?: T<"order">;
 }
 
 export interface ModelMap {

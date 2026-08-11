@@ -1,6 +1,6 @@
 /** @format */
 import stripeClient from "@app/stripe.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import authenticate from "@shared/middleware/authenticate.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { validate } from "@shared/middleware/validate.ts";
@@ -22,10 +22,7 @@ class PaymentRoutes {
   this.router.get(
    "/success",
    asyncHandler(
-    async (
-     req: Request<any, any, any, { session_id: string }>,
-     res: Response,
-    ) => {
+    async (req: Request<{}, {}, {}, { session_id: string }>, res: Response) => {
      const session = await stripeClient.checkout.sessions.retrieve(
       req.query.session_id,
      );

@@ -5,6 +5,7 @@ import CartService from "@module/cart/cart.service.ts";
 import InventoryService from "@module/inventory/inventory.service.ts";
 import { user } from "@schema/auth.ts";
 import { order, orderItem } from "@schema/order.ts";
+import { product } from "@schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
@@ -17,8 +18,8 @@ import {
  TCartItem,
  TMerchantPaginatedOrders,
  TOrderAndItems,
- TOrderJoinRow,
  TOrderWithUser,
+ TUserOrderWithItems,
 } from "@shared/types.ts";
 import { Mutex } from "async-mutex";
 import { and, count, desc, eq, inArray, lt, ne, SQL, sql } from "drizzle-orm";
@@ -93,28 +94,41 @@ class OrderService {
    const [orders, e] = await helper.validateOrderForCart(cartId, userId);
    if (e || !orders) return [null, e];
 
-   const itemResults = await FA.concurrent.map(async (v: TCartItem) => {
-    const [productData, e] = await InventoryService.checkProductThreshold(
-     v.productId,
-    );
-    if (e || Number(productData?.quantity) <= 0) return [null, e];
+   type OrderItemDraft = {
+    productId: string;
+    merchantId: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+   };
 
-    const [merchantId, err] = await helper.getMerchantIdFromProductId(
-     v.productId,
-    );
+   const itemResults = await FA.concurrent.map(
+    async (v: TCartItem): Promise<OrderItemDraft | [null, AppError | null]> => {
+     const [productData, e] = await InventoryService.checkProductThreshold(
+      v.productId,
+     );
+     if (e || Number(productData?.quantity) <= 0) return [null, e];
 
-    if (err || !merchantId) return [null, err];
+     const [merchantId, err] = await helper.getMerchantIdFromProductId(
+      v.productId,
+     );
 
-    return {
-     productId: v.productId,
-     merchantId,
-     quantity: v.quantity,
-     unitPrice: v.price,
-     lineTotal: v.quantity * v.price,
-    };
-   }, data.cart_items || []);
+     if (err || !merchantId) return [null, err];
 
-   const validItems = itemResults.filter(Boolean);
+     return {
+      productId: v.productId,
+      merchantId,
+      quantity: v.quantity,
+      unitPrice: v.price,
+      lineTotal: v.quantity * v.price,
+     };
+    },
+    data.cart_items || [],
+   );
+
+   const validItems = itemResults.filter(
+    (i): i is OrderItemDraft => !Array.isArray(i),
+   );
 
    if (validItems.length <= 0)
     return [null, APIError.notFound("Item not found in cart")];
@@ -139,12 +153,12 @@ class OrderService {
 
    await db
     .insert(orderItem)
-    .values(validItems.map((i: any) => ({ ...i, orderId: newOrder.id })));
+    .values(validItems.map((i) => ({ ...i, orderId: newOrder.id })));
 
    return [
     {
      orderId: newOrder.id,
-     productIds: validItems.map((i: any) => i.productId),
+     productIds: validItems.map((i) => i.productId),
     },
     null,
    ];
@@ -172,20 +186,37 @@ class OrderService {
  getUserOrderByStatus = async (
   userId: string,
   status?: string,
- ): Promise<Result<TOrderJoinRow[], AppError>> => {
+ ): Promise<Result<TUserOrderWithItems[], AppError>> => {
   const result = await db
    .select()
    .from(order)
    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+   .innerJoin(product, eq(orderItem.productId, product.id))
    .where(
     and(eq(order.userId, userId), eq(order.orderStatus, status ?? "pending")),
    )
    .orderBy(desc(order.createdAt));
 
-  if (!(result.length > 0))
+  if (result.length <= 0)
    return [null, APIError.notFound(`${status} order not found`)];
 
-  return [result, null];
+  const orderIds = [...new Set(result.map((row) => row.orders.id))];
+
+  return [
+   orderIds.map((orderId) => {
+    const orderRows = result.filter((row) => row.orders.id === orderId);
+
+    return {
+     orders: orderRows[0].orders,
+     order_items: orderRows.map((row) => ({
+      ...row.orderItem,
+      lineTotal: Number(row.orderItem.lineTotal),
+      product: row.product,
+     })),
+    };
+   }),
+   null,
+  ];
  };
 
  getOrderDetails = async (

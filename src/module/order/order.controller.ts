@@ -1,13 +1,14 @@
 /** @format */
 import { CartParams } from "@module/cart/cart.controller.ts";
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import {
  APIResponse,
  Pagination,
  T,
+ TMerchantPaginatedOrders,
  TOrderAndItems,
- TOrderJoinRow,
+ TUserOrderWithItems,
 } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
@@ -26,10 +27,10 @@ export interface OrderParams {
 class OrderController {
  placeOrder = asyncHandler(
   async (
-   req: Request<CartParams, any, z.infer<typeof CreateOrderDto>>,
-   res: Response<APIResponse<object>>,
+   req: Request<CartParams, {}, z.infer<typeof CreateOrderDto>>,
+   res: Response<APIResponse<{ orderId: string }>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const cartId = String(req.params.cartId);
    const body = req.body;
@@ -51,9 +52,9 @@ class OrderController {
  getUserOrderByStatus = asyncHandler(
   async (
    req: Request<{}, {}, {}, TOrderStatusQuery>,
-   res: Response<APIResponse<TOrderJoinRow[]>>,
+   res: Response<APIResponse<TUserOrderWithItems[]>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const status = req.query.status;
 
@@ -74,7 +75,7 @@ class OrderController {
    req: Request<OrderParams>,
    res: Response<APIResponse<TOrderAndItems>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const orderId = String(req.params.orderId);
 
@@ -92,8 +93,8 @@ class OrderController {
 
  getMerchantOrders = asyncHandler(
   async (
-   req: Request<any, any, any, Pagination & TOrderFilter>,
-   res: Response<APIResponse<TOrderAndItems & any>>,
+   req: Request<{}, {}, {}, Pagination & TOrderFilter>,
+   res: Response<APIResponse<TMerchantPaginatedOrders>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -116,7 +117,7 @@ class OrderController {
     pagination,
    );
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -131,7 +132,7 @@ class OrderController {
    req: Request<OrderParams, {}, z.infer<typeof UpdateOrderStatusDto>>,
    res: Response<APIResponse<T<"order">>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const orderId = String(req.params.orderId);
    const { status } = req.body;
@@ -156,7 +157,7 @@ class OrderController {
    req: Request<OrderParams>,
    res: Response<APIResponse<T<"order">>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const orderId = String(req.params.orderId);
    const [data, err] = await OrderService.cancelOrder(orderId);
 

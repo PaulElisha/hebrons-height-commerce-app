@@ -115,6 +115,7 @@ export const getCartAndItems = async (
    .select()
    .from(cart)
    .leftJoin(cartItem, eq(cartItem.cartId, cart.id))
+   .innerJoin(product, eq(cartItem.productId, product.id))
    .where(and(eq(cart.userId, userId), eq(cart.id, cartId)));
 
   if (!cartAndItems[0]?.cart)
@@ -122,10 +123,17 @@ export const getCartAndItems = async (
 
   return [
    {
-    cart: cartAndItems[0].cart,
+    cart: {
+     ...cartAndItems[0].cart,
+     subtotal: Number(cartAndItems[0].cart.subtotal),
+    },
     cart_items: cartAndItems
-     .map((i) => i.cart_items)
-     .filter(Boolean) as TCartItem[],
+     .filter((i) => i.cart_items && i.product)
+     .map((i) => ({
+      ...i.cart_items!,
+      totalItemPrice: Number(i.cart_items!.totalItemPrice),
+      product: i.product!,
+     })),
    },
    null,
   ];

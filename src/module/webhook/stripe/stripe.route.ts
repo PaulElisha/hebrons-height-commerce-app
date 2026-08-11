@@ -1,5 +1,5 @@
 /** @format */
-import asyncHandler from "@shared/middleware/async-handler.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import express, { Request, Response, Router } from "express";
 
 import { stripeWebhookHandler } from "./stripe.webhook.ts";

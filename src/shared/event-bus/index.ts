@@ -10,6 +10,7 @@ export type {
  OrderCancelledPayload,
  OrderPlacedPayload,
  OrderStatusUpdatedPayload,
+ PaystackChargeEvent,
  PaystackPaymentInitializedPayload,
  PaystackPaymentVerifiedPayload,
  StripePaymentInitializedPayload,

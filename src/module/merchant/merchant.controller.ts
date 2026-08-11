@@ -1,6 +1,6 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import {
  APIResponse,
  T,
@@ -25,7 +25,7 @@ class MerchantController {
    req: Request,
    res: Response<APIResponse<TMerchantWithUser>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const [data, err] = await MerchantService.getMerchantProfile(userId);
 
@@ -41,10 +41,10 @@ class MerchantController {
 
  createMerchantProfile = asyncHandler(
   async (
-   req: Request<any, any, z.infer<typeof CreateMerchantDto>>,
+   req: Request<{}, {}, z.infer<typeof CreateMerchantDto>>,
    res: Response<APIResponse<T<"merchant">>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const body = req.body;
 
@@ -65,10 +65,10 @@ class MerchantController {
 
  updateMerchantProfile = asyncHandler(
   async (
-   req: Request<MerchantParams, any, any, z.infer<typeof UpdateMerchantDto>>,
+   req: Request<MerchantParams, {}, z.infer<typeof UpdateMerchantDto>>,
    res: Response<APIResponse<T<"merchant">>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const merchantId = String(req.params.merchantId);
    const body = req.body;
@@ -108,11 +108,7 @@ class MerchantController {
  );
 
  deleteMerchantProfile = asyncHandler(
-  async (
-   req: Request<MerchantParams>,
-   res: Response,
-   next: NextFunction,
-  ): Promise<any> => {
+  async (req: Request<MerchantParams>, res: Response, next: NextFunction) => {
    const userId = req.user.id;
    const merchantId = String(req.params.merchantId);
 

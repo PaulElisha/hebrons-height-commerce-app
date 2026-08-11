@@ -8,16 +8,29 @@ import { AssetType, Result } from "@shared/types.ts";
 import Env from "env.ts";
 
 export interface UploadResult {
+ asset_id: string;
  public_id: string;
- url: string;
- folder: string;
+ version: number;
+ version_id: string;
  signature: string;
- timestamp: number;
- apiKey: string;
+ width: number;
+ height: number;
+ format: string;
+ resource_type: string;
+ created_at: string;
+ tags: string[];
+ bytes: number;
+ type: string;
+ etag: string;
+ placeholder: boolean;
+ url: string;
+ secure_url: string;
+ access_mode: string;
+ original_filename: string;
 }
 
 export interface UploadData {
- file: any;
+ file: string;
  folder: AssetType;
 }
 
@@ -25,7 +38,7 @@ class UploadService {
  uploadImage = async (
   userId: string,
   body: UploadData,
- ): Promise<Result<any, AppError>> => {
+ ): Promise<Result<UploadResult, AppError>> => {
   const timestamp = Math.floor(Date.now() / 1000);
   const publicId = createPublicId(body.folder, userId);
   const notification_url =
@@ -46,9 +59,10 @@ class UploadService {
     },
     Env.CLOUDINARY_SECRET,
    );
-  } catch (error: any) {
-   logger.error("Upload error", error);
-   return [null, error];
+  } catch (error) {
+   const message = error instanceof Error ? error.message : String(error);
+   logger.error({ err: message }, "Upload error");
+   return [null, APIError.internalServer(message)];
   }
 
   const formData = new FormData();
@@ -83,12 +97,13 @@ class UploadService {
     ];
    }
 
-   const data = await response.json();
-   return [data, null];
-  } catch (error: any) {
-   return [null, error];
-  }
- };
-}
+    const data = (await response.json()) as UploadResult;
+    return [data, null];
+   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return [null, APIError.internalServer(message)];
+   }
+  };
+ }
 
 export default new UploadService();

@@ -5,7 +5,7 @@ import path from "node:path";
 const templateCache = new Map<string, string>();
 
 const createTemplateTag = (baseDir: string) => {
- return async (strings: TemplateStringsArray, ...values: any[]) => {
+ return async (strings: TemplateStringsArray, ...values: unknown[]) => {
   const targetFile = strings[0].trim();
   const cacheKey = path.join(baseDir, targetFile);
 

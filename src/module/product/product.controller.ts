@@ -1,7 +1,7 @@
 /** @format */
 import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import {
  APIResponse,
  Pagination,
@@ -49,7 +49,7 @@ class ProductController {
    req: Request<ProductParams>,
    res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const productId = String(req.params.productId);
    const [data, err] = await ProductService.getSingleProduct(productId);
 
@@ -115,7 +115,7 @@ class ProductController {
    req: Request<{}, {}, {}, Pagination>,
    res: Response<APIResponse<TProductWithMerchant[]>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const pageSizeValue = Number(req.query.pageSize);
    const pageNumberValue = Number(req.query.pageNumber);
 
@@ -138,10 +138,10 @@ class ProductController {
 
  getProducts = asyncHandler(
   async (
-   req: Request<any, any, any, Pagination & TProductFilter>,
+   req: Request<{}, {}, {}, Pagination & TProductFilter>,
    res: Response<APIResponse<TPaginatedProducts>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const pageSizeValue = Number(req.query.pageSize);
    const pageNumberValue = Number(req.query.pageNumber);
 
@@ -170,10 +170,10 @@ class ProductController {
 
  createProduct = asyncHandler(
   async (
-   req: Request<any, any, z.infer<typeof CreateProductDto>>,
+   req: Request<{}, {}, z.infer<typeof CreateProductDto>>,
    res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const body = req.body;
 
@@ -194,7 +194,7 @@ class ProductController {
    req: Request<ProductParams>,
    res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const productId = String(req.params.productId);
    const body = req.body;
@@ -220,7 +220,7 @@ class ProductController {
    req: Request<ProductParams>,
    res: Response<APIResponse<undefined>>,
    next: NextFunction,
-  ): Promise<any> => {
+  ) => {
    const userId = req.user.id;
    const productId = String(req.params.productId);
 

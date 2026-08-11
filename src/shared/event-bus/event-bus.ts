@@ -3,7 +3,7 @@ import logger from "@app/logger.ts";
 import { catchError, filter, map, Observable, of, retry, Subject } from "rxjs";
 
 import { EventType } from "./config.ts";
-import type { EventContract, IEventBus } from "./types.ts";
+import type { EventContract, IEventBus, OutboxEventContract } from "./types.ts";
 
 export class Bus implements IEventBus<EventContract> {
  private eventBus$ = new Subject<EventContract>();
@@ -14,13 +14,13 @@ export class Bus implements IEventBus<EventContract> {
 
  on(
   event: (typeof EventType)[keyof typeof EventType],
- ): Observable<EventContract> {
+ ): Observable<OutboxEventContract> {
   return this.eventBus$.asObservable().pipe(
    filter((update) => update?.event_type === event),
    map(
-    (update): EventContract => ({
+    (update): OutboxEventContract => ({
      event_type: update.event_type,
-     payload: update.payload,
+     payload: update.payload as OutboxEventContract["payload"],
     }),
    ),
    retry(2),
@@ -28,18 +28,18 @@ export class Bus implements IEventBus<EventContract> {
     logger.error({ err }, "Communication Error");
     return of({
      event_type: "error",
-     payload: { msg: "Communication failed" },
-    });
+     payload: { msg: "Communication failed", outboxId: "" },
+    } satisfies OutboxEventContract);
    }),
   );
  }
 
- subscribe(): Observable<EventContract> {
+ subscribe(): Observable<OutboxEventContract> {
   return this.eventBus$.asObservable().pipe(
    map(
-    (update): EventContract => ({
+    (update): OutboxEventContract => ({
      event_type: update.event_type,
-     payload: update.payload,
+     payload: update.payload as OutboxEventContract["payload"],
     }),
    ),
    retry(2),
@@ -47,8 +47,8 @@ export class Bus implements IEventBus<EventContract> {
     logger.error({ err }, "SSE Stream Error");
     return of({
      event_type: "error",
-     payload: { msg: "Stream disconnected" },
-    });
+     payload: { msg: "Stream disconnected", outboxId: "" },
+    } satisfies OutboxEventContract);
    }),
   );
  }

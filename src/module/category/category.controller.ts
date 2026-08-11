@@ -1,6 +1,6 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import { APIResponse, TCategory, TSubcategory } from "@shared/types.ts";
 import { NextFunction, Request, Response } from "express";
 

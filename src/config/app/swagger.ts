@@ -348,6 +348,7 @@ const spec = {
     type: "object",
     properties: {
      id: { type: "string" },
+     userId: { type: "string" },
      cartId: { type: "string" },
      productId: { type: "string" },
      price: { type: "integer" },
@@ -361,7 +362,18 @@ const spec = {
      cart: { $ref: "#/components/schemas/Cart" },
      cart_items: {
       type: "array",
-      items: { $ref: "#/components/schemas/CartItem" },
+      items: {
+       type: "object",
+       allOf: [
+        { $ref: "#/components/schemas/CartItem" },
+        {
+         type: "object",
+         properties: {
+          product: { $ref: "#/components/schemas/Product" },
+         },
+        },
+       ],
+      },
      },
     },
    },
@@ -434,6 +446,27 @@ const spec = {
     properties: {
      orders: { $ref: "#/components/schemas/Order" },
      orderItem: { $ref: "#/components/schemas/OrderItem" },
+    },
+   },
+   UserOrderWithItems: {
+    type: "object",
+    properties: {
+     orders: { $ref: "#/components/schemas/Order" },
+     order_items: {
+      type: "array",
+      items: {
+       type: "object",
+       allOf: [
+        { $ref: "#/components/schemas/OrderItem" },
+        {
+         type: "object",
+         properties: {
+          product: { $ref: "#/components/schemas/Product" },
+         },
+        },
+       ],
+      },
+     },
     },
    },
    CreateOrderDto: {
@@ -642,6 +675,11 @@ const spec = {
       type: "string",
       format: "uri",
       description: "HTTPS URL of the uploaded image",
+     },
+     access_mode: {
+      type: "string",
+      description: "Cloudinary asset access mode",
+      example: "public",
      },
      asset_folder: { type: "string" },
      display_name: { type: "string" },
@@ -2603,10 +2641,10 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "fetched order status" },
-          data: {
-           type: "array",
-           items: { $ref: "#/components/schemas/OrderJoinRow" },
-          },
+           data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/UserOrderWithItems" },
+           },
          },
         },
        },

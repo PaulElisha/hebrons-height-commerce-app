@@ -8,10 +8,12 @@ import { order } from "@schema/order.ts";
 import { payment } from "@schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
+import { PaystackChargeEvent } from "@shared/event-bus/index.ts";
 import { Result, T, TPaymentVerificationResult } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import Env from "env.ts";
+import Stripe from "stripe";
 import z from "zod";
 
 class WebhookHandler {
@@ -112,7 +114,7 @@ class WebhookHandler {
  }
 
  async handlePaystackPaymentVerified(
-  event: any,
+  event: PaystackChargeEvent,
  ): Promise<Result<TPaymentVerificationResult, AppError>> {
   const reference = event.data?.reference;
   const paidAmount = Number(event.data?.amount) / Env.SCALER;
@@ -121,17 +123,20 @@ class WebhookHandler {
    : new Date();
   const isFailure = event.event === "charge.failed";
 
+  if (!reference)
+   return [null, APIError.badRequest("Missing payment reference")];
+
   return await this.verifyPayment(reference, paidAmount, paidAtDate, isFailure);
  }
 
  async handleStripePaymentVerified(
-  session: any,
+  session: Stripe.Checkout.Session,
   eventType: string,
  ): Promise<Result<TPaymentVerificationResult, AppError>> {
   const reference = session.id;
   const paidAmount = Number(session.amount_total) / Env.SCALER;
-  const paidAtDate = session.payment_intent?.created
-   ? new Date(session.payment_intent.created * 1000)
+  const paidAtDate = session.created
+   ? new Date(session.created * 1000)
    : new Date();
   const isFailure = eventType === "checkout.session.expired";
 

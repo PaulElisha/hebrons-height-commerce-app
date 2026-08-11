@@ -3,7 +3,7 @@ import db from "@db/db.ts";
 import authenticate from "@middleware/authenticate.ts";
 import { user } from "@schema/auth.ts";
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/middleware/async-handler.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { APIResponse, T } from "@shared/types.ts";
 import { eq } from "drizzle-orm";

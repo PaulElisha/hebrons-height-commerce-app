@@ -8,8 +8,12 @@ import { EventType } from "./config.ts";
 export interface EventContract {
  event_type: string;
  userId?: string;
- payload: any;
+ payload: Record<string, unknown>;
 }
+
+export type OutboxEventContract = EventContract & {
+ payload: Record<string, unknown> & { outboxId: string };
+};
 
 export interface IEventBus<EventContract> {
  publish(event: EventContract): void;
