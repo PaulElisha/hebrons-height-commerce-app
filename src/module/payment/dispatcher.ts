@@ -121,7 +121,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
          .from(product)
          .where(eq(product.id, i.productId))
          .then((res) => {
-          if (res.length === 0)
+          if (res.length <= 0)
            return [null, APIError.internalServer("Unknown product")];
           return res[0].name;
          }),
@@ -148,6 +148,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
      email: data.email,
      mode: data.mode,
      rail: data.rail,
+     amount: Math.round(Number(orderData.order.subtotal) * Env.SCALER),
      currency: data.currency,
      callbackUrl: data.callback_url,
      checkout_url: session.url,

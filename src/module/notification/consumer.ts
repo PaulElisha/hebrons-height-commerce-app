@@ -16,6 +16,15 @@ import {
 import { and, eq, isNull } from "drizzle-orm";
 
 import NotificationService from "./notification.service.ts";
+import { notificationBroker } from "./broker.ts";
+
+EventBus.subscribe().subscribe({
+ next: ({ userId, payload, event_type }) => {
+  if (!userId) return;
+
+  notificationBroker.sendToUser(userId, payload, event_type);
+ },
+});
 
 EventBus.on(EventType.ORDER_STATUS_UPDATED).subscribe({
  next: async ({ payload }) => {

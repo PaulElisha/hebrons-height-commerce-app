@@ -40,8 +40,6 @@ import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
-import { notificationBroker } from "@module/notification/broker.ts";
-import { EventBus } from "@shared/event-bus/index.ts";
 import OutboxService from "@module/outbox/outbox.service.ts";
 
 dns.setDefaultResultOrder("ipv4first");
@@ -132,14 +130,6 @@ class App {
  startServer = async () => {
   const server = this.app.listen(Env.PORT, () => {
    logger.info(`Server is running on ${Env.BASE_URL}`);
-  });
-
-  EventBus.subscribe().subscribe({
-   next: ({ userId, payload, event_type }) => {
-    if (!userId) return;
-
-    notificationBroker.sendToUser(userId, payload, event_type);
-   },
   });
 
   OutboxService.replayUnprocessed().then((count) => {

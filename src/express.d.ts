@@ -12,6 +12,7 @@ declare global {
    session: Session["session"];
    upload_image?: UploadImage;
    upload_images?: UploadImages;
+   rawBody: Buffer;
   }
  }
 }

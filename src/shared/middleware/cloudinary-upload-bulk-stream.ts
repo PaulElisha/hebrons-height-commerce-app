@@ -14,7 +14,7 @@
 //   try {
 //    const targetFiles = req.files;
 
-//    if (!targetFiles || targetFiles.length === 0) {
+//    if (!targetFiles || targetFiles.length <= 0) {
 //     return next(
 //      APIError.badRequest("No files uploaded under the 'gallery' field key."),
 //     );

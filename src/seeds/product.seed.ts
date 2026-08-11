@@ -149,7 +149,7 @@ async function seedProducts() {
   .where(eq(account.userId, merchantUser.id))
   .limit(1);
 
- if (existingPasswords.length === 0) {
+ if (existingPasswords.length <= 0) {
   const hashed = await hashPassword(DEMO_PASSWORD);
   await db.insert(account).values({
    id: crypto.randomUUID(),

@@ -7,11 +7,18 @@ import { NextFunction, Request, Response } from "express";
 
 export function parseRawBody(req: Request, _res: Response, next: NextFunction) {
  try {
-  req.body = JSON.parse(req.body.toString("utf8"));
+  if (!req.body || !Buffer.isBuffer(req.body)) {
+   return next(APIError.badRequest("Invalid webhook body"));
+  }
+
+  req.rawBody = req.body;
+
+  req.body = JSON.parse(req.rawBody.toString("utf8"));
+
+  return next();
  } catch {
   return next(APIError.badRequest("Invalid JSON payload"));
  }
- next();
 }
 
 export const verifyPaystackSignature = async (
@@ -24,10 +31,6 @@ export const verifyPaystackSignature = async (
 
   if (!signature) {
    return next(APIError.badRequest("Missing Paystack signature"));
-  }
-
-  if (!Buffer.isBuffer(req.body)) {
-   return next(APIError.badRequest("Invalid webhook body"));
   }
 
   const hash = crypto
