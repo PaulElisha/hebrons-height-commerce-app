@@ -40,8 +40,7 @@ class MerchantService {
    .innerJoin(merchant, eq(product.merchantId, merchant.id))
    .where(and(eq(product.id, productId), isNull(merchant.deletedAt)));
 
-  if (!productMerchant)
-   return [null, APIError.notFound("Merchant not found for this product")];
+  if (!productMerchant) return [null, null];
 
   return [productMerchant.merchant, null];
  };
@@ -56,8 +55,7 @@ class MerchantService {
    .where(and(eq(merchant?.userId, userId), isNull(merchant.deletedAt)))
    .limit(1);
 
-  if (!merchantProfile)
-   return [null, APIError.notFound("Merchant profile not found")];
+  if (!merchantProfile) return [null, null];
 
   return [merchantProfile, null];
  };
@@ -102,8 +100,7 @@ class MerchantService {
    .where(and(eq(merchant.userId, userId), eq(merchant.id, merchantId)))
    .returning();
 
-  if (!updatedMerchant)
-   return [null, APIError.notFound("Merchant profile not found")];
+  if (!updatedMerchant) return [null, null];
 
   return [updatedMerchant, null];
  };
@@ -118,8 +115,7 @@ class MerchantService {
    .where(and(eq(merchant.userId, userId), eq(merchant.id, merchantId)))
    .returning();
 
-  if (!deletedMerchant)
-   return [null, APIError.notFound("Merchant profile not found")];
+  if (!deletedMerchant) return [null, null];
 
   return [null, null];
  };

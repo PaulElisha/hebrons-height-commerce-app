@@ -34,7 +34,7 @@ class CategoryService {
    .where(eq(category.name, name))
    .limit(1);
 
-  if (!existing) return [null, APIError.notFound("Category not found")];
+  if (!existing) return [null, null];
 
   return [existing, null];
  };
@@ -47,7 +47,7 @@ class CategoryService {
    .where(eq(category.id, categoryId))
    .returning();
 
-  if (!deleted) return [null, APIError.notFound("Category not found")];
+  if (!deleted) return [null, null];
 
   return [null, null];
  };

@@ -34,7 +34,7 @@ class ProductController {
    const userId = req.user.id;
    const [data, err] = await ProductService.getMerchantProducts(userId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    res.status(HttpStatus.OK).json({
     status: "ok",
@@ -53,7 +53,7 @@ class ProductController {
    const productId = String(req.params.productId);
    const [data, err] = await ProductService.getSingleProduct(productId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -73,7 +73,7 @@ class ProductController {
 
    const [data, err] = await ProductService.getProductForMerchant(merchantId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    res.status(HttpStatus.OK).json({
     status: "ok",
@@ -100,7 +100,7 @@ class ProductController {
    next: NextFunction,
   ) => {
    const [data, err] = await ProductService.getProductsByCategories();
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -126,7 +126,7 @@ class ProductController {
 
    const [data, err] = await ProductService.getLatestProducts(pagination);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -158,7 +158,7 @@ class ProductController {
 
    const [data, err] = await ProductService.getProducts(filters, pagination);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -179,7 +179,7 @@ class ProductController {
 
    const [data, err] = await ProductService.createProduct(userId, body);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -205,7 +205,7 @@ class ProductController {
     body,
    );
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

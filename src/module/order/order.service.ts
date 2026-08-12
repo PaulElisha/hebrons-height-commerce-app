@@ -76,8 +76,7 @@ class OrderService {
    .innerJoin(user, eq(order.userId, user.id))
    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-  if (!(result.length > 0))
-   return [null, APIError.notFound(`Order with ID ${orderId} not found`)];
+  if (!(result.length > 0)) return [null, null];
 
   return [result[0], null];
  };
@@ -131,8 +130,7 @@ class OrderService {
     (i): i is OrderItemDraft => !Array.isArray(i),
    );
 
-   if (validItems.length <= 0)
-    return [null, APIError.notFound("Item not found in cart")];
+   if (validItems.length <= 0) return [null, null];
 
    const [newOrder] = await db
     .insert(order)
@@ -187,28 +185,38 @@ class OrderService {
  getUserOrderByStatus = async (
   userId: string,
   status?: string,
+  pagination: Pagination = {},
  ): Promise<Result<TUserOrderWithItems[], AppError>> => {
+  const { limit, offset } = helper.parsePagination(pagination);
+
+  const orderRows = await db
+   .select({ id: order.id })
+   .from(order)
+   .where(
+    and(eq(order.userId, userId), eq(order.orderStatus, status ?? "pending")),
+   )
+   .orderBy(desc(order.createdAt))
+   .limit(limit)
+   .offset(offset);
+
+  if (orderRows.length <= 0) return [[], null];
+
+  const pageOrderIds = orderRows.map((row) => row.id);
+
   const result = await db
    .select()
    .from(order)
    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
    .innerJoin(product, eq(orderItem.productId, product.id))
-   .where(
-    and(eq(order.userId, userId), eq(order.orderStatus, status ?? "pending")),
-   )
+   .where(inArray(order.id, pageOrderIds))
    .orderBy(desc(order.createdAt));
 
-  if (result.length <= 0)
-   return [null, APIError.notFound(`${status} order not found`)];
-
-  const orderIds = [...new Set(result.map((row) => row.orders.id))];
-
   return [
-   orderIds.map((orderId) => {
+   pageOrderIds.map((orderId) => {
     const orderRows = result.filter((row) => row.orders.id === orderId);
 
     return {
-     orders: orderRows[0].orders,
+     orders: orderRows[0]!.orders,
      order_items: orderRows.map((row) => ({
       ...row.orderItem,
       lineTotal: Number(row.orderItem.lineTotal),
@@ -231,7 +239,7 @@ class OrderService {
    .innerJoin(product, eq(orderItem.productId, product.id))
    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-  if (result.length <= 0) return [null, APIError.notFound("order not found")];
+  if (result.length <= 0) return [null, null];
 
   return [
    {
@@ -328,8 +336,7 @@ class OrderService {
    )
    .limit(1);
 
-  if (!orderItemForMerchant)
-   return [null, APIError.notFound("Order not found for this merchant")];
+  if (!orderItemForMerchant) return [null, null];
 
   const [updatedOrder] = await db
    .update(order)
@@ -397,7 +404,7 @@ class OrderService {
     .where(eq(order.id, orderId))
     .limit(1);
 
-   if (!existingOrder) return [null, APIError.notFound("Order not found")];
+   if (!existingOrder) return [null, null];
    if (existingOrder.orderStatus === "cancelled")
     return [null, APIError.badRequest("Order already cancelled")];
 

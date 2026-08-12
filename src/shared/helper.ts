@@ -85,8 +85,7 @@ export async function getMerchantIdFromUser(
   .where(and(eq(merchant?.userId, userId), isNull(merchant.deletedAt)))
   .limit(1);
 
- if (!relatedMerchant)
-  return [null, APIError.notFound("Merchant profile not found")];
+if (!relatedMerchant) return [null, null];
 
  return [relatedMerchant.id, null];
 }
@@ -100,8 +99,7 @@ export async function getMerchantIdFromProductId(
   .innerJoin(merchant, eq(product.merchantId, merchant.id))
   .where(and(eq(product.id, productId), isNull(merchant.deletedAt)));
 
- if (!productMerchant)
-  return [null, APIError.notFound("Merchant not found for this product")];
+if (!productMerchant) return [null, null];
 
  return [productMerchant.merchant.id, null];
 }
@@ -119,7 +117,7 @@ export const getCartAndItems = async (
    .where(and(eq(cart.userId, userId), eq(cart.id, cartId)));
 
   if (!cartAndItems[0]?.cart)
-   return [null, APIError.notFound("Cart not found")];
+   return [null, null];
 
   return [
    {
@@ -202,11 +200,7 @@ export async function getMerchantProduct(
   )
   .limit(1);
 
- if (!existingProduct)
-  return [
-   null,
-   APIError.notFound("Product not found or not owned by merchant"),
-  ];
+if (!existingProduct) return [null, null];
 
  return [existingProduct, null];
 }

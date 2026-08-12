@@ -21,7 +21,7 @@ class NotificationController {
   ) => {
    const userId = req.user.id;
    const [data, err] = await NotificationService.getUserNotifications(userId);
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -39,7 +39,7 @@ class NotificationController {
   ) => {
    const userId = req.user.id;
    const [count, err] = await NotificationService.getUnreadCount(userId);
-   if (err || !count) return next(err);
+   if (err) return next(err);
 
    const unread = count ?? 0;
 
@@ -63,7 +63,7 @@ class NotificationController {
     notificationId,
     userId,
    );
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

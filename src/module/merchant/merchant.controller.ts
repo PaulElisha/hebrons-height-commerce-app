@@ -29,7 +29,7 @@ class MerchantController {
    const userId = req.user.id;
    const [data, err] = await MerchantService.getMerchantProfile(userId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -53,7 +53,7 @@ class MerchantController {
     body,
    );
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -79,7 +79,7 @@ class MerchantController {
     body,
    );
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -97,7 +97,7 @@ class MerchantController {
   ) => {
    const userId = req.user.id;
    const [data, err] = await MerchantService.getAnalytics(userId);
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

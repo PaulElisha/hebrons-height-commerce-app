@@ -24,7 +24,7 @@ class CategoryController {
    next: NextFunction,
   ) => {
    const [data, err] = await CategoryService.getCategories();
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

@@ -78,7 +78,7 @@ class ProductService {
    .where(and(eq(product.id, productId), isNull(product.deletedAt)))
    .limit(1);
 
-  if (!productDetails) return [null, APIError.notFound("Product not found")];
+  if (!productDetails) return [null, null];
 
   return [productDetails, null];
  };
@@ -232,10 +232,7 @@ class ProductService {
    .limit(1);
 
   if (!existing)
-   return [
-    null,
-    APIError.notFound("Product not found or not owned by merchant"),
-   ];
+   return [null, null];
 
   const updateData: Partial<typeof product.$inferInsert> = {};
 
@@ -275,10 +272,7 @@ class ProductService {
    .returning();
 
   if (!updatedProduct)
-   return [
-    null,
-    APIError.notFound("Product not found or not owned by merchant"),
-   ];
+   return [null, null];
 
   return [updatedProduct, null];
  };
@@ -299,10 +293,7 @@ class ProductService {
    .returning();
 
   if (!deletedProduct)
-   return [
-    null,
-    APIError.notFound("Product not found or not owned by merchant"),
-   ];
+   return [null, null];
 
   return [null, null];
  };

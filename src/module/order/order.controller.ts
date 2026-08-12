@@ -28,7 +28,7 @@ class OrderController {
  placeOrder = asyncHandler(
   async (
    req: Request<CartParams, {}, z.infer<typeof CreateOrderDto>>,
-   res: Response<APIResponse<{ orderId: string }>>,
+   res: Response<APIResponse<{ orderId: string | null }>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -37,7 +37,7 @@ class OrderController {
 
    const [orderId, err] = await OrderService.placeOrder(userId, cartId, body);
 
-   if (err || !orderId) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -51,16 +51,28 @@ class OrderController {
 
  getUserOrderByStatus = asyncHandler(
   async (
-   req: Request<{}, {}, {}, TOrderStatusQuery>,
+   req: Request<{}, {}, {}, Pagination & TOrderStatusQuery>,
    res: Response<APIResponse<TUserOrderWithItems[]>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
    const status = req.query.status;
 
-   const [data, err] = await OrderService.getUserOrderByStatus(userId, status);
+   const pageSizeValue = Number(req.query.pageSize);
+   const pageNumberValue = Number(req.query.pageNumber);
 
-   if (err || !data) return next(err);
+   const pagination = {
+    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
+    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
+   };
+
+   const [data, err] = await OrderService.getUserOrderByStatus(
+    userId,
+    status,
+    pagination,
+   );
+
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -81,7 +93,7 @@ class OrderController {
 
    const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -117,7 +129,7 @@ class OrderController {
     pagination,
    );
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -142,7 +154,7 @@ class OrderController {
     orderId,
     status,
    );
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -161,7 +173,7 @@ class OrderController {
    const orderId = String(req.params.orderId);
    const [data, err] = await OrderService.cancelOrder(orderId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

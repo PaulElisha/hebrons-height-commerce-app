@@ -11,7 +11,7 @@ export type ErrorCodeType = (typeof ErrorCode)[keyof typeof ErrorCode];
 export interface APIResponse<T> {
  status: "ok";
  message?: string;
- data?: T;
+ data?: T | null;
 }
 
 export type Result<T, U> = [T | null, null | U];

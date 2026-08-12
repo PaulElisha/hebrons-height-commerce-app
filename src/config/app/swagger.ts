@@ -437,7 +437,18 @@ const spec = {
      order: { $ref: "#/components/schemas/Order" },
      order_items: {
       type: "array",
-      items: { $ref: "#/components/schemas/OrderItem" },
+      items: {
+       type: "object",
+       allOf: [
+        { $ref: "#/components/schemas/OrderItem" },
+        {
+         type: "object",
+         properties: {
+          product: { $ref: "#/components/schemas/Product" },
+         },
+        },
+       ],
+      },
      },
     },
    },

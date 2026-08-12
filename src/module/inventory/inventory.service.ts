@@ -24,7 +24,7 @@ class InventoryService {
    .where(and(eq(product.id, productId), isNotNull(product.quantity)))
    .limit(1);
 
-  if (!data) return [null, APIError.notFound("Product not found")];
+  if (!data) return [null, null];
 
   if (data.quantity <= 0)
    return [null, APIError.notFound("Product is out of stock")];

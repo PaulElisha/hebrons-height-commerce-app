@@ -22,7 +22,7 @@ class CartController {
 
    const [data, err] = await CartService.addToCart(userId, productId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -43,7 +43,7 @@ class CartController {
 
    const [data, err] = await CartService.removeFromCart(userId, productId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -64,7 +64,7 @@ class CartController {
 
    const [data, err] = await CartService.incrementItem(userId, productId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -85,7 +85,7 @@ class CartController {
 
    const [data, err] = await CartService.decrementItem(userId, productId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -106,7 +106,7 @@ class CartController {
 
    const [data, err] = await CartService.getUserCart(userId, cartId);
 
-   if (err || !data) return next(err);
+   if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
