@@ -80,9 +80,13 @@ export interface TOrderItems {
  lineTotal: number | null;
 }
 
+export interface TOrderItemsWithProduct extends TOrderItems {
+ product: T<"product">;
+}
+
 export type TOrderAndItems = {
  order: T<"order">;
- order_items: T<"orderItems">[];
+ order_items: TOrderItemsWithProduct[];
 };
 
 export type TOrderJoinRow = {

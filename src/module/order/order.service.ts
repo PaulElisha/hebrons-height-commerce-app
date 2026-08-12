@@ -18,6 +18,7 @@ import {
  TCartItem,
  TMerchantPaginatedOrders,
  TOrderAndItems,
+ TOrderItemsWithProduct,
  TOrderWithUser,
  TUserOrderWithItems,
 } from "@shared/types.ts";
@@ -227,6 +228,7 @@ class OrderService {
    .select()
    .from(order)
    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+   .innerJoin(product, eq(orderItem.productId, product.id))
    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
   if (result.length <= 0) return [null, APIError.notFound("order not found")];
@@ -234,7 +236,11 @@ class OrderService {
   return [
    {
     order: result[0].orders,
-    order_items: result.filter((i) => i.orderItem).map((o) => o.orderItem),
+    order_items: result.map(({ orderItem, product }) => ({
+     ...orderItem,
+     lineTotal: Number(orderItem.lineTotal),
+     product,
+    })),
    },
    null,
   ];
