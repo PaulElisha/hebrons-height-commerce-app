@@ -30,7 +30,7 @@ const spec = {
     properties: {
      status: { type: "string", example: "ok" },
      message: { type: "string" },
-     data: { type: "object" },
+     data: { type: "object", nullable: true },
     },
    },
    Error: {
@@ -1180,7 +1180,8 @@ const spec = {
     security: [{ bearerAuth: [] }],
     responses: {
      "200": {
-      description: "Fetched merchant profile",
+      description:
+       "Fetched merchant profile — data is null when the user has no merchant profile",
       content: {
        "application/json": {
         schema: {
@@ -1190,6 +1191,7 @@ const spec = {
           message: { type: "string", example: "fetched merchant profile" },
           data: {
            type: "object",
+           nullable: true,
            properties: {
             merchant: { $ref: "#/components/schemas/Merchant" },
             user: { $ref: "#/components/schemas/User" },
@@ -1212,12 +1214,6 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "404": {
-      description: "Merchant profile not found",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
     },
    },
   },
@@ -1229,7 +1225,8 @@ const spec = {
     security: [{ bearerAuth: [] }],
     responses: {
      "200": {
-      description: "Analytics fetched successfully",
+      description:
+       "Analytics fetched successfully — data is null when the user has no merchant profile",
       content: {
        "application/json": {
         schema: {
@@ -1240,7 +1237,10 @@ const spec = {
            type: "string",
            example: "analytics fetched successfully",
           },
-          data: { $ref: "#/components/schemas/MerchantAnalytics" },
+          data: {
+           allOf: [{ $ref: "#/components/schemas/MerchantAnalytics" }],
+           nullable: true,
+          },
          },
         },
        },
@@ -1254,12 +1254,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — user is not a merchant",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Merchant profile not found",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -1342,7 +1336,8 @@ const spec = {
     },
     responses: {
      "200": {
-      description: "Merchant profile updated",
+      description:
+       "Merchant profile updated — data is null when the merchant profile does not exist",
       content: {
        "application/json": {
         schema: {
@@ -1376,12 +1371,6 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "404": {
-      description: "Merchant profile not found",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
     },
    },
    delete: {
@@ -1398,7 +1387,10 @@ const spec = {
      },
     ],
     responses: {
-     "204": { description: "Merchant profile deleted, no content" },
+     "204": {
+      description:
+       "Merchant profile deleted, no content (204 even when the profile does not exist)",
+     },
      "401": {
       description: "Unauthorized — invalid or missing session token",
       content: {
@@ -1407,12 +1399,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — user is not a merchant",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Merchant profile not found",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -1464,7 +1450,10 @@ const spec = {
      },
     ],
     responses: {
-     "204": { description: "Category deleted, no content" },
+     "204": {
+      description:
+       "Category deleted, no content (204 even when the category does not exist)",
+     },
      "401": {
       description: "Unauthorized — invalid or missing session token",
       content: {
@@ -1473,12 +1462,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — admin only",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Category not found",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -1972,7 +1955,8 @@ const spec = {
     },
     responses: {
      "200": {
-      description: "Product created successfully",
+      description:
+       "Product created — data is null when the user has no merchant profile",
       content: {
        "application/json": {
         schema: {
@@ -1980,7 +1964,10 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "product created successfully" },
-          data: { $ref: "#/components/schemas/Product" },
+          data: {
+           allOf: [{ $ref: "#/components/schemas/Product" }],
+           nullable: true,
+          },
          },
         },
        },
@@ -2002,12 +1989,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — user is not a merchant",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Merchant profile not found",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -2082,7 +2063,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description: "Fetched a product",
+      description:
+       "Fetched a product — data is null when the product does not exist",
       content: {
        "application/json": {
         schema: {
@@ -2090,7 +2072,10 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "fetched a product" },
-          data: { $ref: "#/components/schemas/Product" },
+          data: {
+           allOf: [{ $ref: "#/components/schemas/Product" }],
+           nullable: true,
+          },
          },
         },
        },
@@ -2104,12 +2089,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Product not found",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -2138,7 +2117,8 @@ const spec = {
     },
     responses: {
      "200": {
-      description: "Product updated successfully",
+      description:
+       "Product updated — data is null when the product does not exist",
       content: {
        "application/json": {
         schema: {
@@ -2172,12 +2152,6 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "404": {
-      description: "Product not found or not owned by merchant",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
     },
    },
    delete: {
@@ -2195,7 +2169,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description: "Product deleted successfully",
+      description:
+       "Product deleted — succeeds with 200 even when the product does not exist",
       content: {
        "application/json": {
         schema: {
@@ -2216,12 +2191,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — user is not a merchant",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Product not found or not owned by merchant",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -2305,7 +2274,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description: "User cart fetched successfully",
+      description:
+       "User cart fetched — data is null when the user has no cart",
       content: {
        "application/json": {
         schema: {
@@ -2316,7 +2286,10 @@ const spec = {
            type: "string",
            example: "user cart fetched successfully",
           },
-          data: { $ref: "#/components/schemas/CartAndItems" },
+          data: {
+           allOf: [{ $ref: "#/components/schemas/CartAndItems" }],
+           nullable: true,
+          },
          },
         },
        },
@@ -2330,12 +2303,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Cart not found",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -2359,7 +2326,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description: "Product added to cart",
+      description:
+       "Product added to cart — data is null when the product does not exist",
       content: {
        "application/json": {
         schema: {
@@ -2385,7 +2353,7 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "404": { description: "Product not found or out of stock" },
+     "404": { description: "Product is out of stock" },
      "500": {
       description: "Product threshold exceeded",
       content: {
@@ -2454,7 +2422,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description: "Product quantity incremented",
+      description:
+       "Product quantity incremented — data is null when the product does not exist",
       content: {
        "application/json": {
         schema: {
@@ -2480,7 +2449,7 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "404": { description: "Product not found or out of stock" },
+     "404": { description: "Product is out of stock" },
      "500": {
       description: "Product threshold exceeded",
       content: {
@@ -2619,7 +2588,8 @@ const spec = {
   "/api/order/status": {
    get: {
     tags: ["Order"],
-    summary: "Get user's orders filtered by status (defaults to pending)",
+    summary:
+     "Get user's orders filtered by status, paginated (defaults to pending)",
     security: [{ bearerAuth: [] }],
     parameters: [
      {
@@ -2641,10 +2611,24 @@ const spec = {
       },
       description: "Order status to filter by (default: pending)",
      },
+     {
+      name: "pageSize",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+      description: "Number of orders per page (max 50)",
+     },
+     {
+      name: "pageNumber",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1, default: 1 },
+      description: "Page number",
+     },
     ],
     responses: {
      "200": {
-      description: "Fetched orders by status",
+      description: "Fetched orders by status (empty array when none found)",
       content: {
        "application/json": {
         schema: {
@@ -2652,10 +2636,10 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "fetched order status" },
-           data: {
-            type: "array",
-            items: { $ref: "#/components/schemas/UserOrderWithItems" },
-           },
+          data: {
+           type: "array",
+           items: { $ref: "#/components/schemas/UserOrderWithItems" },
+          },
          },
         },
        },
@@ -2669,12 +2653,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "No orders found for the given status",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -2698,7 +2676,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description: "Fetched order details",
+      description:
+       "Fetched order details — data is null when the order does not exist",
       content: {
        "application/json": {
         schema: {
@@ -2706,7 +2685,10 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "fetched order details" },
-          data: { $ref: "#/components/schemas/OrderAndItems" },
+          data: {
+           allOf: [{ $ref: "#/components/schemas/OrderAndItems" }],
+           nullable: true,
+          },
          },
         },
        },
@@ -2720,12 +2702,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Order not found",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -2747,7 +2723,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description: "Order cancelled",
+      description:
+       "Order cancelled — data is null when the order does not exist",
       content: {
        "application/json": {
         schema: {
@@ -2761,25 +2738,7 @@ const spec = {
        },
       },
      },
-     "401": {
-      description: "Unauthorized — invalid or missing session token",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "403": {
-      description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Order not found",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "422": {
+     "400": {
       description: "Order already cancelled or already paid — cannot cancel",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
@@ -2802,7 +2761,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description: "Order deleted successfully",
+      description:
+       "Order deleted successfully (also succeeds with 200 when the order does not exist)",
       content: {
        "application/json": {
         schema: {
@@ -2827,7 +2787,7 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "422": {
+     "400": {
       description: "Invalid order",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
@@ -2860,7 +2820,8 @@ const spec = {
     },
     responses: {
      "200": {
-      description: "Order status updated",
+      description:
+       "Order status updated — data is null when the order is not for this merchant",
       content: {
        "application/json": {
         schema: {
@@ -2868,7 +2829,10 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "order out for delivery" },
-          data: { $ref: "#/components/schemas/Order" },
+          data: {
+           allOf: [{ $ref: "#/components/schemas/Order" }],
+           nullable: true,
+          },
          },
         },
        },
@@ -2886,8 +2850,7 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "404": { description: "Order not found for this merchant" },
-     "422": {
+     "400": {
       description: "Invalid status transition",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
@@ -2920,7 +2883,8 @@ const spec = {
     },
     responses: {
      "200": {
-      description: "Order placed",
+      description:
+       "Order placed — data.orderId is null when the cart, product, merchant, or item is not found",
       content: {
        "application/json": {
         schema: {
@@ -2931,7 +2895,11 @@ const spec = {
           data: {
            type: "object",
            properties: {
-            orderId: { type: "string", description: "Newly created order ID" },
+            orderId: {
+             type: "string",
+             nullable: true,
+             description: "Newly created order ID",
+            },
            },
           },
          },
@@ -2955,12 +2923,6 @@ const spec = {
      },
      "403": {
       description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description: "Cart, product, merchant, or item not found",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
@@ -3370,7 +3332,8 @@ const spec = {
       },
      },
      "404": {
-      description: "Merchant profile not found",
+      description:
+       "Upload target not found for the given public_id — webhook silently skipped",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
