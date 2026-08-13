@@ -12,12 +12,13 @@ import Stripe from "stripe";
 import z from "zod";
 
 import { FetchRail } from "./dispatcher.ts";
+import Env from "env.ts";
 
 export const CheckoutData = z.object({
  email: z.string().email(),
  currency: z.string(),
  rail: z.enum(["initializePaystackCheckout", "initializeStripeCheckout"]),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+ metadata: z.record(z.string(), z.unknown()).optional(),
  callback_url: z.url().optional(),
  mode: z.custom<Stripe.Checkout.SessionCreateParams.Mode>().optional(),
 });
@@ -91,7 +92,8 @@ class PaymentService {
      paymentProvider: paymentData.paymentProvider,
      accessCode: paymentData.access_code,
      authorizationUrl: paymentData.checkout_url,
-     status: existingPayment.status === "failed" ? "pending" : existingPayment.status,
+     status:
+      existingPayment.status === "failed" ? "pending" : existingPayment.status,
      updatedAt: new Date(),
     })
     .where(eq(payment.id, existingPayment.id))
@@ -128,6 +130,29 @@ class PaymentService {
 
   return [paymentCreated, null];
  }
+
+ verifyPayment = async (reference: string): Promise<Result<any, AppError>> => {
+  const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/:${reference}`, {
+   method: "POST",
+   headers: {
+    Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+    "Content-Type": "application/json",
+   },
+  });
+
+  if (!response.ok) {
+   const errBody = await response.json().catch(() => ({}));
+
+   return [
+    null,
+    APIError.badRequest(errBody.message || "Paystack Payment failed"),
+   ];
+  }
+
+  const responseData = await response.json();
+
+  return [responseData.data, null];
+ };
 }
 
 export default new PaymentService();

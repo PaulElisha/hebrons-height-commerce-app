@@ -43,6 +43,28 @@ class PaymentController {
    });
   },
  );
+
+ verify = asyncHandler(
+  async (
+   req: Request<{}, {}, {}, { reference: string }>,
+   res: Response,
+   next: NextFunction,
+  ) => {
+   const reference = req.query.reference;
+
+   if (!reference) return next("No reference data");
+
+   const [data, err] = await PaymentService.verifyPayment(reference);
+
+   if (err || !data) return next(err);
+
+   return res.status(HttpStatus.OK).json({
+    status: "ok",
+    message: "Checkout session created successfully",
+    data,
+   });
+  },
+ );
 }
 
 export default new PaymentController();
