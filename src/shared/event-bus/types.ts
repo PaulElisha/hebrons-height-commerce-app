@@ -1,5 +1,6 @@
 /** @format */
 import type { PaymentCheckoutResult } from "@module/payment/payment.service.ts";
+import type { T } from "@shared/types.ts";
 import type { Observable } from "rxjs";
 import type Stripe from "stripe";
 
@@ -87,4 +88,9 @@ export interface PaystackPaymentVerifiedPayload {
 export interface StripePaymentVerifiedPayload {
  event: Stripe.Checkout.Session;
  eventType: string;
+}
+
+export interface PaymentFulfilledPayload {
+ updatedPayment: T<"payment">;
+ updatedOrder: T<"order">;
 }

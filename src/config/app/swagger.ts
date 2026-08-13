@@ -1029,47 +1029,6 @@ const spec = {
     },
    },
   },
-  "/api/auth/session": {
-   get: {
-    tags: ["Authentication"],
-    summary: "Get the current session and user (better-auth)",
-    description:
-     "Returns the active session for the request cookie/Bearer token, or null when unauthenticated.",
-    responses: {
-     "200": {
-      description: "Session data or null",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         nullable: true,
-         properties: {
-          session: { $ref: "#/components/schemas/Session" },
-          user: { $ref: "#/components/schemas/User" },
-         },
-        },
-       },
-      },
-     },
-    },
-   },
-  },
-  "/api/auth/user": {
-   get: {
-    tags: ["Authentication"],
-    summary: "Get the currently authenticated user (better-auth)",
-    responses: {
-     "200": {
-      description: "Authenticated user or null",
-      content: {
-       "application/json": {
-        schema: { $ref: "#/components/schemas/User" },
-       },
-      },
-     },
-    },
-   },
-  },
   "/api/docs": {
    get: {
     tags: ["Docs"],
@@ -1510,7 +1469,7 @@ const spec = {
     tags: ["Notification"],
     summary: "SSE stream for real-time events",
     description:
-     "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the payload itself no longer contains the `userId` (it moved to the event envelope) but always includes an `outboxId` that correlates to the underlying outbox row. Events without a top-level `userId` (`inventory.low_stock`, payment *verified* webhook events, etc.) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
+     "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the payload itself no longer contains the `userId` (it moved to the event envelope) but always includes an `outboxId` that correlates to the underlying outbox row. Events without a top-level `userId` (`inventory.low_stock`, raw provider webhook events like `payment.paystack.checkout.verified`) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. The `PAYMENT_FULFILLED` event is published from the payment verification handler WITH a top-level `userId`, so it IS streamed to the user. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
     security: [{ bearerAuth: [] }],
     responses: {
      "200": {
@@ -1662,6 +1621,45 @@ const spec = {
            checkout_url: { type: "string", format: "uri" },
            reference: { type: "string" },
            access_code: { type: "string" },
+          },
+         },
+         outboxId: {
+          type: "string",
+          description: "Correlates to the underlying outbox row",
+         },
+        },
+       },
+      },
+      {
+       event: "PAYMENT_FULFILLED",
+       description:
+        "A payment was fulfilled (published from the payment verification handler) — the order is marked paid and fulfilled.",
+       data: {
+        type: "object",
+        required: ["updatedPayment", "updatedOrder", "outboxId"],
+        properties: {
+         updatedPayment: {
+          type: "object",
+          required: ["id", "orderId", "status", "paymentReference"],
+          properties: {
+           id: { type: "string" },
+           orderId: { type: "string" },
+           amount: { type: "integer" },
+           currency: { type: "string" },
+           status: { type: "string", enum: ["paid"] },
+           paymentReference: { type: "string" },
+           paymentProvider: { type: "string" },
+           paidAt: { type: "string", format: "date-time" },
+          },
+         },
+         updatedOrder: {
+          type: "object",
+          required: ["id", "userId", "orderStatus", "paymentStatus"],
+          properties: {
+           id: { type: "string" },
+           userId: { type: "string" },
+           orderStatus: { type: "string", enum: ["fulfilled"] },
+           paymentStatus: { type: "string", enum: ["paid"] },
           },
          },
          outboxId: {
@@ -3068,6 +3066,65 @@ const spec = {
        "text/html": {
         schema: { type: "string", example: "Payment failed" },
        },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — user role required",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/payment/verify": {
+   get: {
+    tags: ["Payment"],
+    summary: "Verify a Paystack payment by reference",
+    description:
+     "Calls the Paystack verify API for the given payment reference and returns the raw verification data.",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "reference",
+      in: "query",
+      required: true,
+      schema: { type: "string" },
+      description: "Paystack payment reference to verify",
+     },
+    ],
+    responses: {
+     "200": {
+      description: "Payment verification data from Paystack",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: {
+           type: "string",
+           example: "Checkout session created successfully",
+          },
+          data: {
+           type: "object",
+           description: "Raw Paystack verification response data",
+          },
+         },
+        },
+       },
+      },
+     },
+     "400": {
+      description: "Missing reference or Paystack verification failed",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
      "401": {

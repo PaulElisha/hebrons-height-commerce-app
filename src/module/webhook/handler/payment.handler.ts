@@ -8,7 +8,8 @@ import { order } from "@schema/order.ts";
 import { payment } from "@schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
-import { PaystackChargeEvent } from "@shared/event-bus/index.ts";
+import { EventType, PaystackChargeEvent } from "@shared/event-bus/index.ts";
+import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, T, TPaymentVerificationResult } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
@@ -109,6 +110,15 @@ class WebhookHandler {
    })
    .where(eq(order.id, paymentRecord.orderId))
    .returning();
+
+  await publishEvent({
+   event_type: EventType.PAYMENT_FULFILLED,
+   userId: updatedOrder.userId,
+   payload: {
+    updatedPayment,
+    updatedOrder,
+   },
+  });
 
   return [{ payment: updatedPayment, order: updatedOrder }, null];
  }

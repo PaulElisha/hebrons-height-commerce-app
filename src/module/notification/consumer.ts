@@ -12,6 +12,7 @@ import {
  OrderCancelledPayload,
  OrderPlacedPayload,
  OrderStatusUpdatedPayload,
+ PaymentFulfilledPayload,
 } from "@shared/event-bus/index.ts";
 import { and, eq, isNull } from "drizzle-orm";
 
@@ -116,6 +117,24 @@ EventBus.on(EventType.ORDER_CANCELLED).subscribe({
      orderDetails.user.id,
      "Order Cancelled",
      `Your order #${orderId.slice(0, 8)} has been cancelled`,
+     "order_update",
+    );
+   },
+  );
+ },
+});
+
+EventBus.on(EventType.PAYMENT_FULFILLED).subscribe({
+ next: async ({ payload }) => {
+  await consumeOutboxEvent<PaymentFulfilledPayload>(
+   payload.outboxId,
+   async ({ updatedOrder }) => {
+    if (!updatedOrder?.userId) return;
+
+    await NotificationService.createNotification(
+     updatedOrder.userId,
+     "Payment Successful",
+     `Payment received — order #${updatedOrder.id.slice(0, 8)} is now fulfilled`,
      "order_update",
     );
    },
