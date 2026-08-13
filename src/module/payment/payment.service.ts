@@ -36,6 +36,18 @@ export type PaymentCheckoutResult = Omit<
  "paymentProvider"
 > & { callbackUrl?: string };
 
+export interface PaystackVerifiedData {
+ status: string;
+ reference: string;
+ amount: number;
+ currency: string;
+ paid_at: string;
+ channel?: string;
+ customer?: Record<string, unknown>;
+ authorization?: Record<string, unknown>;
+ [key: string]: unknown;
+}
+
 class PaymentService {
  fetchPaymentForOrderByRail = async (
   userId: string,
@@ -131,12 +143,13 @@ class PaymentService {
   return [paymentCreated, null];
  }
 
- verifyPayment = async (reference: string): Promise<Result<any, AppError>> => {
-  const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/:${reference}`, {
-   method: "POST",
+ verifyPayment = async (
+  reference: string,
+ ): Promise<Result<PaystackVerifiedData, AppError>> => {
+  const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/${reference}`, {
+   method: "GET",
    headers: {
     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
-    "Content-Type": "application/json",
    },
   });
 
@@ -150,6 +163,9 @@ class PaymentService {
   }
 
   const responseData = await response.json();
+
+  if (!responseData.status)
+   return [null, APIError.badRequest("Payment not verified")];
 
   return [responseData.data, null];
  };

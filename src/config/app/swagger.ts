@@ -3110,7 +3110,7 @@ const spec = {
           status: { type: "string", example: "ok" },
           message: {
            type: "string",
-           example: "Checkout session created successfully",
+           example: "Payment verified successfully",
           },
           data: {
            type: "object",
@@ -3122,7 +3122,8 @@ const spec = {
       },
      },
      "400": {
-      description: "Missing reference or Paystack verification failed",
+      description:
+       "Missing reference, Paystack verification failed, or amount/currency mismatch",
       content: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
