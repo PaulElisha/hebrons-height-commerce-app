@@ -1,4 +1,5 @@
 /** @format */
+import logger from "@app/logger.ts";
 import Env, { isProd } from "@/env.ts";
 import { remember } from "@epic-web/remember";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -21,6 +22,4 @@ if (isProd()) {
 }
 
 const pool = remember("dbPool", () => createPool());
-
-export { pool };
 export default drizzle(pool, { schema });

@@ -42,7 +42,7 @@ EventBus.on(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaystackPaymentVerifiedPayload>(
    payload.outboxId,
-   async ({ event }) => {
+   async ({ event, orderId }) => {
     const [, err] = await WebHookHandler.handlePaystackPaymentVerified(event);
     if (err) throw err;
     logger.info({}, "[...Paystack verification completed]");

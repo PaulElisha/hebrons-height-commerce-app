@@ -7,8 +7,10 @@ import AppError from "@shared/error/app-error.ts";
 import { EventBus } from "@shared/event-bus/index.ts";
 import type { EventContract } from "@shared/event-bus/types.ts";
 import { Result } from "@shared/types.ts";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, sql } from "drizzle-orm";
 import FA from "fasy";
+
+export const MAX_OUTBOX_ATTEMPTS = 5;
 
 export const consumeOutboxEvent = async <T = Record<string, unknown>>(
  outboxId: string,
@@ -17,6 +19,9 @@ export const consumeOutboxEvent = async <T = Record<string, unknown>>(
  const [outboxEvent, e] = await OutboxService.fetchById(outboxId);
 
  if (e || !outboxEvent) return logger.info("Event already processed");
+
+ if (outboxEvent.attempts >= MAX_OUTBOX_ATTEMPTS)
+  return logger.info("Event dead-lettered (max attempts reached)");
 
  try {
   await cb(outboxEvent.payload as T);
@@ -55,7 +60,7 @@ class OutboxService {
    .where(eq(outbox.id, outboxId))
    .limit(1);
 
-  if (!row) [null, null];
+  if (!row) return [null, null];
   return [row, null];
  }
 
@@ -67,20 +72,35 @@ class OutboxService {
  }
 
  static async markFailed(outboxId: string, error: string): Promise<void> {
-  await db
+  const [updated] = await db
    .update(outbox)
    .set({
     attempts: sql`${outbox.attempts} + 1`,
     lastError: error,
    })
-   .where(and(eq(outbox.id, outboxId), isNull(outbox.processedAt)));
+   .where(and(eq(outbox.id, outboxId), isNull(outbox.processedAt)))
+   .returning({ attempts: outbox.attempts });
+
+  if (updated && updated.attempts >= MAX_OUTBOX_ATTEMPTS) {
+   await db
+    .update(outbox)
+    .set({ processedAt: new Date() })
+    .where(eq(outbox.id, outboxId));
+
+   logger.warn(
+    { outboxId, error },
+    "Outbox event dead-lettered after max attempts",
+   );
+  }
  }
 
  static async replayUnprocessed(): Promise<number> {
   const events = await db
    .select()
    .from(outbox)
-   .where(isNull(outbox.processedAt))
+   .where(
+    and(isNull(outbox.processedAt), lt(outbox.attempts, MAX_OUTBOX_ATTEMPTS)),
+   )
    .orderBy(outbox.createdAt);
 
   await FA.concurrent.map(async (e: typeof outbox.$inferSelect) => {

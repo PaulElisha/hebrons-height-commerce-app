@@ -12,7 +12,7 @@ import limiter from "@app/limiter.ts";
 import logger from "@app/logger.ts";
 import spec, { options } from "@app/swagger.ts";
 import { auth } from "@auth/auth.ts";
-import db, { pool } from "@db/db.ts";
+import db from "@db/db.ts";
 import HttpStatus from "@enum/http.ts";
 import errorHandler from "@middleware/error-handler.ts";
 import cartRouter from "@module/cart/cart.route.ts";
@@ -29,7 +29,6 @@ import paystackWebhookRouter from "@module/webhook/paystack/paystack.routes.ts";
 import stripeWebhookRouter from "@module/webhook/stripe/stripe.route.ts";
 import { toNodeHandler } from "better-auth/node";
 import cookieParser from "cookie-parser";
-import dns from "dns";
 import { sql } from "drizzle-orm";
 import {
  addTransactionalDrizzleDatabase,
@@ -41,8 +40,6 @@ import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
 import OutboxService from "@module/outbox/outbox.service.ts";
-
-dns.setDefaultResultOrder("ipv4first");
 
 initializeDrizzleTransactionalContext();
 addTransactionalDrizzleDatabase(db as any);
@@ -128,45 +125,17 @@ class App {
  }
 
  startServer = async () => {
-  const server = this.app.listen(Env.PORT, () => {
+  this.app.listen(Env.PORT, () => {
    logger.info(`Server is running on ${Env.BASE_URL}`);
   });
 
-  OutboxService.replayUnprocessed().then((count) => {
-   if (count > 0) logger.info(`Replayed ${count} unprocessed outbox events.`);
-  });
+  // OutboxService.replayUnprocessed().then((count) => {
+  //  if (count > 0) logger.info(`Replayed ${count} unprocessed outbox events.`);
+  // });
 
-  const outboxTimer = setInterval(() => {
-   OutboxService.replayUnprocessed();
-  }, 5_000).unref();
-
-  const shutdown = (signal: string) => {
-   logger.info({ signal }, "Shutting down gracefully...");
-   clearInterval(outboxTimer);
-
-   server.close(() => {
-    logger.info("HTTP server closed.");
-
-    pool
-     .end()
-     .then(() => {
-      logger.info("Database pool closed.");
-      process.exit(0);
-     })
-     .catch((err) => {
-      logger.error({ err }, "Error closing database pool");
-      process.exit(1);
-     });
-   });
-
-   setTimeout(() => {
-    logger.error("Forced shutdown after timeout.");
-    process.exit(1);
-   }, 30_000).unref();
-  };
-
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
-  process.on("SIGINT", () => shutdown("SIGINT"));
+  // const outboxTimer = setInterval(() => {
+  //  OutboxService.replayUnprocessed();
+  // }, 5_000).unref();
  };
 }
 

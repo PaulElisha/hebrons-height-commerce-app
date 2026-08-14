@@ -82,6 +82,7 @@ export interface PaystackChargeEvent {
 }
 
 export interface PaystackPaymentVerifiedPayload {
+ orderId?: string;
  event: PaystackChargeEvent;
 }
 

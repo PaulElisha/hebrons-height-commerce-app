@@ -80,7 +80,7 @@ class InventoryService {
 
    if (result.length <= 0) return [null, null];
 
-   await FA.concurrent.map(async ({ userId, name, quantity }) => {
+   await FA.concurrent.map(async ({ userId, name, quantity }: any) => {
     await publishEvent({
      event_type: EventType.CART_LOW_STOCK_ALERT,
      userId,
