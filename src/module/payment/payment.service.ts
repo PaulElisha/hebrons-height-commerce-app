@@ -15,7 +15,7 @@ import { FetchRail } from "./dispatcher.ts";
 import Env from "env.ts";
 
 export const CheckoutData = z.object({
- email: z.string().email(),
+ email: z.email(),
  currency: z.string(),
  rail: z.enum(["initializePaystackCheckout", "initializeStripeCheckout"]),
  metadata: z.record(z.string(), z.unknown()).optional(),
@@ -146,12 +146,16 @@ class PaymentService {
  verifyPayment = async (
   reference: string,
  ): Promise<Result<PaystackVerifiedData, AppError>> => {
-  const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/${reference}`, {
-   method: "GET",
-   headers: {
-    Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+  const response = await fetch(
+   `${Env.PAYSTACK_VERIFY_URL}/${encodeURIComponent(reference)}`,
+   {
+    method: "GET",
+    headers: {
+     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+     "Content-Type": "application/json",
+    },
    },
-  });
+  );
 
   if (!response.ok) {
    const errBody = await response.json().catch(() => ({}));
@@ -164,7 +168,7 @@ class PaymentService {
 
   const responseData = await response.json();
 
-  if (!responseData.status)
+  if (!responseData.status || responseData.data?.status !== "success")
    return [null, APIError.badRequest("Payment not verified")];
 
   return [responseData.data, null];
