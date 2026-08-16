@@ -146,16 +146,13 @@ class PaymentService {
  verifyPayment = async (
   reference: string,
  ): Promise<Result<PaystackVerifiedData, AppError>> => {
-  const response = await fetch(
-   `${Env.PAYSTACK_VERIFY_URL}/${encodeURIComponent(reference)}`,
-   {
-    method: "GET",
-    headers: {
-     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
-     "Content-Type": "application/json",
-    },
+  const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/${reference}`, {
+   method: "GET",
+   headers: {
+    Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+    "Content-Type": "application/json",
    },
-  );
+  });
 
   if (!response.ok) {
    const errBody = await response.json().catch(() => ({}));

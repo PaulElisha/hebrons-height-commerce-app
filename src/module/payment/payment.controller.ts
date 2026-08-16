@@ -48,11 +48,11 @@ class PaymentController {
 
  verify = asyncHandler(
   async (
-   req: Request<{}, {}, {}, { reference: string }>,
+   req: Request<{ reference: string }, {}, {}>,
    res: Response<APIResponse<PaystackVerifiedData>>,
    next: NextFunction,
   ) => {
-   const reference = req.query.reference;
+   const reference = req.params.reference;
 
    if (!reference) return next(APIError.badRequest("Reference is required"));
 
