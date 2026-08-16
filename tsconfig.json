@@ -50,6 +50,7 @@
     "rootDir": ".",
     "baseUrl": ".",
     "strict": true,
+    "ignoreDeprecations": "6.0",
     "experimentalDecorators": true,
     "noEmit": true,
     "target": "ES2022",
