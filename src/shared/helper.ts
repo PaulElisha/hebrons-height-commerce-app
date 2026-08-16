@@ -17,7 +17,13 @@ import {
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import * as APIError from "./error/APIError.ts";
+import * as helper from "@shared/helper.ts";
 import AppError from "./error/app-error.ts";
+
+export const STOCK_THRESHOLDS = [10, 7, 5, 3, 1] as const;
+
+export const isLowStock = (quantity: number): boolean =>
+ quantity <= STOCK_THRESHOLDS[0];
 
 export async function fetchMerchantProductsFromDb(
  merchantId: string,
@@ -85,7 +91,7 @@ export async function getMerchantIdFromUser(
   .where(and(eq(merchant?.userId, userId), isNull(merchant.deletedAt)))
   .limit(1);
 
-if (!relatedMerchant) return [null, null];
+ if (!relatedMerchant) return [null, null];
 
  return [relatedMerchant.id, null];
 }
@@ -99,7 +105,7 @@ export async function getMerchantIdFromProductId(
   .innerJoin(merchant, eq(product.merchantId, merchant.id))
   .where(and(eq(product.id, productId), isNull(merchant.deletedAt)));
 
-if (!productMerchant) return [null, null];
+ if (!productMerchant) return [null, null];
 
  return [productMerchant.merchant.id, null];
 }
@@ -116,8 +122,7 @@ export const getCartAndItems = async (
    .innerJoin(product, eq(cartItem.productId, product.id))
    .where(and(eq(cart.userId, userId), eq(cart.id, cartId)));
 
-  if (!cartAndItems[0]?.cart)
-   return [null, null];
+  if (!cartAndItems[0]?.cart) return [null, null];
 
   return [
    {
@@ -127,10 +132,11 @@ export const getCartAndItems = async (
     },
     cart_items: cartAndItems
      .filter((i) => i.cart_items && i.product)
-     .map((i) => ({
-      ...i.cart_items!,
-      totalItemPrice: Number(i.cart_items!.totalItemPrice),
-      product: i.product!,
+     .map(({ cart_items, product }: any) => ({
+      ...cart_items,
+      totalItemPrice: Number(cart_items.totalItemPrice),
+      product: product!,
+      lowStock: isLowStock(Number(product.quantity)),
      })),
    },
    null,
@@ -189,6 +195,10 @@ export async function getMerchantProduct(
  userId: string,
  productId: string,
 ): Promise<Result<T<"product">, AppError>> {
+ const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+
+ if (e) return [null, e];
+
  const [existingProduct] = await db
   .select()
   .from(product)
@@ -200,7 +210,7 @@ export async function getMerchantProduct(
   )
   .limit(1);
 
-if (!existingProduct) return [null, null];
+ if (!existingProduct) return [null, null];
 
  return [existingProduct, null];
 }

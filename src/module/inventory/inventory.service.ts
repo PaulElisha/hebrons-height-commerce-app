@@ -1,18 +1,18 @@
 /** @format */
 import db from "@db/db.ts";
 import { cart, cartItem } from "@schema/cart.ts";
+import { merchant } from "@schema/merchant.ts";
 import { order, orderItem } from "@schema/order.ts";
 import { product } from "@schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
+import { STOCK_THRESHOLDS } from "@shared/helper.ts";
 import { Result, T, TProductThreshold } from "@shared/types.ts";
-import { and, eq, isNotNull, lt, ne, sql, sum } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, lt, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import FA from "fasy";
-
-const STOCK_THRESHOLDS = [10, 5, 3, 1] as const;
 
 class InventoryService {
  checkProductThreshold = async (
@@ -74,7 +74,7 @@ class InventoryService {
     .where(
      and(
       eq(cartItem.productId, productId),
-      lt(product.quantity, STOCK_THRESHOLDS[0]),
+      inArray(product.quantity, STOCK_THRESHOLDS),
      ),
     );
 
@@ -82,7 +82,7 @@ class InventoryService {
 
    await FA.concurrent.map(async ({ userId, name, quantity }: any) => {
     await publishEvent({
-     event_type: EventType.CART_LOW_STOCK_ALERT,
+     event_type: EventType.USERCART_LOW_STOCK_ALERT,
      userId,
      payload: {
       productId,
@@ -98,31 +98,38 @@ class InventoryService {
   }
  };
 
- checkLowStock = async (productId: string): Promise<Result<void, AppError>> => {
+ checkLowStockForMerchant = async (
+  productId: string,
+ ): Promise<Result<void, AppError>> => {
   try {
    const [current] = await db
     .select({
      quantity: product.quantity,
      name: product.name,
-     merchantId: product.merchantId,
+     userId: merchant.userId,
     })
     .from(product)
-    .where(eq(product.id, productId))
+    .innerJoin(merchant, eq(merchant.id, product.merchantId))
+    .where(
+     and(
+      eq(product.id, productId),
+      inArray(product.quantity, STOCK_THRESHOLDS),
+     ),
+    )
     .limit(1);
 
    if (!current) return [null, null];
 
-   if (current.quantity <= STOCK_THRESHOLDS[0]) {
-    await publishEvent({
-     event_type: EventType.LOW_STOCK_ALERT,
-     payload: {
-      productId,
-      productName: current.name,
-      quantity: current.quantity,
-      merchantId: current.merchantId,
-     },
-    });
-   }
+   await publishEvent({
+    event_type: EventType.MERCHANT_LOW_STOCK_ALERT,
+    userId: current.userId,
+    payload: {
+     productId,
+     productName: current.name,
+     quantity: current.quantity,
+     userId: current.userId,
+    },
+   });
 
    return [null, null];
   } catch (err) {
@@ -188,7 +195,7 @@ class InventoryService {
     return [null, null];
    }
 
-   await this.checkLowStock(productId);
+   await this.checkLowStockForMerchant(productId);
    await this.checkUserStockAtIntervals(productId);
 
    return [updatedProduct, null];

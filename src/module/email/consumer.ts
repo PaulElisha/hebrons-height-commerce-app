@@ -36,7 +36,7 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
  },
 });
 
-EventBus.on(EventType.CART_LOW_STOCK_ALERT).subscribe({
+EventBus.on(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<CartLowStockAlertPayload>(
    payload.outboxId,

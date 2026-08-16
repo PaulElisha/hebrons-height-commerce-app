@@ -51,7 +51,7 @@ export interface TCartItem {
 
 export type TCartAndItem = {
  cart: TCart;
- cart_items: (TCartItem & { product: T<"product"> })[];
+ cart_items: (TCartItem & { product: T<"product">; lowStock: boolean })[];
 };
 
 export interface TOrder {
@@ -82,6 +82,7 @@ export interface TOrderItems {
 
 export interface TOrderItemsWithProduct extends TOrderItems {
  product: T<"product">;
+ lowStock: boolean;
 }
 
 export type TOrderAndItems = {
@@ -96,7 +97,7 @@ export type TOrderJoinRow = {
 
 export type TUserOrderWithItems = {
  orders: T<"order">;
- order_items: (T<"orderItems"> & { product: T<"product"> })[];
+ order_items: (T<"orderItems"> & { product: T<"product">; lowStock: boolean })[];
 };
 
 export type TMerchantProducts = {

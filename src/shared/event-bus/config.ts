@@ -8,11 +8,11 @@ export enum EventType {
  ORDER_CANCELLED = "order.cancelled",
  ORDER_STATUS_UPDATED = "order.status.updated",
  UPDATE_INVENTORY = "inventory.update",
- LOW_STOCK_ALERT = "inventory.low_stock",
+ MERCHANT_LOW_STOCK_ALERT = "inventory.low_stock",
  STRIPE_PAYMENT_INITIALIZED = "payment.stripe.checkout.initialized",
  PAYSTACK_PAYMENT_INITIALIZED = "payment.paystack.checkout.initialized",
  PAYSTACK_PAYMENT_VERIFIED = "payment.paystack.checkout.verified",
  STRIPE_PAYMENT_VERIFIED = "payment.stripe.checkout.verified",
- CART_LOW_STOCK_ALERT = "cart.low_stock",
+ USERCART_LOW_STOCK_ALERT = "cart.low_stock",
  PAYMENT_FULFILLED = "PAYMENT_FULFILLED",
 }

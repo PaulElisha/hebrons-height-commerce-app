@@ -127,7 +127,7 @@ class OrderService {
    );
 
    const validItems = itemResults.filter(
-    (i): i is OrderItemDraft => !Array.isArray(i),
+    (i: OrderItemDraft): i is OrderItemDraft => !Array.isArray(i),
    );
 
    if (validItems.length <= 0) return [null, null];
@@ -152,12 +152,14 @@ class OrderService {
 
    await db
     .insert(orderItem)
-    .values(validItems.map((i) => ({ ...i, orderId: newOrder.id })));
+    .values(
+     validItems.map((i: OrderItemDraft) => ({ ...i, orderId: newOrder.id })),
+    );
 
    return [
     {
      orderId: newOrder.id,
-     productIds: validItems.map((i) => i.productId),
+     productIds: validItems.map((i: OrderItemDraft) => i.productId),
     },
     null,
    ];
@@ -216,11 +218,12 @@ class OrderService {
     const orderRows = result.filter((row) => row.orders.id === orderId);
 
     return {
-     orders: orderRows[0]!.orders,
+     orders: orderRows[0].orders,
      order_items: orderRows.map((row) => ({
       ...row.orderItem,
       lineTotal: Number(row.orderItem.lineTotal),
       product: row.product,
+      lowStock: helper.isLowStock(Number(row.product.quantity)),
      })),
     };
    }),
@@ -248,6 +251,7 @@ class OrderService {
      ...orderItem,
      lineTotal: Number(orderItem.lineTotal),
      product,
+     lowStock: helper.isLowStock(Number(product.quantity)),
     })),
    },
    null,
@@ -261,9 +265,11 @@ class OrderService {
  ): Promise<Result<TMerchantPaginatedOrders, AppError>> => {
   const { limit, pageNumber, offset } = helper.parsePagination(pagination);
 
-  const filters: SQL[] = [
-   eq(orderItem.merchantId, helper.merchantIdSubquery(userId)),
-  ];
+  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+
+  if (e) return [null, e];
+
+  const filters: SQL[] = [eq(orderItem.merchantId, merchantId!)];
 
   if (filter?.status) {
    filters?.push(eq(order?.orderStatus, filter?.status)!);
@@ -325,14 +331,15 @@ class OrderService {
   orderId: string,
   status: z.infer<typeof UpdateOrderStatusDto>["status"],
  ): Promise<Result<T<"order">, AppError>> {
+  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+
+  if (e) return [null, e];
+
   const [orderItemForMerchant] = await db
    .select()
    .from(orderItem)
    .where(
-    and(
-     eq(orderItem.orderId, orderId),
-     inArray(orderItem.merchantId, helper.merchantIdSubquery(userId)),
-    ),
+    and(eq(orderItem.orderId, orderId), eq(orderItem.merchantId, merchantId!)),
    )
    .limit(1);
 
@@ -430,21 +437,6 @@ class OrderService {
   });
 
   return [cancelledOrder, null];
- }
-
- @Transactional()
- async deleteOrderItem(orderId: string): Promise<Result<void, AppError>> {
-  const [existingOrder] = await db
-   .select()
-   .from(order)
-   .where(eq(order.id, orderId));
-
-  if (!existingOrder) return [null, APIError.badRequest("Invalid order")];
-
-  await db.delete(orderItem).where(eq(orderItem.orderId, orderId));
-  await db.delete(order).where(eq(order.id, orderId));
-
-  return [null, null];
  }
 }
 

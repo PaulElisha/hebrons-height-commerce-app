@@ -1,9 +1,7 @@
 /** @format */
 import logger from "@app/logger.ts";
-import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
-import { merchant } from "@schema/merchant.ts";
 import {
  CartLowStockAlertPayload,
  EventBus,
@@ -14,7 +12,6 @@ import {
  OrderStatusUpdatedPayload,
  PaymentFulfilledPayload,
 } from "@shared/event-bus/index.ts";
-import { and, eq, isNull } from "drizzle-orm";
 
 import NotificationService from "./notification.service.ts";
 import { notificationBroker } from "./broker.ts";
@@ -59,24 +56,16 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
  },
 });
 
-EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
+EventBus.on(EventType.MERCHANT_LOW_STOCK_ALERT).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<LowStockAlertPayload>(
    payload.outboxId,
-   async ({ merchantId, productName, quantity }) => {
-    if (!merchantId) return logger.info("Merchant id not found");
-
-    const [merchantData] = await db
-     .select({ userId: merchant.userId })
-     .from(merchant)
-     .where(and(eq(merchant.id, merchantId), isNull(merchant.deletedAt)))
-     .limit(1);
-
-    if (!merchantData) return logger.info("Merchant data not found");
+   async ({ userId, productName, quantity }) => {
+    if (!userId) return logger.info("User id not found");
 
     await NotificationService.createNotification(
-     merchantData.userId,
-     "Low Stock Alert",
+     userId,
+     "Merchant Low Stock Alert",
      `"${productName}" is running low (${quantity} left)`,
      "stock_alert",
     );
@@ -85,14 +74,14 @@ EventBus.on(EventType.LOW_STOCK_ALERT).subscribe({
  },
 });
 
-EventBus.on(EventType.CART_LOW_STOCK_ALERT).subscribe({
+EventBus.on(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<CartLowStockAlertPayload>(
    payload.outboxId,
    async ({ userId, productName, quantity }) => {
     await NotificationService.createNotification(
      userId,
-     "Low Stock Alert",
+     "Cart Low Stock Alert",
      `"${productName}" is running low (${quantity} left)`,
      "stock_alert",
     );

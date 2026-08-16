@@ -220,19 +220,17 @@ class ProductService {
   productId: string,
   body: z.infer<typeof UpdateProductDto>,
  ): Promise<Result<T<"product">, AppError>> => {
+  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+
+  if (e) return [null, e];
+
   const [existing] = await db
    .select({ deletedAt: product.deletedAt, status: product.status })
    .from(product)
-   .where(
-    and(
-     eq(product.id, productId),
-     inArray(product.merchantId, helper.merchantIdSubquery(userId)),
-    ),
-   )
+   .where(and(eq(product.id, productId), eq(product.merchantId, merchantId!)))
    .limit(1);
 
-  if (!existing)
-   return [null, null];
+  if (!existing) return [null, null];
 
   const updateData: Partial<typeof product.$inferInsert> = {};
 
@@ -263,16 +261,10 @@ class ProductService {
   const [updatedProduct] = await db
    .update(product)
    .set(updateData)
-   .where(
-    and(
-     eq(product.id, productId),
-     inArray(product.merchantId, helper.merchantIdSubquery(userId)),
-    ),
-   )
+   .where(and(eq(product.id, productId), eq(product.merchantId, merchantId!)))
    .returning();
 
-  if (!updatedProduct)
-   return [null, null];
+  if (!updatedProduct) return [null, null];
 
   return [updatedProduct, null];
  };
@@ -281,19 +273,17 @@ class ProductService {
   userId: string,
   productId: string,
  ): Promise<Result<void, AppError>> => {
+  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+
+  if (e) return [null, e];
+
   const [deletedProduct] = await db
    .update(product)
    .set({ deletedAt: new Date() })
-   .where(
-    and(
-     eq(product.id, productId),
-     inArray(product.merchantId, helper.merchantIdSubquery(userId)),
-    ),
-   )
+   .where(and(eq(product.id, productId), eq(product.merchantId, merchantId!)))
    .returning();
 
-  if (!deletedProduct)
-   return [null, null];
+  if (!deletedProduct) return [null, null];
 
   return [null, null];
  };

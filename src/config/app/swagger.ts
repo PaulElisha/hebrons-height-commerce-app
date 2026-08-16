@@ -6,7 +6,8 @@ const spec = {
  info: {
   title: "HHG Commerce API",
   version: Env.VERSION || "1.0.0",
-  description: "Hebrons Height Commerce API documentation",
+  description:
+   "Hebrons Height Commerce API documentation. API routes are rate-limited to 100 requests per 15 minutes per IP — rate-limited requests return 429 (`Too Many Requests`). Webhook endpoints (`/api/webhook/*`) are exempt from the rate limiter.",
  },
  servers: [
   {
@@ -370,6 +371,11 @@ const spec = {
          type: "object",
          properties: {
           product: { $ref: "#/components/schemas/Product" },
+          lowStock: {
+           type: "boolean",
+           description:
+            "True when the product's stock is at or below the low-stock threshold",
+          },
          },
         },
        ],
@@ -445,6 +451,11 @@ const spec = {
          type: "object",
          properties: {
           product: { $ref: "#/components/schemas/Product" },
+          lowStock: {
+           type: "boolean",
+           description:
+            "True when the product's stock is at or below the low-stock threshold",
+          },
          },
         },
        ],
@@ -473,6 +484,11 @@ const spec = {
          type: "object",
          properties: {
           product: { $ref: "#/components/schemas/Product" },
+          lowStock: {
+           type: "boolean",
+           description:
+            "True when the product's stock is at or below the low-stock threshold",
+          },
          },
         },
        ],
@@ -575,16 +591,16 @@ const spec = {
      },
     },
    },
-   CheckoutResult: {
-    type: "object",
-    required: ["email", "currency", "rail", "checkout_url"],
-    properties: {
-     email: { type: "string", format: "email" },
-     amount: {
-      type: "integer",
-      nullable: true,
-      description: "Amount charged — Paystack rail only (absent for Stripe)",
-     },
+CheckoutResult: {
+     type: "object",
+     required: ["email", "currency", "rail", "checkout_url"],
+     properties: {
+      email: { type: "string", format: "email" },
+      amount: {
+       type: "integer",
+       nullable: true,
+       description: "Amount charged",
+      },
      currency: { type: "string" },
      rail: {
       type: "string",
@@ -1020,16 +1036,99 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "500": {
-      description: "Internal Server Error",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"500": {
+       description: "Internal Server Error",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/docs": {
+   "/api/auth/get-session": {
+    get: {
+     tags: ["Authentication"],
+     summary: "Get the current session and user",
+     operationId: "getSession",
+     security: [{ bearerAuth: [] }],
+     responses: {
+      "200": {
+       description:
+        "Current session and user — null when there is no active session",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          nullable: true,
+          properties: {
+           session: { $ref: "#/components/schemas/Session" },
+           user: { $ref: "#/components/schemas/User" },
+          },
+         },
+        },
+       },
+      },
+      "401": {
+       description: "Unauthorized",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+     },
+    },
+   },
+   "/api/auth/token": {
+    get: {
+     tags: ["Authentication"],
+     summary: "Get a signed JWT for the current session (jwt plugin)",
+     operationId: "getJwtToken",
+     security: [{ bearerAuth: [] }],
+     responses: {
+      "200": {
+       description: "Signed JWT for the authenticated session",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           token: { type: "string", description: "Signed JWT" },
+          },
+         },
+        },
+       },
+      },
+      "401": {
+       description: "Unauthorized",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+     },
+    },
+   },
+   "/api/auth/jwks": {
+    get: {
+     tags: ["Authentication"],
+     summary: "JSON Web Key Set for verifying issued JWTs (jwt plugin)",
+     operationId: "getJwks",
+     responses: {
+      "200": {
+       description: "JWKS document used to verify JWT signatures",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           keys: { type: "array", items: { type: "object" } },
+          },
+         },
+        },
+       },
+      },
+     },
+    },
+   },
+   "/api/docs": {
    get: {
     tags: ["Docs"],
     summary: "Swagger UI documentation",
@@ -1087,7 +1186,7 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "403": { description: "Forbidden — user role not authorized" },
+     "403": { description: "Forbidden — user or merchant role required (administrators are rejected)" },
     },
    },
   },
@@ -1128,7 +1227,7 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "403": { description: "Forbidden — user role not authorized" },
+     "403": { description: "Forbidden — user or merchant role required (administrators are rejected)" },
     },
    },
   },
@@ -1454,22 +1553,28 @@ const spec = {
         },
        },
       },
-     },
-     "401": {
-      description: "Unauthorized — invalid or missing session token",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+      "401": {
+       description: "Unauthorized — invalid or missing session token",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+      "403": {
+       description: "Forbidden — user or merchant role required (administrators are rejected)",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/notification/stream": {
-   get: {
+   "/api/notification/stream": {
+    get: {
     tags: ["Notification"],
     summary: "SSE stream for real-time events",
     description:
-     "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the payload itself no longer contains the `userId` (it moved to the event envelope) but always includes an `outboxId` that correlates to the underlying outbox row. Events without a top-level `userId` (`inventory.low_stock`, raw provider webhook events like `payment.paystack.checkout.verified`) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. The `PAYMENT_FULFILLED` event is published from the payment verification handler WITH a top-level `userId`, so it IS streamed to the user. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
+     "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the payload itself no longer contains the `userId` (it moved to the event envelope) but always includes an `outboxId` that correlates to the underlying outbox row. Raw provider webhook events without a top-level `userId` (e.g. `payment.paystack.checkout.verified`) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. The `inventory.low_stock` event is published from the inventory service WITH a top-level `userId` (the merchant's user ID), so it IS streamed to the merchant. The `PAYMENT_FULFILLED` event is published from the payment verification handler WITH a top-level `userId`, so it IS streamed to the user. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
     security: [{ bearerAuth: [] }],
     responses: {
      "200": {
@@ -1482,10 +1587,17 @@ const spec = {
        },
       },
      },
-     "401": {
-      description: "Unauthorized — invalid or missing session token",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"401": {
+       description: "Unauthorized — invalid or missing session token",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+      "403": {
+       description: "Forbidden — user or merchant role required (administrators are rejected)",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
@@ -1562,6 +1674,25 @@ const spec = {
         type: "object",
         required: ["productId", "productName", "quantity", "outboxId"],
         properties: {
+         productId: { type: "string" },
+         productName: { type: "string" },
+         quantity: { type: "integer" },
+         outboxId: {
+          type: "string",
+          description: "Correlates to the underlying outbox row",
+         },
+        },
+       },
+      },
+      {
+       event: "inventory.low_stock",
+       description:
+        "A merchant's product is running low on stock — streamed to the merchant user.",
+       data: {
+        type: "object",
+        required: ["userId", "productId", "productName", "quantity", "outboxId"],
+        properties: {
+         userId: { type: "string" },
          productId: { type: "string" },
          productName: { type: "string" },
          quantity: { type: "integer" },
@@ -1688,7 +1819,7 @@ const spec = {
          properties: {
           status: { type: "string", example: "ok" },
           message: { type: "string", example: "unread count fetched" },
-          data: {
+data: {
            type: "object",
            properties: {
             unread: { type: "integer" },
@@ -1698,17 +1829,22 @@ const spec = {
         },
        },
       },
-     },
-     "401": {
-      description: "Unauthorized — invalid or missing session token",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "401": {
+       description: "Unauthorized — invalid or missing session token",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+      "403": {
+       description: "Forbidden — user or merchant role required (administrators are rejected)",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/notification/{notificationId}/read": {
+   "/api/notification/{notificationId}/read": {
    put: {
     tags: ["Notification"],
     summary: "Mark a single notification as read",
@@ -1723,31 +1859,41 @@ const spec = {
      },
     ],
     responses: {
-     "200": {
-      description: "Notification marked as read",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "notification marked as read" },
-          data: { $ref: "#/components/schemas/Notification" },
+"200": {
+       description:
+        "Notification marked as read — data is null when the notification does not exist",
+       content: {
+        "application/json": {
+         schema: {
+          type: "object",
+          properties: {
+           status: { type: "string", example: "ok" },
+           message: { type: "string", example: "notification marked as read" },
+           data: {
+            allOf: [{ $ref: "#/components/schemas/Notification" }],
+            nullable: true,
+           },
+          },
          },
         },
        },
       },
-     },
-     "401": {
-      description: "Unauthorized — invalid or missing session token",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "401": {
+       description: "Unauthorized — invalid or missing session token",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+      "403": {
+       description: "Forbidden — user or merchant role required (administrators are rejected)",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/notification/read-all": {
+   "/api/notification/read-all": {
    put: {
     tags: ["Notification"],
     summary: "Mark all notifications as read",
@@ -1761,25 +1907,31 @@ const spec = {
          type: "object",
          properties: {
           status: { type: "string", example: "ok" },
-          message: {
-           type: "string",
-           example: "all notifications marked as read",
+message: {
+            type: "string",
+            example: "all notifications marked as read",
+           },
           },
          },
         },
        },
       },
-     },
-     "401": {
-      description: "Unauthorized — invalid or missing session token",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "401": {
+       description: "Unauthorized — invalid or missing session token",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+      "403": {
+       description: "Forbidden — user or merchant role required (administrators are rejected)",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/product/latest": {
+   "/api/product/latest": {
    get: {
     tags: ["Product"],
     summary: "Get latest available products (paginated, public)",
@@ -2187,16 +2339,17 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "403": {
-      description: "Forbidden — user is not a merchant",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"403": {
+       description:
+        "Forbidden — user role required (merchants and administrators are rejected)",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/product/{merchantId}/merchant": {
+   "/api/product/{merchantId}/merchant": {
    get: {
     tags: ["Product"],
     summary: "Get products for a specific merchant (user role required)",
@@ -2241,22 +2394,23 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "403": {
-      description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"403": {
+       description:
+        "Forbidden — user role required (merchants and administrators are rejected)",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
-     },
-     "500": {
-      description: "Failed to fetch merchant products",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "500": {
+       description: "Failed to fetch merchant products",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/cart/{cartId}": {
+   "/api/cart/{cartId}": {
    get: {
     tags: ["Cart"],
     summary: "Get user's cart with items by cart ID",
@@ -2324,8 +2478,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description:
-       "Product added to cart — data is null when the product does not exist",
+description:
+        "Product added to cart — returns the updated cart; a nonexistent product is silently skipped and the current cart is returned",
       content: {
        "application/json": {
         schema: {
@@ -2420,8 +2574,8 @@ const spec = {
     ],
     responses: {
      "200": {
-      description:
-       "Product quantity incremented — data is null when the product does not exist",
+description:
+        "Product quantity incremented — returns the updated cart; a nonexistent product is silently skipped and the current cart is returned",
       content: {
        "application/json": {
         schema: {
@@ -2736,15 +2890,15 @@ const spec = {
        },
       },
      },
-     "400": {
-      description: "Order already cancelled or already paid — cannot cancel",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"422": {
+       description: "Order already cancelled or already paid — cannot cancel",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
-   },
-   delete: {
+    delete: {
     tags: ["Order"],
     summary: "Delete an order and its items",
     security: [{ bearerAuth: [] }],
@@ -2785,16 +2939,16 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "400": {
-      description: "Invalid order",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"422": {
+       description: "Invalid order",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/order/{orderId}/status": {
+   "/api/order/{orderId}/status": {
    put: {
     tags: ["Order"],
     summary: "Update order status (merchant only)",
@@ -2989,34 +3143,29 @@ const spec = {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-     "403": {
-      description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"403": {
+       description: "Forbidden — user role required",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
-     },
-     "404": {
-      description: "Order not found",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "422": {
+       description: "Invalid order state or payment provider error",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
-     },
-     "422": {
-      description: "Invalid order state or payment provider error",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "500": {
-      description: "Failed to initialize payment",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "500": {
+       description:
+        "Failed to initialize payment — returned when the order is not found or the provider call fails",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/payment/success": {
+   "/api/payment/success": {
    get: {
     tags: ["Payment"],
     summary: "Payment success page (plain text response)",
@@ -3121,7 +3270,7 @@ const spec = {
        },
       },
      },
-"400": {
+"422": {
        description:
         "Paystack verification failed, or amount/currency mismatch",
        content: {
@@ -3141,9 +3290,9 @@ const spec = {
        },
       },
      },
+    },
    },
-  },
-  "/api/upload/upload-image": {
+   "/api/upload/upload-image": {
    post: {
     tags: ["Upload"],
     summary: "Upload an image to Cloudinary (server-side)",
@@ -3247,22 +3396,22 @@ const spec = {
        },
       },
      },
-     "400": {
-      description: "Webhook signature verification failed",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"400": {
+       description: "Webhook signature verification failed (plain text body)",
+       content: {
+        "text/plain": { schema: { type: "string" } },
+       },
       },
-     },
-     "500": {
-      description: "Webhook processing error",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "500": {
+       description: "Webhook processing error (plain text body)",
+       content: {
+        "text/plain": { schema: { type: "string" } },
+       },
       },
      },
     },
    },
-  },
-  "/api/webhook/paystack": {
+   "/api/webhook/paystack": {
    post: {
     tags: ["Webhook"],
     summary: "Paystack webhook handler (charge.success/charge.failed)",
@@ -3377,30 +3526,24 @@ const spec = {
        },
       },
      },
-     "403": {
-      description: "Missing security headers or invalid webhook signature",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"403": {
+       description:
+        "Missing security headers, invalid webhook signature, or upload target not found for the given public_id",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
-     },
-     "422": {
-      description: "Invalid timestamp or unsupported upload folder",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "404": {
-      description:
-       "Upload target not found for the given public_id — webhook silently skipped",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      "422": {
+       description: "Invalid timestamp or unsupported upload folder",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
     },
    },
   },
- },
-};
+ };
 
 export const options: Record<string, unknown> = {
  explorer: true,

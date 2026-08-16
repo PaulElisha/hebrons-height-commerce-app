@@ -44,11 +44,6 @@ class OrderRouter {
    OrderController.placeOrder,
   );
   this.router.put("/:orderId", roleGuard("user"), OrderController.cancelOrder);
-  this.router.delete(
-   "/:orderId",
-   roleGuard("user"),
-   OrderController.deleteOrderItem,
-  );
  }
 }
 

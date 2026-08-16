@@ -46,7 +46,7 @@ export interface OrderCancelledPayload {
 
 export interface LowStockAlertPayload {
  productId: string;
- merchantId: string | null;
+ userId: string;
  productName: string;
  quantity: number;
 }
