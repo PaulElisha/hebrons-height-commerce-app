@@ -3083,22 +3083,22 @@ const spec = {
     },
    },
   },
-  "/api/payment/verify": {
-   get: {
-    tags: ["Payment"],
-    summary: "Verify a Paystack payment by reference",
-    description:
-     "Calls the Paystack verify API for the given payment reference and returns the raw verification data.",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "reference",
-      in: "query",
-      required: true,
-      schema: { type: "string" },
-      description: "Paystack payment reference to verify",
-     },
-    ],
+"/api/payment/verify/{reference}": {
+    get: {
+     tags: ["Payment"],
+     summary: "Verify a Paystack payment by reference",
+     description:
+      "Calls the Paystack verify API for the given payment reference and returns the raw verification data.",
+     security: [{ bearerAuth: [] }],
+     parameters: [
+      {
+       name: "reference",
+       in: "path",
+       required: true,
+       schema: { type: "string" },
+       description: "Paystack payment reference to verify",
+      },
+     ],
     responses: {
      "200": {
       description: "Payment verification data from Paystack",
@@ -3121,26 +3121,26 @@ const spec = {
        },
       },
      },
-     "400": {
-      description:
-       "Missing reference, Paystack verification failed, or amount/currency mismatch",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+"400": {
+       description:
+        "Paystack verification failed, or amount/currency mismatch",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+      "401": {
+       description: "Unauthorized — invalid or missing session token",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
+      },
+      "403": {
+       description: "Forbidden — user role required",
+       content: {
+        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+       },
       },
      },
-     "401": {
-      description: "Unauthorized — invalid or missing session token",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "403": {
-      description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-    },
    },
   },
   "/api/upload/upload-image": {

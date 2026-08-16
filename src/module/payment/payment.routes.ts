@@ -35,7 +35,7 @@ class PaymentRoutes {
    res.send("Payment failed");
   });
 
-  this.router.get("/verify", PaymentController.verify);
+  this.router.get("/verify/:reference", PaymentController.verify);
 
   this.router.post(
    "/initialize/:orderId",
