@@ -41,7 +41,9 @@ import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
 import OutboxService from "@module/outbox/outbox.service.ts";
+import { connectToUserEvents } from "@module/notification/consumer.ts";
 
+connectToUserEvents();
 initializeDrizzleTransactionalContext();
 addTransactionalDrizzleDatabase(db as any);
 

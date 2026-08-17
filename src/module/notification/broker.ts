@@ -10,7 +10,7 @@ export interface BrokerEvent {
 class NotificationBroker {
  private notification$ = new Subject<BrokerEvent>();
 
- public sendToUser(userId: string, data: unknown, eventType: string) {
+ public connectToUserEvents(userId: string, data: unknown, eventType: string) {
   this.notification$.next({ userId, data, eventType });
  }
 
