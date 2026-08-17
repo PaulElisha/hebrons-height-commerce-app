@@ -287,6 +287,80 @@ export interface TPaymentVerificationResult {
  order?: T<"order">;
 }
 
+export interface TAdminAnalytics {
+ totalOrders: number;
+ totalRevenue: number;
+ totalUsers: number;
+ totalMerchants: number;
+ totalProducts: number;
+ approvedMerchants: number;
+ pendingMerchants: number;
+ statusBreakdown: { status: string; count: number }[];
+ topProducts: {
+  productId: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+ }[];
+ periodCounts: { date: string; count: number; revenue: number }[];
+}
+
+export interface TUserFull {
+ id: string;
+ name: string;
+ email: string;
+ emailVerified: boolean;
+ image: string | null;
+ role: string;
+ createdAt: Date;
+ updatedAt: Date;
+}
+
+export interface TAdminUsersPagination extends TPaginationMeta {
+ totalUsers: number;
+}
+
+export interface TAdminPaginatedUsers {
+ data: TUserFull[];
+ pagination: TAdminUsersPagination;
+}
+
+export interface TAdminMerchantsPagination extends TPaginationMeta {
+ totalMerchants: number;
+}
+
+export interface TAdminPaginatedMerchants {
+ data: TMerchantWithUser[];
+ pagination: TAdminMerchantsPagination;
+}
+
+export interface TAdminOrdersPagination extends TPaginationMeta {
+ totalOrders: number;
+}
+
+export interface TAdminPaginatedOrders {
+ data: TOrderWithUser[];
+ pagination: TAdminOrdersPagination;
+}
+
+export interface TAdminPaymentsPagination extends TPaginationMeta {
+ totalPayments: number;
+}
+
+export interface TAdminPaginatedPayments {
+ data: TPayment[];
+ pagination: TAdminPaymentsPagination;
+}
+
+export interface TAdminProductsPagination extends TPaginationMeta {
+ totalProducts: number;
+}
+
+export interface TAdminPaginatedProducts {
+ data: TProductWithMerchant[];
+ pagination: TAdminProductsPagination;
+}
+
 export interface ModelMap {
  product: TProduct;
  order: TOrder;

@@ -15,6 +15,7 @@ import { auth } from "@auth/auth.ts";
 import db from "@db/db.ts";
 import HttpStatus from "@enum/http.ts";
 import errorHandler from "@middleware/error-handler.ts";
+import adminRouter from "@module/admin/admin.route.ts";
 import cartRouter from "@module/cart/cart.route.ts";
 import categoryRouter from "@module/category/category.route.ts";
 import merchantRouter from "@module/merchant/merchant.route.ts";
@@ -100,6 +101,7 @@ class App {
     });
   });
 
+  this.app.use("/api/admin", adminRouter);
   this.app.use("/api/user", userRouter);
   this.app.use("/api/merchant", merchantRouter);
   this.app.use("/api/category", categoryRouter);

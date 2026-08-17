@@ -335,6 +335,185 @@ const spec = {
      offset: { type: "integer" },
     },
    },
+   AdminAnalytics: {
+    type: "object",
+    properties: {
+     totalOrders: { type: "integer" },
+     totalRevenue: { type: "integer" },
+     totalUsers: { type: "integer" },
+     totalMerchants: { type: "integer" },
+     totalProducts: { type: "integer" },
+     approvedMerchants: { type: "integer" },
+     pendingMerchants: { type: "integer" },
+     statusBreakdown: {
+      type: "array",
+      items: {
+       type: "object",
+       properties: {
+        status: { type: "string" },
+        count: { type: "integer" },
+       },
+      },
+     },
+     topProducts: {
+      type: "array",
+      items: {
+       type: "object",
+       properties: {
+        productId: { type: "string" },
+        name: { type: "string" },
+        quantity: { type: "integer" },
+        revenue: { type: "integer" },
+       },
+      },
+     },
+     periodCounts: {
+      type: "array",
+      items: {
+       type: "object",
+       properties: {
+        date: { type: "string", example: "2025-01-01" },
+        count: { type: "integer" },
+        revenue: { type: "integer" },
+       },
+      },
+     },
+    },
+   },
+   AdminUserPagination: {
+    type: "object",
+    properties: {
+     limit: { type: "integer" },
+     pageNumber: { type: "integer" },
+     totalUsers: { type: "integer" },
+     totalPages: { type: "integer" },
+     offset: { type: "integer" },
+    },
+   },
+   AdminMerchantPagination: {
+    type: "object",
+    properties: {
+     limit: { type: "integer" },
+     pageNumber: { type: "integer" },
+     totalMerchants: { type: "integer" },
+     totalPages: { type: "integer" },
+     offset: { type: "integer" },
+    },
+   },
+   AdminOrderPagination: {
+    type: "object",
+    properties: {
+     limit: { type: "integer" },
+     pageNumber: { type: "integer" },
+     totalOrders: { type: "integer" },
+     totalPages: { type: "integer" },
+     offset: { type: "integer" },
+    },
+   },
+   AdminProductPagination: {
+    type: "object",
+    properties: {
+     limit: { type: "integer" },
+     pageNumber: { type: "integer" },
+     totalProducts: { type: "integer" },
+     totalPages: { type: "integer" },
+     offset: { type: "integer" },
+    },
+   },
+   AdminPaymentPagination: {
+    type: "object",
+    properties: {
+     limit: { type: "integer" },
+     pageNumber: { type: "integer" },
+     totalPayments: { type: "integer" },
+     totalPages: { type: "integer" },
+     offset: { type: "integer" },
+    },
+   },
+   MerchantWithUser: {
+    type: "object",
+    properties: {
+     merchant: { $ref: "#/components/schemas/Merchant" },
+     user: { $ref: "#/components/schemas/User" },
+    },
+   },
+   OrderWithUser: {
+    type: "object",
+    properties: {
+     id: { type: "string" },
+     subtotal: { type: "integer" },
+     deliveryAddress: { type: "object", additionalProperties: { type: "string" } },
+     createdAt: { type: "string", format: "date-time" },
+     user: {
+      type: "object",
+      properties: {
+       id: { type: "string" },
+       email: { type: "string", format: "email" },
+       name: { type: "string" },
+      },
+     },
+    },
+   },
+   CreateCategoryDto: {
+    type: "object",
+    required: ["name"],
+    properties: {
+     name: { type: "string" },
+     description: { type: "string" },
+     subcategories: {
+      type: "array",
+      items: { type: "string" },
+      description: "Optional subcategory names to create with the category",
+     },
+    },
+   },
+   UpdateCategoryDto: {
+    type: "object",
+    properties: {
+     name: { type: "string" },
+     description: { type: "string" },
+    },
+   },
+   CreateSubcategoryDto: {
+    type: "object",
+    required: ["name"],
+    properties: {
+     name: { type: "string" },
+    },
+   },
+   UpdateSubcategoryDto: {
+    type: "object",
+    required: ["name"],
+    properties: {
+     name: { type: "string" },
+    },
+   },
+   SendNotificationDto: {
+    type: "object",
+    required: ["title", "message", "type"],
+    properties: {
+     userId: {
+      type: "string",
+      description: "Target user — omit to broadcast to all users",
+     },
+     title: { type: "string" },
+     message: { type: "string" },
+     type: {
+      type: "string",
+      enum: ["order_update", "stock_alert", "system"],
+     },
+    },
+   },
+   ReviewMerchantDto: {
+    type: "object",
+    required: ["approvalStatus"],
+    properties: {
+     approvalStatus: {
+      type: "string",
+      enum: ["approved", "rejected"],
+     },
+    },
+   },
    Cart: {
     type: "object",
     properties: {
@@ -717,6 +896,1010 @@ CheckoutResult: {
   },
  },
  paths: {
+  "/api/admin/analytics": {
+   get: {
+    tags: ["Admin"],
+    summary: "Get platform-wide analytics (admin only)",
+    security: [{ bearerAuth: [] }],
+    responses: {
+     "200": {
+      description: "Admin analytics fetched successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: {
+           type: "string",
+           example: "admin analytics fetched successfully",
+          },
+          data: { $ref: "#/components/schemas/AdminAnalytics" },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/users": {
+   get: {
+    tags: ["Admin"],
+    summary: "List all users with pagination and search (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "pageSize",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1, maximum: 50 },
+      description: "Number of users per page (default 10)",
+     },
+     {
+      name: "pageNumber",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1 },
+      description: "Page number (default 1)",
+     },
+     {
+      name: "search",
+      in: "query",
+      required: false,
+      schema: { type: "string" },
+      description: "Search users by name or email",
+     },
+    ],
+    responses: {
+     "200": {
+      description: "Users fetched successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "users fetched successfully" },
+          data: {
+           type: "object",
+           properties: {
+            data: {
+             type: "array",
+             items: { $ref: "#/components/schemas/User" },
+            },
+            pagination: {
+             $ref: "#/components/schemas/AdminUserPagination",
+            },
+           },
+          },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/users/{userId}": {
+   get: {
+    tags: ["Admin"],
+    summary: "Get a single user (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "userId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "User ID",
+     },
+    ],
+    responses: {
+     "200": {
+      description:
+       "User fetched successfully — data is null when the user does not exist",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "user fetched successfully" },
+          data: { $ref: "#/components/schemas/User" },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/merchants": {
+   get: {
+    tags: ["Admin"],
+    summary: "List merchants with pagination and status filter (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "pageSize",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1, maximum: 50 },
+      description: "Number of merchants per page (default 10)",
+     },
+     {
+      name: "pageNumber",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1 },
+      description: "Page number (default 1)",
+     },
+     {
+      name: "approvalStatus",
+      in: "query",
+      required: false,
+      schema: { type: "string", enum: ["pending", "approved", "rejected"] },
+      description: "Filter merchants by approval status",
+     },
+    ],
+    responses: {
+     "200": {
+      description: "Merchants fetched successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "merchants fetched successfully" },
+          data: {
+           type: "object",
+           properties: {
+            data: {
+             type: "array",
+             items: { $ref: "#/components/schemas/MerchantWithUser" },
+            },
+            pagination: {
+             $ref: "#/components/schemas/AdminMerchantPagination",
+            },
+           },
+          },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/merchants/{merchantId}/approval": {
+   put: {
+    tags: ["Admin"],
+    summary: "Approve or reject a merchant application (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "merchantId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Merchant ID",
+     },
+    ],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: { $ref: "#/components/schemas/ReviewMerchantDto" },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description:
+       "Merchant review recorded — data is null when the merchant does not exist",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "merchant approved successfully" },
+          data: { $ref: "#/components/schemas/Merchant" },
+         },
+        },
+       },
+      },
+     },
+     "400": {
+      description: "Validation failed or merchant is already in that state",
+      content: {
+       "application/json": {
+        schema: { $ref: "#/components/schemas/ValidationError" },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/orders": {
+   get: {
+    tags: ["Admin"],
+    summary: "List all orders with pagination and status filter (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "pageSize",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1, maximum: 50 },
+      description: "Number of orders per page (default 10)",
+     },
+     {
+      name: "pageNumber",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1 },
+      description: "Page number (default 1)",
+     },
+     {
+      name: "orderStatus",
+      in: "query",
+      required: false,
+      schema: {
+       type: "string",
+       enum: [
+        "pending",
+        "processing",
+        "fulfilled",
+        "failed",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+       ],
+      },
+      description: "Filter orders by order status",
+     },
+    ],
+    responses: {
+     "200": {
+      description: "Orders fetched successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "orders fetched successfully" },
+          data: {
+           type: "object",
+           properties: {
+            data: {
+             type: "array",
+             items: { $ref: "#/components/schemas/OrderWithUser" },
+            },
+            pagination: {
+             $ref: "#/components/schemas/AdminOrderPagination",
+            },
+           },
+          },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/orders/{orderId}": {
+   get: {
+    tags: ["Admin"],
+    summary: "Get full order details with items (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "orderId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Order ID",
+     },
+    ],
+    responses: {
+     "200": {
+      description:
+       "Order details fetched successfully — data is null when the order does not exist",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: {
+           type: "string",
+           example: "order details fetched successfully",
+          },
+          data: { $ref: "#/components/schemas/OrderAndItems" },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/products": {
+   get: {
+    tags: ["Admin"],
+    summary: "List all products with pagination and search (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "pageSize",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1, maximum: 50 },
+      description: "Number of products per page (default 10)",
+     },
+     {
+      name: "pageNumber",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1 },
+      description: "Page number (default 1)",
+     },
+     {
+      name: "search",
+      in: "query",
+      required: false,
+      schema: { type: "string" },
+      description: "Search products by name or description",
+     },
+    ],
+    responses: {
+     "200": {
+      description: "Products fetched successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "products fetched successfully" },
+          data: {
+           type: "object",
+           properties: {
+            data: {
+             type: "array",
+             items: { $ref: "#/components/schemas/ProductWithMerchant" },
+            },
+            pagination: {
+             $ref: "#/components/schemas/AdminProductPagination",
+            },
+           },
+          },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/products/{productId}": {
+   delete: {
+    tags: ["Admin"],
+    summary: "Soft delete any product (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "productId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Product ID",
+     },
+    ],
+    responses: {
+     "200": {
+      description:
+       "Product deleted successfully (200 even when the product does not exist)",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "product deleted successfully" },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/merchants/{merchantId}": {
+   get: {
+    tags: ["Admin"],
+    summary: "Get a single merchant with its user (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "merchantId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Merchant ID",
+     },
+    ],
+    responses: {
+     "200": {
+      description:
+       "Merchant fetched successfully — data is null when the merchant does not exist",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "merchant fetched successfully" },
+          data: { $ref: "#/components/schemas/MerchantWithUser" },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/payments": {
+   get: {
+    tags: ["Admin"],
+    summary: "List all payments with pagination and status filter (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "pageSize",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1, maximum: 50 },
+      description: "Number of payments per page (default 10)",
+     },
+     {
+      name: "pageNumber",
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1 },
+      description: "Page number (default 1)",
+     },
+     {
+      name: "paymentStatus",
+      in: "query",
+      required: false,
+      schema: {
+       type: "string",
+       enum: [
+        "pending",
+        "initialized",
+        "paid",
+        "failed",
+        "cancelled",
+        "refunded",
+       ],
+      },
+      description: "Filter payments by status",
+     },
+    ],
+    responses: {
+     "200": {
+      description: "Payments fetched successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "payments fetched successfully" },
+          data: {
+           type: "object",
+           properties: {
+            data: {
+             type: "array",
+             items: { $ref: "#/components/schemas/Payment" },
+            },
+            pagination: {
+             $ref: "#/components/schemas/AdminPaymentPagination",
+            },
+           },
+          },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/categories": {
+   post: {
+    tags: ["Admin"],
+    summary: "Create a category with optional subcategories (admin only)",
+    security: [{ bearerAuth: [] }],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: { $ref: "#/components/schemas/CreateCategoryDto" },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description: "Category created successfully",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "category created successfully" },
+          data: { $ref: "#/components/schemas/Category" },
+         },
+        },
+       },
+      },
+     },
+     "400": {
+      description: "Validation failed or category name already exists",
+      content: {
+       "application/json": {
+        schema: { $ref: "#/components/schemas/ValidationError" },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/categories/{categoryId}": {
+   put: {
+    tags: ["Admin"],
+    summary: "Update a category (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "categoryId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Category ID",
+     },
+    ],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: { $ref: "#/components/schemas/UpdateCategoryDto" },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description:
+       "Category updated successfully — data is null when the category does not exist",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "category updated successfully" },
+          data: { $ref: "#/components/schemas/Category" },
+         },
+        },
+       },
+      },
+     },
+     "400": {
+      description: "Validation failed or category name already exists",
+      content: {
+       "application/json": {
+        schema: { $ref: "#/components/schemas/ValidationError" },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/categories/{categoryId}/subcategories": {
+   post: {
+    tags: ["Admin"],
+    summary: "Create a subcategory under a category (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "categoryId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Parent category ID",
+     },
+    ],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: { $ref: "#/components/schemas/CreateSubcategoryDto" },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description:
+       "Subcategory created successfully — data is null when the category does not exist",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: {
+           type: "string",
+           example: "subcategory created successfully",
+          },
+          data: { $ref: "#/components/schemas/Subcategory" },
+         },
+        },
+       },
+      },
+     },
+     "400": {
+      description: "Validation failed",
+      content: {
+       "application/json": {
+        schema: { $ref: "#/components/schemas/ValidationError" },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/subcategories/{subcategoryId}": {
+   put: {
+    tags: ["Admin"],
+    summary: "Update a subcategory (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "subcategoryId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Subcategory ID",
+     },
+    ],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: { $ref: "#/components/schemas/UpdateSubcategoryDto" },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description:
+       "Subcategory updated successfully — data is null when the subcategory does not exist",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: {
+           type: "string",
+           example: "subcategory updated successfully",
+          },
+          data: { $ref: "#/components/schemas/Subcategory" },
+         },
+        },
+       },
+      },
+     },
+     "400": {
+      description: "Validation failed",
+      content: {
+       "application/json": {
+        schema: { $ref: "#/components/schemas/ValidationError" },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+   delete: {
+    tags: ["Admin"],
+    summary: "Delete a subcategory (admin only)",
+    security: [{ bearerAuth: [] }],
+    parameters: [
+     {
+      name: "subcategoryId",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+      description: "Subcategory ID",
+     },
+    ],
+    responses: {
+     "200": {
+      description:
+       "Subcategory deleted successfully (200 even when the subcategory does not exist)",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: {
+           type: "string",
+           example: "subcategory deleted successfully",
+          },
+         },
+        },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
+  "/api/admin/notifications": {
+   post: {
+    tags: ["Admin"],
+    summary: "Send a notification to one user or broadcast to all (admin only)",
+    security: [{ bearerAuth: [] }],
+    requestBody: {
+     required: true,
+     content: {
+      "application/json": {
+       schema: { $ref: "#/components/schemas/SendNotificationDto" },
+      },
+     },
+    },
+    responses: {
+     "200": {
+      description:
+       "Notification sent — data is null when the target user does not exist or there are no users",
+      content: {
+       "application/json": {
+        schema: {
+         type: "object",
+         properties: {
+          status: { type: "string", example: "ok" },
+          message: { type: "string", example: "notification sent successfully" },
+          data: {
+           type: "array",
+           items: { $ref: "#/components/schemas/Notification" },
+          },
+         },
+        },
+       },
+      },
+     },
+     "400": {
+      description: "Validation failed",
+      content: {
+       "application/json": {
+        schema: { $ref: "#/components/schemas/ValidationError" },
+       },
+      },
+     },
+     "401": {
+      description: "Unauthorized — invalid or missing session token",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+     "403": {
+      description: "Forbidden — admin only",
+      content: {
+       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+      },
+     },
+    },
+   },
+  },
   "/health": {
    get: {
     tags: ["Health"],
