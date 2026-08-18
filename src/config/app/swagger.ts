@@ -272,6 +272,12 @@ const spec = {
       additionalProperties: { type: "string" },
       description: "Required — additional product data as key-value map",
      },
+     additonalImages: {
+      type: "array",
+      items: { type: "string" },
+      description:
+       "Optional additional product image URLs — stored on the product's `additionalImages` field",
+     },
     },
    },
    UpdateProductDto: {
@@ -288,6 +294,12 @@ const spec = {
       type: "object",
       additionalProperties: { type: "string" },
       description: "Optional additional product data",
+     },
+     additonalImages: {
+      type: "array",
+      items: { type: "string" },
+      description:
+       "Optional additional product image URLs — stored on the product's `additionalImages` field",
      },
     },
    },
