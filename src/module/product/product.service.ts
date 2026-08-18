@@ -47,6 +47,7 @@ export const CreateProductDto = z.object({
  category: z.string(),
  subCategory: z.string(),
  additionalData: z.record(z.string(), z.string()),
+ additonalImages: z.array(z.string()).optional(),
 });
 
 export const UpdateProductDto = z.object({
@@ -58,6 +59,7 @@ export const UpdateProductDto = z.object({
  category: z.string().optional(),
  subCategory: z.string().optional(),
  additionalData: z.record(z.string(), z.string()).optional(),
+ additonalImages: z.array(z.string()).optional(),
 });
 
 class ProductService {
@@ -195,22 +197,7 @@ class ProductService {
    body.subCategory,
   );
 
-  const [newProduct] = await db
-   .insert(product)
-   .values({
-    merchantId: targetMerchantId,
-    name: body.name,
-    description: body.description,
-    image: body.image,
-    price: body.price,
-    quantity: body.quantity,
-    categoryId,
-    subCategoryId,
-    category: body.category,
-    subCategory: body.subCategory,
-    additionalData: body.additionalData,
-   })
-   .returning();
+  const [newProduct] = await db.insert(product).values(body).returning();
 
   return [newProduct, null];
  };
@@ -256,6 +243,10 @@ class ProductService {
     updateData.subCategory = body.subCategory;
     updateData.subCategoryId = ids.subCategoryId;
    }
+  }
+
+  if (body.additonalImages !== undefined) {
+   updateData.additionalImages = body.additonalImages;
   }
 
   const [updatedProduct] = await db
