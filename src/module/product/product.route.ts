@@ -45,7 +45,7 @@ class ProductRouter {
    "/",
    authenticate,
    roleGuard("merchant"),
-   checkMerchantStatus("approved"),
+   // checkMerchantStatus("approved"),
    validate(CreateProductDto),
    ProductController.createProduct,
   );
@@ -53,7 +53,7 @@ class ProductRouter {
    "/:productId",
    authenticate,
    roleGuard("merchant"),
-   checkMerchantStatus("approved"),
+   // checkMerchantStatus("approved"),
    validate(UpdateProductDto),
    ProductController.updateProduct,
   );

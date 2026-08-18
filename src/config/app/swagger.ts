@@ -2732,12 +2732,12 @@ CheckoutResult: {
            type: "array",
            items: { $ref: "#/components/schemas/Notification" },
           },
+},
+          },
          },
         },
        },
-      },
-      },
-      "401": {
+        "401": {
        description: "Unauthorized — invalid or missing session token",
        content: {
         "application/json": { schema: { $ref: "#/components/schemas/Error" } },
@@ -2986,7 +2986,6 @@ CheckoutResult: {
      ],
     },
    },
-  },
    "/api/notification/unread-count": {
    get: {
     tags: ["Notification"],
@@ -3005,14 +3004,15 @@ CheckoutResult: {
 data: {
            type: "object",
            properties: {
-            unread: { type: "integer" },
+unread: { type: "integer" },
+            },
            },
           },
          },
         },
        },
       },
-      "401": {
+       "401": {
        description: "Unauthorized — invalid or missing session token",
        content: {
         "application/json": { schema: { $ref: "#/components/schemas/Error" } },
@@ -3023,7 +3023,7 @@ data: {
        content: {
         "application/json": { schema: { $ref: "#/components/schemas/Error" } },
        },
-      },
+},
      },
     },
    },
@@ -3529,11 +3529,10 @@ message: {
          "application/json": { schema: { $ref: "#/components/schemas/Error" } },
         },
        },
+},
       },
      },
-    },
-   },
-    "/api/product/{merchantId}/merchant": {
+   "/api/product/{merchantId}/merchant": {
    get: {
     tags: ["Product"],
     summary: "Get products for a specific merchant (user role required)",
@@ -4676,8 +4675,9 @@ description:
       },
      },
     },
-},
-  };
+   },
+  },
+};
 
 export const options: Record<string, unknown> = {
  explorer: true,
