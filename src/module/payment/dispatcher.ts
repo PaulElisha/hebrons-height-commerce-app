@@ -13,10 +13,7 @@ import Env from "env.ts";
 import FA from "fasy";
 import z from "zod";
 
-import {
- CheckoutData,
- PaymentCheckoutResult,
-} from "./payment.service.ts";
+import { CheckoutData, PaymentCheckoutResult } from "./payment.service.ts";
 
 type Rail = z.infer<typeof CheckoutData>["rail"];
 
@@ -101,7 +98,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
   userId: string,
   orderId: string,
   data: z.infer<typeof CheckoutData>,
-  ): Promise<Result<PaymentCheckoutResult, AppError>> => {
+ ): Promise<Result<PaymentCheckoutResult, AppError>> => {
   const [orderData, err] = await OrderService.getOrderDetails(userId, orderId);
 
   if (err || !orderData) return [null, err];

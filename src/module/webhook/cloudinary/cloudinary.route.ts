@@ -5,7 +5,7 @@ import express, { NextFunction, Request, Response, Router } from "express";
 import { cloudinaryWebhookHandler } from "./cloudinary.webhook.ts";
 
 const cloudinaryWebhookRouter = Router().post(
- "/cloudinary",
+ "/webhook",
  express.raw({ type: "application/json" }),
  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   await cloudinaryWebhookHandler(req, res, next);

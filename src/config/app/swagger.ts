@@ -7,7 +7,7 @@ const spec = {
   title: "HHG Commerce API",
   version: Env.VERSION || "1.0.0",
   description:
-   "Hebrons Height Commerce API documentation. API routes are rate-limited to 100 requests per 15 minutes per IP — rate-limited requests return 429 (`Too Many Requests`). Webhook endpoints (`/api/webhook/*`) are exempt from the rate limiter.",
+   "Hebrons Height Commerce API documentation. API routes are rate-limited to 100 requests per 15 minutes per IP — rate-limited requests return 429 (`Too Many Requests`). Webhook endpoints (`/api/stripe/webhook`, `/api/paystack/webhook`, `/api/cloudinary/webhook`) are exempt from the rate limiter.",
  },
  servers: [
   {
@@ -2980,14 +2980,14 @@ CheckoutResult: {
           type: "string",
           description: "Correlates to the underlying outbox row",
          },
-        },
+},
        },
       },
      ],
     },
    },
   },
-  "/api/notification/unread-count": {
+   "/api/notification/unread-count": {
    get: {
     tags: ["Notification"],
     summary: "Get unread notification count",
@@ -3522,17 +3522,18 @@ message: {
        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
       },
      },
-"403": {
-       description:
-        "Forbidden — user role required (merchants and administrators are rejected)",
-       content: {
-        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+     "403": {
+        description:
+         "Forbidden — merchant role required (users and administrators are rejected)",
+        content: {
+         "application/json": { schema: { $ref: "#/components/schemas/Error" } },
+        },
        },
       },
      },
     },
    },
-   "/api/product/{merchantId}/merchant": {
+    "/api/product/{merchantId}/merchant": {
    get: {
     tags: ["Product"],
     summary: "Get products for a specific merchant (user role required)",
@@ -4081,57 +4082,8 @@ description:
       },
      },
     },
-    delete: {
-    tags: ["Order"],
-    summary: "Delete an order and its items",
-    security: [{ bearerAuth: [] }],
-    parameters: [
-     {
-      name: "orderId",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-      description: "Order ID to delete",
-     },
-    ],
-    responses: {
-     "200": {
-      description:
-       "Order deleted successfully (also succeeds with 200 when the order does not exist)",
-      content: {
-       "application/json": {
-        schema: {
-         type: "object",
-         properties: {
-          status: { type: "string", example: "ok" },
-          message: { type: "string", example: "order deleted" },
-         },
-        },
-       },
-      },
-     },
-     "401": {
-      description: "Unauthorized — invalid or missing session token",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-     "403": {
-      description: "Forbidden — user role required",
-      content: {
-       "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      },
-     },
-"422": {
-       description: "Invalid order",
-       content: {
-        "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-       },
-      },
-     },
     },
-   },
-   "/api/order/{orderId}/status": {
+    "/api/order/{orderId}/status": {
    put: {
     tags: ["Order"],
     summary: "Update order status (merchant only)",
@@ -4539,7 +4491,7 @@ description:
     },
    },
   },
-  "/api/webhook/stripe": {
+   "/api/stripe/webhook": {
    post: {
     tags: ["Webhook"],
     summary: "Stripe webhook handler (checkout.session.completed/expired)",
@@ -4594,7 +4546,7 @@ description:
      },
     },
    },
-   "/api/webhook/paystack": {
+    "/api/paystack/webhook": {
    post: {
     tags: ["Webhook"],
     summary: "Paystack webhook handler (charge.success/charge.failed)",
@@ -4651,7 +4603,7 @@ description:
     },
    },
   },
-  "/api/webhook/cloudinary": {
+   "/api/cloudinary/webhook": {
    post: {
     tags: ["Webhook"],
     summary: "Cloudinary webhook handler (upload notification)",
@@ -4724,9 +4676,8 @@ description:
       },
      },
     },
-   },
-  },
- };
+},
+  };
 
 export const options: Record<string, unknown> = {
  explorer: true,

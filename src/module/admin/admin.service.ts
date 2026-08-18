@@ -658,7 +658,7 @@ class AdminService {
 
  sendNotification = async (
   body: z.infer<typeof SendNotificationDto>,
- ): Promise<Result<T<"notification">[], AppError>> => {
+ ): Promise<Result<T<"notification">, AppError>> => {
   const { userId, title, message, type } = body;
 
   if (userId) {
@@ -677,14 +677,14 @@ class AdminService {
 
    if (!created) return [null, null];
 
-   return [[created], null];
+   return [created, null];
   }
 
   const allUsers = await db.select({ id: user.id }).from(user);
 
   if (allUsers.length <= 0) return [null, null];
 
-  const created = await db
+  const [created] = await db
    .insert(notification)
    .values(allUsers.map((u) => ({ userId: u.id, title, message, type })))
    .returning();

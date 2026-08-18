@@ -8,4 +8,8 @@ export default rateLimit({
  standardHeaders: true,
  legacyHeaders: false,
  validate: { xForwardedForHeader: false },
+ skip: (req) =>
+  ["/api/stripe/webhook", "/api/paystack/webhook", "/api/cloudinary/webhook"].includes(
+   req.path,
+  ),
 });

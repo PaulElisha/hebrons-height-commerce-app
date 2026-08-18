@@ -95,8 +95,8 @@ class NotificationController {
    next: ({ data, eventType }) => {
     session.push(data, eventType);
    },
-   error: (err: unknown) => {
-    const msg = err instanceof Error ? err?.message : String(err);
+   error: (err: Error) => {
+    const msg = err.message;
     session.push(msg, "error_event");
    },
   });

@@ -6,6 +6,7 @@ import { Router } from "express";
 
 import ProductController from "./product.controller.ts";
 import { CreateProductDto, UpdateProductDto } from "./product.service.ts";
+import { checkMerchantStatus } from "@shared/middleware/check-status.ts";
 
 class ProductRouter {
  router: Router;
@@ -16,7 +17,11 @@ class ProductRouter {
 
  initializeRoutes() {
   this.router.get("/latest", ProductController.getLatestProducts);
-  this.router.get("/by-categories", ProductController.getProductsByCategories);
+  this.router.get(
+   "/by-categories",
+   roleGuard("user", "merchant"),
+   ProductController.getProductsByCategories,
+  );
   this.router.get("/", ProductController.getProducts);
   this.router.get(
    "/merchant",
@@ -40,6 +45,7 @@ class ProductRouter {
    "/",
    authenticate,
    roleGuard("merchant"),
+   checkMerchantStatus("approved"),
    validate(CreateProductDto),
    ProductController.createProduct,
   );
@@ -47,6 +53,7 @@ class ProductRouter {
    "/:productId",
    authenticate,
    roleGuard("merchant"),
+   checkMerchantStatus("approved"),
    validate(UpdateProductDto),
    ProductController.updateProduct,
   );

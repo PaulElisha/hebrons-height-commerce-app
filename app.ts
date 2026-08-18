@@ -74,9 +74,9 @@ class App {
  }
 
  initializeWebhooks() {
-  this.app.use("/api/webhook", stripeWebhookRouter);
-  this.app.use("/api/webhook", paystackWebhookRouter);
-  this.app.use("/api/webhook", cloudinaryWebhookRouter);
+  this.app.use("/api/stripe", stripeWebhookRouter);
+  this.app.use("/api/paystack", paystackWebhookRouter);
+  this.app.use("/api/cloudinary", cloudinaryWebhookRouter);
  }
 
  initializeApiRoutes() {

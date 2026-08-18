@@ -416,7 +416,7 @@ class AdminController {
  sendNotification = asyncHandler(
   async (
    req: Request<{}, {}, z.infer<typeof SendNotificationDto>>,
-   res: Response<APIResponse<T<"notification">[]>>,
+   res: Response<APIResponse<T<"notification">>>,
    next: NextFunction,
   ) => {
    const body = req.body;

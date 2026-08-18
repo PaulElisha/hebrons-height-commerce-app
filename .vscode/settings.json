@@ -1,5 +1,6 @@
 {
-    "editor.fontFamily": "'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace",
+    "editor.fontFamily": "Fira Code",
+    "editor.fontLigatures": true,
     "editor.fontSize": 13,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     // "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
@@ -16,10 +17,10 @@
     },
     "[typescript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "typescript.preferences.quoteStyle": "single",
-        "typescript.suggest.completeJSDocs": true,
-        "typescript.suggest.jsdoc.generateReturns": true,
-        "typescript.suggest.enabled": true
+        "#js/ts.preferences.quoteStyle#": "single",
+        "#js/ts.suggest.completeJSDocs#": true,
+        "#typescript.suggest.jsdoc.generateReturns#": true,
+        "#typescript.suggest.enabled#": true
     },
     "tsEssentialPlugins.methodSnippets.insertText": "always-declaration",
     "tsEssentialPlugins.autoImport.changeSorting": {
@@ -39,6 +40,7 @@
         "path/*", // ignore path, path/posix and path/win32
         "path/*#join", // ignore path, path/posix and path/win32, but only join symbol
         "path/*#join,resolve",
-    ]
+    ],
+    "workbench.colorTheme": "Cursor Dark"
     // set as "true" to run 'prettier' last not first
 }
