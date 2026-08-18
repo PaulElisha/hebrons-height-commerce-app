@@ -197,7 +197,23 @@ class ProductService {
    body.subCategory,
   );
 
-  const [newProduct] = await db.insert(product).values(body).returning();
+  const [newProduct] = await db
+   .insert(product)
+   .values({
+    merchantId: targetMerchantId,
+    name: body.name,
+    description: body.description,
+    image: body.image,
+    price: body.price,
+    quantity: body.quantity,
+    categoryId,
+    subCategoryId,
+    category: body.category,
+    subCategory: body.subCategory,
+    additionalData: body.additionalData,
+    additionalImages: body.additonalImages,
+   })
+   .returning();
 
   return [newProduct, null];
  };
