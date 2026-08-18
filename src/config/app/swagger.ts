@@ -272,7 +272,7 @@ const spec = {
       additionalProperties: { type: "string" },
       description: "Required — additional product data as key-value map",
      },
-     additonalImages: {
+     additionalImages: {
       type: "array",
       items: { type: "string" },
       description:
@@ -295,7 +295,7 @@ const spec = {
       additionalProperties: { type: "string" },
       description: "Optional additional product data",
      },
-     additonalImages: {
+     additionalImages: {
       type: "array",
       items: { type: "string" },
       description:

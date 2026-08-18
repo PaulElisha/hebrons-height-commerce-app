@@ -18,6 +18,7 @@ import z from "zod";
 import ProductService, {
  CreateProductDto,
  TProductFilter,
+ UpdateProductDto,
 } from "./product.service.ts";
 
 export interface ProductParams {
@@ -191,7 +192,7 @@ class ProductController {
 
  updateProduct = asyncHandler(
   async (
-   req: Request<ProductParams>,
+   req: Request<ProductParams, {}, z.infer<typeof UpdateProductDto>>,
    res: Response<APIResponse<T<"product">>>,
    next: NextFunction,
   ) => {

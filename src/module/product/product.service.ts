@@ -47,7 +47,7 @@ export const CreateProductDto = z.object({
  category: z.string(),
  subCategory: z.string(),
  additionalData: z.record(z.string(), z.string()),
- additonalImages: z.array(z.string()).optional(),
+ additionalImages: z.array(z.string()).optional(),
 });
 
 export const UpdateProductDto = z.object({
@@ -59,7 +59,7 @@ export const UpdateProductDto = z.object({
  category: z.string().optional(),
  subCategory: z.string().optional(),
  additionalData: z.record(z.string(), z.string()).optional(),
- additonalImages: z.array(z.string()).optional(),
+ additionalImages: z.array(z.string()).optional(),
 });
 
 class ProductService {
@@ -211,7 +211,7 @@ class ProductService {
     category: body.category,
     subCategory: body.subCategory,
     additionalData: body.additionalData,
-    additionalImages: body.additonalImages,
+    additionalImages: body.additionalImages,
    })
    .returning();
 
@@ -225,12 +225,12 @@ class ProductService {
  ): Promise<Result<T<"product">, AppError>> => {
   const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
 
-  if (e) return [null, e];
+  if (e || !merchantId) return [null, e];
 
   const [existing] = await db
    .select({ deletedAt: product.deletedAt, status: product.status })
    .from(product)
-   .where(and(eq(product.id, productId), eq(product.merchantId, merchantId!)))
+   .where(and(eq(product.id, productId), eq(product.merchantId, merchantId)))
    .limit(1);
 
   if (!existing) return [null, null];
@@ -261,8 +261,8 @@ class ProductService {
    }
   }
 
-  if (body.additonalImages !== undefined) {
-   updateData.additionalImages = body.additonalImages;
+  if (body.additionalImages !== undefined) {
+   updateData.additionalImages = body.additionalImages;
   }
 
   const [updatedProduct] = await db
