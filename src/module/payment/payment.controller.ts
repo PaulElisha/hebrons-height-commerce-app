@@ -12,17 +12,18 @@ import PaymentService, {
  CheckoutData,
  PaymentCheckoutResult,
  PaystackVerifiedData,
+ VerifyPaymentParams,
 } from "./payment.service.ts";
 
 class PaymentController {
  initialize = asyncHandler(
   async (
-   req: Request<OrderParams, {}, z.infer<typeof CheckoutData>>,
+   req: Request<z.infer<typeof OrderParams>, {}, z.infer<typeof CheckoutData>>,
    res: Response<APIResponse<PaymentCheckoutResult>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const orderId = String(req.params.orderId);
+   const orderId = req.params.orderId;
    const body = req.body;
 
    const [paymentRes, err] = await PaymentService.fetchPaymentForOrderByRail(
@@ -48,7 +49,7 @@ class PaymentController {
 
  verify = asyncHandler(
   async (
-   req: Request<{ reference: string }, {}, {}>,
+   req: Request<z.infer<typeof VerifyPaymentParams>, {}, {}>,
    res: Response<APIResponse<PaystackVerifiedData>>,
    next: NextFunction,
   ) => {

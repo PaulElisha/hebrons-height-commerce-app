@@ -1,22 +1,22 @@
 /** @format */
 import db from "@db/db.ts";
-import MerchantService from "@module/merchant/merchant.service.ts";
 import OrderService from "@module/order/order.service.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import { user } from "@db/schema/auth.ts";
 import { merchant } from "@db/schema/merchant.ts";
 import {
- CartLowStockAlertPayload,
- EventBus,
+ EventBroker,
  EventType,
+ LowStockAlertPayload,
  OrderPlacedPayload,
 } from "@shared/event-bus/index.ts";
 import { and, eq, isNull } from "drizzle-orm";
 import FA from "fasy";
 
 import EmailWorker from "./email.worker.ts";
+import { getMerchantIdFromProductId } from "@shared/helper.ts";
 
-EventBus.on(EventType.ORDER_PLACED).subscribe({
+EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderPlacedPayload>(
    payload.outboxId,
@@ -36,9 +36,9 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
  },
 });
 
-EventBus.on(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
+EventBroker.subscribe(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
  next: async ({ payload }) => {
-  await consumeOutboxEvent<CartLowStockAlertPayload>(
+  await consumeOutboxEvent<LowStockAlertPayload>(
    payload.outboxId,
    async ({ userId, productName, quantity }) => {
     const [userDetails] = await db
@@ -56,15 +56,14 @@ EventBus.on(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
  },
 });
 
-EventBus.on(EventType.ORDER_PLACED).subscribe({
+EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderPlacedPayload>(
    payload.outboxId,
    async ({ orderId, productIds }) => {
     await FA.concurrent.map(async (productId: string) => {
-     const [merchantForProduct, err] =
-      await MerchantService.getMerchantIdFromProductId(productId);
-     if (err || !merchantForProduct) throw err;
+     const [merchantId, err] = await getMerchantIdFromProductId(productId);
+     if (err || !merchantId) throw err;
 
      const [userMerchant] = await db
       .select({
@@ -73,9 +72,7 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
       })
       .from(merchant)
       .innerJoin(user, eq(merchant.userId, user.id))
-      .where(
-       and(eq(merchant.id, merchantForProduct.id), isNull(merchant.deletedAt)),
-      );
+      .where(and(eq(merchant.id, merchantId), isNull(merchant.deletedAt)));
 
      await EmailWorker({
       user: userMerchant.user,

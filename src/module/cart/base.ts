@@ -4,13 +4,13 @@ import InventoryService from "@module/inventory/inventory.service.ts";
 import { cart, cartItem } from "@db/schema/cart.ts";
 import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import * as helper from "@shared/helper.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
 import { Mutex } from "async-mutex";
 import { and, eq, sql } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 
 import CartActions from "./dispatcher.ts";
+import { checkItemExistsInCart, getCartAndItems } from "@shared/helper.ts";
 
 const mutex = new Mutex();
 
@@ -59,12 +59,9 @@ class CartBase {
 
   const [result, err] = await mutex.runExclusive(async () => {
    if (intent == "add") {
-    const existingItem = await helper.checkItemExistsInCart(
-     userCart.id,
-     productId,
-    );
+    const existingItem = await checkItemExistsInCart(userCart.id, productId);
 
-    if (existingItem) return await helper.getCartAndItems(userCart.id, userId);
+    if (existingItem) return await getCartAndItems(userCart.id, userId);
 
     const [price, err] =
      await InventoryService.checkInventoryThreshold(productId);
@@ -79,10 +76,7 @@ class CartBase {
     );
     if (actionErr) return [null, actionErr];
    } else if (intent == "increment") {
-    const existingItem = await helper.checkItemExistsInCart(
-     userCart.id,
-     productId,
-    );
+    const existingItem = await checkItemExistsInCart(userCart.id, productId);
 
     if (existingItem) {
      const [price, err] =
@@ -106,9 +100,7 @@ class CartBase {
 
   await this.calculateTotalAmount(userCart.id, userId);
 
-  const [cartData, cartErr] = await helper.getCartAndItems(userCart.id, userId);
-  if (cartErr || !cartData) return [null, cartErr];
-  return [cartData, null];
+  return await getCartAndItems(userCart.id, userId);
  }
 }
 

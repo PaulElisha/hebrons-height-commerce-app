@@ -5,14 +5,20 @@ import { merchant } from "@db/schema/merchant.ts";
 import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
-import * as helper from "@shared/helper.ts";
+import {
+ fetchMerchantProductsByUserId,
+ fetchMerchantProductsFromDb,
+ getMerchantIdFromUser,
+ parsePagination,
+ resolveCategoryId,
+} from "@shared/helper.ts";
 import {
  Pagination,
  Result,
- T,
  TCategory,
  TMerchantProducts,
  TPaginatedProducts,
+ TProduct,
  TProductWithMerchant,
  TSubcategory,
 } from "@shared/types.ts";
@@ -66,14 +72,14 @@ class ProductService {
  getMerchantProducts = async (
   userId: string,
  ): Promise<Result<TMerchantProducts, AppError>> => {
-  const [data, err] = await helper.fetchMerchantProductsByUserId(userId);
+  const [data, err] = await fetchMerchantProductsByUserId(userId);
   if (err || !data) return [null, err];
   return [data, null];
  };
 
  getSingleProduct = async (
   productId: string,
- ): Promise<Result<T<"product">, AppError>> => {
+ ): Promise<Result<TProduct, AppError>> => {
   const [productDetails] = await db
    .select()
    .from(product)
@@ -88,7 +94,7 @@ class ProductService {
  getProductForMerchant = async (
   merchantId: string,
  ): Promise<Result<TMerchantProducts, AppError>> => {
-  const [data, err] = await helper.fetchMerchantProductsFromDb(merchantId);
+  const [data, err] = await fetchMerchantProductsFromDb(merchantId);
   if (err || !data) return [null, err];
   return [data, null];
  };
@@ -96,7 +102,7 @@ class ProductService {
  getLatestProducts = async (
   pagination: Pagination,
  ): Promise<Result<TProductWithMerchant[], AppError>> => {
-  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
+  const { limit, pageNumber, offset } = parsePagination(pagination);
 
   const latestProducts = await db
    .select()
@@ -127,7 +133,7 @@ class ProductService {
   filter: TProductFilter,
   pagination: Pagination,
  ): Promise<Result<TPaginatedProducts, AppError>> => {
-  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
+  const { limit, pageNumber, offset } = parsePagination(pagination);
 
   const filters: SQL[] = [
    eq(product?.status, "available"),
@@ -188,11 +194,11 @@ class ProductService {
  createProduct = async (
   userId: string,
   body: z.infer<typeof CreateProductDto>,
- ): Promise<Result<T<"product">, AppError>> => {
-  const [targetMerchantId, err] = await helper.getMerchantIdFromUser(userId);
+ ): Promise<Result<TProduct, AppError>> => {
+  const [targetMerchantId, err] = await getMerchantIdFromUser(userId);
   if (err || !targetMerchantId) return [null, err];
 
-  const { categoryId, subCategoryId } = await helper.resolveCategoryId(
+  const { categoryId, subCategoryId } = await resolveCategoryId(
    body.category,
    body.subCategory,
   );
@@ -222,8 +228,8 @@ class ProductService {
   userId: string,
   productId: string,
   body: z.infer<typeof UpdateProductDto>,
- ): Promise<Result<T<"product">, AppError>> => {
-  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+ ): Promise<Result<TProduct, AppError>> => {
+  const [merchantId, e] = await getMerchantIdFromUser(userId);
 
   if (e || !merchantId) return [null, e];
 
@@ -252,7 +258,7 @@ class ProductService {
   updateData.updatedAt = new Date();
 
   if (body.category !== undefined) {
-   const ids = await helper.resolveCategoryId(body.category, body.subCategory);
+   const ids = await resolveCategoryId(body.category, body.subCategory);
    updateData.category = body.category;
    updateData.categoryId = ids.categoryId;
    if (body.subCategory !== undefined) {
@@ -280,7 +286,7 @@ class ProductService {
   userId: string,
   productId: string,
  ): Promise<Result<void, AppError>> => {
-  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+  const [merchantId, e] = await getMerchantIdFromUser(userId);
 
   if (e) return [null, e];
 
@@ -299,7 +305,7 @@ class ProductService {
   Result<
    {
     category: TCategory;
-    subcategories: { subcategory: TSubcategory; products: T<"product">[] }[];
+    subcategories: { subcategory: TSubcategory; products: TProduct[] }[];
    }[],
    AppError
   >

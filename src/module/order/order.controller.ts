@@ -5,8 +5,8 @@ import asyncHandler from "@shared/util/async-handler.ts";
 import {
  APIResponse,
  Pagination,
- T,
  TMerchantPaginatedOrders,
+ TOrder,
  TOrderAndItems,
  TUserOrderWithItems,
 } from "@shared/types.ts";
@@ -20,19 +20,19 @@ import OrderService, {
  UpdateOrderStatusDto,
 } from "./order.service.ts";
 
-export interface OrderParams {
- orderId?: string;
-}
+export const OrderParams = z.object({
+ orderId: z.string(),
+});
 
 class OrderController {
  placeOrder = asyncHandler(
   async (
-   req: Request<CartParams, {}, z.infer<typeof CreateOrderDto>>,
+   req: Request<z.infer<typeof CartParams>, {}, z.infer<typeof CreateOrderDto>>,
    res: Response<APIResponse<{ orderId: string | null }>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const cartId = String(req.params.cartId);
+   const cartId = req.params.cartId;
    const body = req.body;
 
    const [orderId, err] = await OrderService.placeOrder(userId, cartId, body);
@@ -84,12 +84,12 @@ class OrderController {
 
  getOrderDetails = asyncHandler(
   async (
-   req: Request<OrderParams>,
+   req: Request<z.infer<typeof OrderParams>>,
    res: Response<APIResponse<TOrderAndItems>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const orderId = String(req.params.orderId);
+   const orderId = req.params.orderId;
 
    const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
@@ -141,12 +141,12 @@ class OrderController {
 
  updateOrderStatus = asyncHandler(
   async (
-   req: Request<OrderParams, {}, z.infer<typeof UpdateOrderStatusDto>>,
-   res: Response<APIResponse<T<"order">>>,
+   req: Request<z.infer<typeof OrderParams>, {}, z.infer<typeof UpdateOrderStatusDto>>,
+   res: Response<APIResponse<TOrder>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const orderId = String(req.params.orderId);
+   const orderId = req.params.orderId;
    const { status } = req.body;
 
    const [data, err] = await OrderService.updateOrderStatus(
@@ -166,11 +166,11 @@ class OrderController {
 
  cancelOrder = asyncHandler(
   async (
-   req: Request<OrderParams>,
-   res: Response<APIResponse<T<"order">>>,
+   req: Request<z.infer<typeof OrderParams>>,
+   res: Response<APIResponse<TOrder>>,
    next: NextFunction,
   ) => {
-   const orderId = String(req.params.orderId);
+   const orderId = req.params.orderId;
    const [data, err] = await OrderService.cancelOrder(orderId);
 
    if (err) return next(err);

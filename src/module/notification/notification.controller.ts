@@ -1,22 +1,23 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/util/async-handler.ts";
-import { APIResponse, T } from "@shared/types.ts";
+import { APIResponse, TNotification } from "@shared/types.ts";
 import { createSession } from "better-sse";
 import { NextFunction, Request, Response } from "express";
+import z from "zod";
 
 import { notificationBroker } from "./broker.ts";
 import NotificationService from "./notification.service.ts";
 
-export interface NotificationParams {
- notificationId: string;
-}
+export const NotificationParams = z.object({
+ notificationId: z.string(),
+});
 
 class NotificationController {
  getNotifications = asyncHandler(
   async (
    req: Request,
-   res: Response<APIResponse<T<"notification">[]>>,
+   res: Response<APIResponse<TNotification[]>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -53,8 +54,8 @@ class NotificationController {
 
  markAsRead = asyncHandler(
   async (
-   req: Request<NotificationParams>,
-   res: Response<APIResponse<T<"notification">>>,
+   req: Request<z.infer<typeof NotificationParams>>,
+   res: Response<APIResponse<TNotification>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -89,9 +90,11 @@ class NotificationController {
  streamNotifications = async (req: Request, res: Response) => {
   const userId = req.user.id;
 
-  const session = await createSession(req, res);
+  const session = await createSession(req, res, {
+   keepAlive: 30_000,
+  });
 
-  const subscription = notificationBroker.listenToUserEvents(userId).subscribe({
+  const subscription = notificationBroker.subscribe(userId).subscribe({
    next: ({ data, eventType }) => {
     session.push(data, eventType);
    },
@@ -101,14 +104,7 @@ class NotificationController {
    },
   });
 
-  const heartbeat = setInterval(() => {
-   res.write(": ping\n\n", (err) => {
-    if (err) cleanUp();
-   });
-  }, 30_000).unref();
-
   function cleanUp() {
-   clearInterval(heartbeat);
    subscription.unsubscribe();
    res.end();
   }

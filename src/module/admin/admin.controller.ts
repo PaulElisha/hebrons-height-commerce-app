@@ -4,7 +4,6 @@ import asyncHandler from "@shared/util/async-handler.ts";
 import {
  APIResponse,
  Pagination,
- T,
  TAdminAnalytics,
  TAdminPaginatedMerchants,
  TAdminPaginatedOrders,
@@ -12,7 +11,9 @@ import {
  TAdminPaginatedProducts,
  TAdminPaginatedUsers,
  TCategory,
+ TMerchant,
  TMerchantWithUser,
+ TNotification,
  TOrderAndItems,
  TSubcategory,
  TUserFull,
@@ -30,14 +31,24 @@ import AdminService, {
  UpdateSubcategoryDto,
 } from "./admin.service.ts";
 
-export interface AdminParams {
- userId?: string;
- merchantId?: string;
- orderId?: string;
- productId?: string;
- categoryId?: string;
- subcategoryId?: string;
-}
+export const UserIdParams = z.object({
+ userId: z.string(),
+});
+export const MerchantIdParams = z.object({
+ merchantId: z.string(),
+});
+export const OrderIdParams = z.object({
+ orderId: z.string(),
+});
+export const ProductIdParams = z.object({
+ productId: z.string(),
+});
+export const CategoryIdParams = z.object({
+ categoryId: z.string(),
+});
+export const SubcategoryIdParams = z.object({
+ subcategoryId: z.string(),
+});
 
 class AdminController {
  getAnalytics = asyncHandler(
@@ -90,11 +101,11 @@ class AdminController {
 
  getUser = asyncHandler(
   async (
-   req: Request<AdminParams>,
-   res: Response<APIResponse<TUserFull>>,
+req: Request<z.infer<typeof UserIdParams>>,
+  res: Response<APIResponse<TUserFull>>,
    next: NextFunction,
   ) => {
-   const userId = String(req.params.userId);
+   const userId = req.params.userId;
 
    const [data, err] = await AdminService.getUser(userId);
 
@@ -140,11 +151,11 @@ class AdminController {
 
  getMerchant = asyncHandler(
   async (
-   req: Request<AdminParams>,
-   res: Response<APIResponse<TMerchantWithUser>>,
+req: Request<z.infer<typeof MerchantIdParams>>,
+  res: Response<APIResponse<TMerchantWithUser>>,
    next: NextFunction,
   ) => {
-   const merchantId = String(req.params.merchantId);
+   const merchantId = req.params.merchantId;
 
    const [data, err] = await AdminService.getMerchant(merchantId);
 
@@ -160,11 +171,11 @@ class AdminController {
 
  reviewMerchant = asyncHandler(
   async (
-   req: Request<AdminParams, {}, z.infer<typeof ReviewMerchantDto>>,
-   res: Response<APIResponse<T<"merchant">>>,
+   req: Request<z.infer<typeof MerchantIdParams>, {}, z.infer<typeof ReviewMerchantDto>>,
+   res: Response<APIResponse<TMerchant>>,
    next: NextFunction,
   ) => {
-   const merchantId = String(req.params.merchantId);
+   const merchantId = req.params.merchantId;
    const body = req.body;
 
    const [data, err] = await AdminService.reviewMerchant(merchantId, body);
@@ -211,11 +222,11 @@ class AdminController {
 
  getOrderDetails = asyncHandler(
   async (
-   req: Request<AdminParams>,
-   res: Response<APIResponse<TOrderAndItems>>,
+req: Request<z.infer<typeof OrderIdParams>>,
+  res: Response<APIResponse<TOrderAndItems>>,
    next: NextFunction,
   ) => {
-   const orderId = String(req.params.orderId);
+   const orderId = req.params.orderId;
 
    const [data, err] = await AdminService.getOrderDetails(orderId);
 
@@ -261,11 +272,11 @@ class AdminController {
 
  deleteProduct = asyncHandler(
   async (
-   req: Request<AdminParams>,
-   res: Response<APIResponse<undefined>>,
-   next: NextFunction,
-  ) => {
-   const productId = String(req.params.productId);
+req: Request<z.infer<typeof ProductIdParams>>,
+  res: Response<APIResponse<undefined>>,
+  next: NextFunction,
+ ) => {
+  const productId = req.params.productId;
 
    const [, err] = await AdminService.deleteProduct(productId);
 
@@ -330,11 +341,11 @@ class AdminController {
 
  updateCategory = asyncHandler(
   async (
-   req: Request<AdminParams, {}, z.infer<typeof UpdateCategoryDto>>,
+   req: Request<z.infer<typeof CategoryIdParams>, {}, z.infer<typeof UpdateCategoryDto>>,
    res: Response<APIResponse<TCategory>>,
    next: NextFunction,
   ) => {
-   const categoryId = String(req.params.categoryId);
+   const categoryId = req.params.categoryId;
    const body = req.body;
 
    const [data, err] = await AdminService.updateCategory(categoryId, body);
@@ -351,11 +362,11 @@ class AdminController {
 
  createSubcategory = asyncHandler(
   async (
-   req: Request<AdminParams, {}, z.infer<typeof CreateSubcategoryDto>>,
+   req: Request<z.infer<typeof CategoryIdParams>, {}, z.infer<typeof CreateSubcategoryDto>>,
    res: Response<APIResponse<TSubcategory>>,
    next: NextFunction,
   ) => {
-   const categoryId = String(req.params.categoryId);
+   const categoryId = req.params.categoryId;
    const body = req.body;
 
    const [data, err] = await AdminService.createSubcategory(categoryId, body);
@@ -372,11 +383,11 @@ class AdminController {
 
  updateSubcategory = asyncHandler(
   async (
-   req: Request<AdminParams, {}, z.infer<typeof UpdateSubcategoryDto>>,
+   req: Request<z.infer<typeof SubcategoryIdParams>, {}, z.infer<typeof UpdateSubcategoryDto>>,
    res: Response<APIResponse<TSubcategory>>,
    next: NextFunction,
   ) => {
-   const subcategoryId = String(req.params.subcategoryId);
+   const subcategoryId = req.params.subcategoryId;
    const body = req.body;
 
    const [data, err] = await AdminService.updateSubcategory(
@@ -396,11 +407,11 @@ class AdminController {
 
  deleteSubcategory = asyncHandler(
   async (
-   req: Request<AdminParams>,
-   res: Response<APIResponse<undefined>>,
-   next: NextFunction,
-  ) => {
-   const subcategoryId = String(req.params.subcategoryId);
+req: Request<z.infer<typeof SubcategoryIdParams>>,
+  res: Response<APIResponse<undefined>>,
+  next: NextFunction,
+ ) => {
+  const subcategoryId = req.params.subcategoryId;
 
    const [, err] = await AdminService.deleteSubcategory(subcategoryId);
 
@@ -416,7 +427,7 @@ class AdminController {
  sendNotification = asyncHandler(
   async (
    req: Request<{}, {}, z.infer<typeof SendNotificationDto>>,
-   res: Response<APIResponse<T<"notification">>>,
+   res: Response<APIResponse<TNotification>>,
    next: NextFunction,
   ) => {
    const body = req.body;

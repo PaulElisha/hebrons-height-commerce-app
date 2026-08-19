@@ -5,10 +5,10 @@ import asyncHandler from "@shared/util/async-handler.ts";
 import {
  APIResponse,
  Pagination,
- T,
  TCategory,
  TMerchantProducts,
  TPaginatedProducts,
+ TProduct,
  TProductWithMerchant,
  TSubcategory,
 } from "@shared/types.ts";
@@ -21,9 +21,9 @@ import ProductService, {
  UpdateProductDto,
 } from "./product.service.ts";
 
-export interface ProductParams {
- productId?: string;
-}
+export const ProductParams = z.object({
+ productId: z.string(),
+});
 
 class ProductController {
  getMerchantProduct = asyncHandler(
@@ -47,11 +47,11 @@ class ProductController {
 
  getSingleProduct = asyncHandler(
   async (
-   req: Request<ProductParams>,
-   res: Response<APIResponse<T<"product">>>,
+   req: Request<z.infer<typeof ProductParams>>,
+   res: Response<APIResponse<TProduct>>,
    next: NextFunction,
   ) => {
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
    const [data, err] = await ProductService.getSingleProduct(productId);
 
    if (err) return next(err);
@@ -66,11 +66,11 @@ class ProductController {
 
  getProductForMerchant = asyncHandler(
   async (
-   req: Request<MerchantParams>,
+   req: Request<z.infer<typeof MerchantParams>>,
    res: Response<APIResponse<TMerchantProducts>>,
    next: NextFunction,
   ) => {
-   const merchantId = String(req.params.merchantId);
+   const merchantId = req.params.merchantId;
 
    const [data, err] = await ProductService.getProductForMerchant(merchantId);
 
@@ -93,7 +93,7 @@ class ProductController {
       category: TCategory;
       subcategories: {
        subcategory: TSubcategory;
-       products: T<"product">[];
+       products: TProduct[];
       }[];
      }[]
     >
@@ -172,7 +172,7 @@ class ProductController {
  createProduct = asyncHandler(
   async (
    req: Request<{}, {}, z.infer<typeof CreateProductDto>>,
-   res: Response<APIResponse<T<"product">>>,
+   res: Response<APIResponse<TProduct>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -192,12 +192,16 @@ class ProductController {
 
  updateProduct = asyncHandler(
   async (
-   req: Request<ProductParams, {}, z.infer<typeof UpdateProductDto>>,
-   res: Response<APIResponse<T<"product">>>,
+   req: Request<
+    z.infer<typeof ProductParams>,
+    {},
+    z.infer<typeof UpdateProductDto>
+   >,
+   res: Response<APIResponse<TProduct>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
    const body = req.body;
 
    const [data, err] = await ProductService.updateProduct(
@@ -218,12 +222,12 @@ class ProductController {
 
  deleteProduct = asyncHandler(
   async (
-   req: Request<ProductParams>,
+   req: Request<z.infer<typeof ProductParams>>,
    res: Response<APIResponse<undefined>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
 
    const [, err] = await ProductService.deleteProduct(userId, productId);
 

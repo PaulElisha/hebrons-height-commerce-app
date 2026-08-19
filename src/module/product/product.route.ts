@@ -4,7 +4,8 @@ import authenticate from "@shared/middleware/authenticate.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
-import ProductController from "./product.controller.ts";
+import { MerchantParams } from "@module/merchant/merchant.controller.ts";
+import ProductController, { ProductParams } from "./product.controller.ts";
 import { CreateProductDto, UpdateProductDto } from "./product.service.ts";
 import { checkMerchantStatus } from "@shared/middleware/check-status.ts";
 
@@ -33,12 +34,14 @@ class ProductRouter {
    "/:productId",
    authenticate,
    roleGuard("user"),
+   validate(ProductParams, "params"),
    ProductController.getSingleProduct,
   );
   this.router.get(
    "/:merchantId/merchant",
    authenticate,
    roleGuard("user"),
+   validate(MerchantParams, "params"),
    ProductController.getProductForMerchant,
   );
   this.router.post(
@@ -55,12 +58,14 @@ class ProductRouter {
    roleGuard("merchant"),
    // checkMerchantStatus("approved"),
    validate(UpdateProductDto),
+   validate(ProductParams, "params"),
    ProductController.updateProduct,
   );
   this.router.delete(
    "/:productId",
    authenticate,
    roleGuard("merchant"),
+   validate(ProductParams, "params"),
    ProductController.deleteProduct,
   );
  }

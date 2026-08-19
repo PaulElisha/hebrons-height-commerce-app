@@ -9,11 +9,10 @@ import { payment } from "@db/schema/payment.ts";
 import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
-import * as helper from "@shared/helper.ts";
+import { isLowStock, parsePagination } from "@shared/helper.ts";
 import {
  Pagination,
  Result,
- T,
  TAdminAnalytics,
  TAdminPaginatedMerchants,
  TAdminPaginatedOrders,
@@ -21,7 +20,9 @@ import {
  TAdminPaginatedProducts,
  TAdminPaginatedUsers,
  TCategory,
+ TMerchant,
  TMerchantWithUser,
+ TNotification,
  TOrderAndItems,
  TProductWithMerchant,
  TSubcategory,
@@ -40,6 +41,7 @@ import {
  sql,
  sum,
 } from "drizzle-orm";
+import { Transactional } from "drizzle-transactional";
 import z from "zod";
 
 export const ReviewMerchantDto = z.object({
@@ -181,7 +183,7 @@ class AdminService {
   query: TAdminQuery,
   pagination: Pagination = {},
  ): Promise<Result<TAdminPaginatedUsers, AppError>> => {
-  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
+  const { limit, pageNumber, offset } = parsePagination(pagination);
 
   const filters: SQL[] = [];
 
@@ -241,7 +243,7 @@ class AdminService {
   query: TAdminQuery,
   pagination: Pagination = {},
  ): Promise<Result<TAdminPaginatedMerchants, AppError>> => {
-  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
+  const { limit, pageNumber, offset } = parsePagination(pagination);
 
   const filters: SQL[] = [isNull(merchant.deletedAt)];
 
@@ -296,10 +298,11 @@ class AdminService {
   return [existing, null];
  };
 
+ @Transactional()
  reviewMerchant = async (
   merchantId: string,
   body: z.infer<typeof ReviewMerchantDto>,
- ): Promise<Result<T<"merchant">, AppError>> => {
+ ): Promise<Result<TMerchant, AppError>> => {
   const [existing] = await db
    .select({ id: merchant.id, approvalStatus: merchant.approvalStatus })
    .from(merchant)
@@ -333,7 +336,7 @@ class AdminService {
   query: TAdminQuery,
   pagination: Pagination = {},
  ): Promise<Result<TAdminPaginatedOrders, AppError>> => {
-  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
+  const { limit, pageNumber, offset } = parsePagination(pagination);
 
   const filters: SQL[] = [];
 
@@ -402,7 +405,7 @@ class AdminService {
      ...orderItem,
      lineTotal: Number(orderItem.lineTotal),
      product,
-     lowStock: helper.isLowStock(Number(product.quantity)),
+     lowStock: isLowStock(Number(product.quantity)),
     })),
    },
    null,
@@ -413,7 +416,7 @@ class AdminService {
   query: TAdminQuery,
   pagination: Pagination = {},
  ): Promise<Result<TAdminPaginatedProducts, AppError>> => {
-  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
+  const { limit, pageNumber, offset } = parsePagination(pagination);
 
   const filters: SQL[] = [];
 
@@ -487,7 +490,7 @@ class AdminService {
   query: TAdminQuery,
   pagination: Pagination = {},
  ): Promise<Result<TAdminPaginatedPayments, AppError>> => {
-  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
+  const { limit, pageNumber, offset } = parsePagination(pagination);
 
   const filters: SQL[] = [];
 
@@ -526,6 +529,7 @@ class AdminService {
   ];
  };
 
+ @Transactional()
  createCategory = async (
   body: z.infer<typeof CreateCategoryDto>,
  ): Promise<Result<TCategory, AppError>> => {
@@ -563,6 +567,7 @@ class AdminService {
   return [newCategory, null];
  };
 
+ @Transactional()
  updateCategory = async (
   categoryId: string,
   body: z.infer<typeof UpdateCategoryDto>,
@@ -603,6 +608,7 @@ class AdminService {
   return [updatedCategory, null];
  };
 
+ @Transactional()
  createSubcategory = async (
   categoryId: string,
   body: z.infer<typeof CreateSubcategoryDto>,
@@ -656,9 +662,10 @@ class AdminService {
   return [null, null];
  };
 
+ @Transactional()
  sendNotification = async (
   body: z.infer<typeof SendNotificationDto>,
- ): Promise<Result<T<"notification">, AppError>> => {
+ ): Promise<Result<TNotification, AppError>> => {
   const { userId, title, message, type } = body;
 
   if (userId) {

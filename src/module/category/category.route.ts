@@ -1,9 +1,10 @@
 /** @format */
 import authenticate from "@middleware/authenticate.ts";
 import roleGuard from "@middleware/role-guard.ts";
+import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
-import CategoryController from "./category.controller.ts";
+import CategoryController, { CategoryParams } from "./category.controller.ts";
 
 class CategoryRouter {
  router: Router;
@@ -18,6 +19,7 @@ class CategoryRouter {
    "/:categoryId",
    authenticate,
    roleGuard("admin"),
+   validate(CategoryParams, "params"),
    CategoryController.deleteCategory,
   );
  }

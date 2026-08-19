@@ -1,8 +1,8 @@
 /** @format */
-import db from "@db/db.ts";
 import ErrorCode from "@enum/error-code.ts";
 import HttpStatus from "@enum/http.ts";
 import Mail from "nodemailer/lib/mailer/index.js";
+import { z } from "zod";
 
 export type HttpStatusCodeType = (typeof HttpStatus)[keyof typeof HttpStatus];
 
@@ -26,12 +26,11 @@ export interface MailData<U> {
  message: string;
 }
 
-export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-
-export interface Pagination {
- pageSize?: number;
- pageNumber?: number;
-}
+export const PaginationSchema = z.object({
+ pageSize: z.coerce.number().optional(),
+ pageNumber: z.coerce.number().optional(),
+});
+export type Pagination = z.infer<typeof PaginationSchema>;
 
 export interface TCart {
  id: string;
@@ -51,7 +50,7 @@ export interface TCartItem {
 
 export type TCartAndItem = {
  cart: TCart;
- cart_items: (TCartItem & { product: T<"product">; lowStock: boolean })[];
+ cart_items: (TCartItem & { product: TProduct; lowStock: boolean })[];
 };
 
 export interface TOrder {
@@ -81,33 +80,33 @@ export interface TOrderItems {
 }
 
 export interface TOrderItemsWithProduct extends TOrderItems {
- product: T<"product">;
+ product: TProduct;
  lowStock: boolean;
 }
 
 export type TOrderAndItems = {
- order: T<"order">;
+ order: TOrder;
  order_items: TOrderItemsWithProduct[];
 };
 
 export type TOrderJoinRow = {
- orders: T<"order">;
- orderItem: T<"orderItems">;
+ orders: TOrder;
+ orderItem: TOrderItems;
 };
 
 export type TUserOrderWithItems = {
- orders: T<"order">;
- order_items: (T<"orderItems"> & { product: T<"product">; lowStock: boolean })[];
+ orders: TOrder;
+ order_items: TOrderItemsWithProduct[];
 };
 
 export type TMerchantProducts = {
- merchant: T<"merchant">;
- products: T<"product">[];
+ merchant: TMerchant;
+ products: TProduct[];
 };
 
 export type TMerchantWithUser = {
- merchant: T<"merchant">;
- user: T<"user">;
+ merchant: TMerchant;
+ user: TUser;
 };
 
 export interface TUser {
@@ -123,7 +122,13 @@ export interface UploadImage {
 
 export type UploadImages = UploadImage[];
 
-export type AssetType = "profile" | "product" | "business" | "additional";
+export const AssetTypeEnum = z.enum([
+ "profile",
+ "product",
+ "business",
+ "additional",
+]);
+export type AssetType = z.infer<typeof AssetTypeEnum>;
 
 export interface TProductThreshold {
  price: number;
@@ -147,10 +152,8 @@ export interface TProduct {
  updatedAt: Date;
 }
 
-export interface TMerchantInfo {
- id: string;
- businessName: string;
- businessLogo: string;
+export interface TMerchantInfo
+ extends Pick<TMerchant, "id" | "businessName" | "businessLogo"> {
  status: string;
 }
 
@@ -170,7 +173,7 @@ export interface TProductPagination extends TPaginationMeta {
 }
 
 export interface TProductPageData {
- products: T<"product">[];
+ products: TProduct[];
  pagination: TProductPagination;
 }
 
@@ -191,18 +194,9 @@ export interface TMerchant {
  updatedAt: Date;
 }
 
-export interface TOrderUser {
- id: string;
- email: string;
- name: string;
-}
-
-export interface TOrderWithUser {
- id: string;
- subtotal: number;
- deliveryAddress: Record<string, string>;
- createdAt: Date;
- user: TOrderUser;
+export interface TOrderWithUser
+ extends Pick<TOrder, "id" | "subtotal" | "deliveryAddress" | "createdAt"> {
+ user: TUser;
 }
 
 export interface TMerchantOrdersPagination extends TPaginationMeta {
@@ -212,15 +206,6 @@ export interface TMerchantOrdersPagination extends TPaginationMeta {
 export interface TMerchantPaginatedOrders {
  fetchedOrders: TOrderJoinRow[];
  pagination: TMerchantOrdersPagination;
-}
-
-export interface TOrderItemInsert {
- orderId: string;
- productId: string;
- merchantId: string;
- quantity: number;
- unitPrice: number;
- lineTotal: number;
 }
 
 export interface TCategory {
@@ -283,32 +268,19 @@ export interface TPayment {
 }
 
 export interface TPaymentVerificationResult {
- payment: T<"payment">;
- order?: T<"order">;
+ payment: TPayment;
+ order?: TOrder;
 }
 
-export interface TAdminAnalytics {
- totalOrders: number;
- totalRevenue: number;
+export interface TAdminAnalytics extends TAnalyticsResult {
  totalUsers: number;
  totalMerchants: number;
  totalProducts: number;
  approvedMerchants: number;
  pendingMerchants: number;
- statusBreakdown: { status: string; count: number }[];
- topProducts: {
-  productId: string;
-  name: string;
-  quantity: number;
-  revenue: number;
- }[];
- periodCounts: { date: string; count: number; revenue: number }[];
 }
 
-export interface TUserFull {
- id: string;
- name: string;
- email: string;
+export interface TUserFull extends TUser {
  emailVerified: boolean;
  image: string | null;
  role: string;
@@ -320,60 +292,51 @@ export interface TAdminUsersPagination extends TPaginationMeta {
  totalUsers: number;
 }
 
-export interface TAdminPaginatedUsers {
- data: TUserFull[];
- pagination: TAdminUsersPagination;
-}
+export type Paginated<
+ TData,
+ TMeta extends TPaginationMeta = TPaginationMeta,
+> = {
+ data: TData;
+ pagination: TMeta;
+};
+
+export type TAdminPaginatedUsers = Paginated<
+ TUserFull[],
+ TAdminUsersPagination
+>;
 
 export interface TAdminMerchantsPagination extends TPaginationMeta {
  totalMerchants: number;
 }
 
-export interface TAdminPaginatedMerchants {
- data: TMerchantWithUser[];
- pagination: TAdminMerchantsPagination;
-}
+export type TAdminPaginatedMerchants = Paginated<
+ TMerchantWithUser[],
+ TAdminMerchantsPagination
+>;
 
 export interface TAdminOrdersPagination extends TPaginationMeta {
  totalOrders: number;
 }
 
-export interface TAdminPaginatedOrders {
- data: TOrderWithUser[];
- pagination: TAdminOrdersPagination;
-}
+export type TAdminPaginatedOrders = Paginated<
+ TOrderWithUser[],
+ TAdminOrdersPagination
+>;
 
 export interface TAdminPaymentsPagination extends TPaginationMeta {
  totalPayments: number;
 }
 
-export interface TAdminPaginatedPayments {
- data: TPayment[];
- pagination: TAdminPaymentsPagination;
-}
+export type TAdminPaginatedPayments = Paginated<
+ TPayment[],
+ TAdminPaymentsPagination
+>;
 
 export interface TAdminProductsPagination extends TPaginationMeta {
  totalProducts: number;
 }
 
-export interface TAdminPaginatedProducts {
- data: TProductWithMerchant[];
- pagination: TAdminProductsPagination;
-}
-
-export interface ModelMap {
- product: TProduct;
- order: TOrder;
- user: TUser;
- merchant: TMerchant;
- cart: TCart;
- cartItem: TCartItem;
- category: TCategory;
- subcategory: TSubcategory;
- notification: TNotification;
- payment: TPayment;
- orderItems: TOrderItems;
- merchantInfo: TMerchantInfo;
-}
-
-export type T<K extends keyof ModelMap> = ModelMap[K];
+export type TAdminPaginatedProducts = Paginated<
+ TProductWithMerchant[],
+ TAdminProductsPagination
+>;

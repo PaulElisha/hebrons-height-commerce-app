@@ -3,7 +3,7 @@ import logger from "@app/logger.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import WebHookHandler from "@module/webhook/handler/payment.handler.ts";
 import {
- EventBus,
+ EventBroker,
  EventType,
  PaystackPaymentInitializedPayload,
  PaystackPaymentVerifiedPayload,
@@ -11,7 +11,7 @@ import {
  StripePaymentVerifiedPayload,
 } from "@shared/event-bus/index.ts";
 
-EventBus.on(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
+EventBroker.subscribe(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaystackPaymentInitializedPayload>(
    payload.outboxId,
@@ -38,7 +38,7 @@ EventBus.on(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
  },
 });
 
-EventBus.on(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
+EventBroker.subscribe(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaystackPaymentVerifiedPayload>(
    payload.outboxId,
@@ -58,7 +58,7 @@ EventBus.on(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
  },
 });
 
-EventBus.on(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
+EventBroker.subscribe(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<StripePaymentInitializedPayload>(
    payload.outboxId,
@@ -85,7 +85,7 @@ EventBus.on(EventType.STRIPE_PAYMENT_INITIALIZED).subscribe({
  },
 });
 
-EventBus.on(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
+EventBroker.subscribe(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<StripePaymentVerifiedPayload>(
    payload.outboxId,

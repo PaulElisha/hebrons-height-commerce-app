@@ -5,7 +5,7 @@ import { order } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
-import { Result, T } from "@shared/types.ts";
+import { Result, TPayment } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import Stripe from "stripe";
@@ -13,6 +13,10 @@ import z from "zod";
 
 import { FetchRail } from "./dispatcher.ts";
 import Env from "env.ts";
+
+export const VerifyPaymentParams = z.object({
+ reference: z.string(),
+});
 
 export const CheckoutData = z.object({
  email: z.email(),
@@ -68,7 +72,7 @@ class PaymentService {
   userId: string,
   orderId: string,
   paymentData: z.infer<typeof PaymentData>,
- ): Promise<Result<T<"payment">, AppError>> {
+ ): Promise<Result<TPayment, AppError>> {
   const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
   if (err || !data) return [null, err];

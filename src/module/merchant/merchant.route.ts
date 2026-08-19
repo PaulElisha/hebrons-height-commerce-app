@@ -4,7 +4,9 @@ import roleGuard from "@middleware/role-guard.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
-import MerchantController from "./merchant.controller.ts";
+import MerchantController, {
+ MerchantParams,
+} from "./merchant.controller.ts";
 import { CreateMerchantDto, UpdateMerchantDto } from "./merchant.service.ts";
 
 class MerchantRouter {
@@ -27,9 +29,14 @@ class MerchantRouter {
   this.router.put(
    "/:merchantId",
    validate(UpdateMerchantDto),
+   validate(MerchantParams, "params"),
    MerchantController.updateMerchantProfile,
   );
-  this.router.delete("/:merchantId", MerchantController.deleteMerchantProfile);
+  this.router.delete(
+   "/:merchantId",
+   validate(MerchantParams, "params"),
+   MerchantController.deleteMerchantProfile,
+  );
  }
 }
 

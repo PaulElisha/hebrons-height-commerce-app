@@ -3,7 +3,7 @@ import db from "@db/db.ts";
 import { cartItem } from "@db/schema/cart.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
-import { Result, T } from "@shared/types.ts";
+import { Result, TCartItem } from "@shared/types.ts";
 import { and, eq, sql } from "drizzle-orm";
 
 export type CartAction = (
@@ -11,7 +11,7 @@ export type CartAction = (
  userId: string,
  productId: string,
  price?: number,
-) => Promise<Result<T<"cartItem">[], AppError>>;
+) => Promise<Result<TCartItem[], AppError>>;
 
 export const CartActions: Record<string, CartAction> = {
  add: async (cartId: string, userId: string, productId: string, price) => {

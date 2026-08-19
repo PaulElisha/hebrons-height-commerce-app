@@ -3,7 +3,7 @@ import db from "@db/db.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import { cartItem } from "@db/schema/cart.ts";
 import {
- EventBus,
+ EventBroker,
  EventType,
  OrderPlacedPayload,
 } from "@shared/event-bus/index.ts";
@@ -11,7 +11,7 @@ import { and, eq } from "drizzle-orm";
 
 import CartBase from "./base.ts";
 
-EventBus.on(EventType.ORDER_PLACED).subscribe({
+EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderPlacedPayload>(
    payload.outboxId,

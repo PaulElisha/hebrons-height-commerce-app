@@ -9,7 +9,7 @@ import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { STOCK_THRESHOLDS } from "@shared/helper.ts";
-import { Result, T, TProductThreshold } from "@shared/types.ts";
+import { Result, TProduct, TProductThreshold } from "@shared/types.ts";
 import { and, eq, inArray, isNotNull, lt, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import FA from "fasy";
@@ -76,21 +76,22 @@ class InventoryService {
       eq(cartItem.productId, productId),
       inArray(product.quantity, STOCK_THRESHOLDS),
      ),
-    );
+    )
+    .limit(1);
 
    if (result.length <= 0) return [null, null];
 
-   await FA.concurrent.map(async ({ userId, name, quantity }: any) => {
-    await publishEvent({
-     event_type: EventType.USERCART_LOW_STOCK_ALERT,
-     userId,
-     payload: {
-      productId,
-      productName: name,
-      quantity: quantity,
-     },
-    });
-   }, result);
+   const { userId, name, quantity } = result[0];
+
+   await publishEvent({
+    event_type: EventType.USERCART_LOW_STOCK_ALERT,
+    userId,
+    payload: {
+     productId,
+     productName: name,
+     quantity: quantity,
+    },
+   });
 
    return [null, null];
   } catch (err) {
@@ -142,7 +143,7 @@ class InventoryService {
   productId: string,
   orderId: string,
   action: "placeOrder" | "cancelOrder",
- ): Promise<Result<T<"product">, AppError>> {
+ ): Promise<Result<TProduct, AppError>> {
   try {
    const [productThreshold, err] = await this.checkProductThreshold(productId);
 
@@ -171,7 +172,7 @@ class InventoryService {
      APIError.badRequest("This product was not part of the original order."),
     ];
 
-   let updatedProduct: T<"product">;
+   let updatedProduct: TProduct;
 
    if (action === "placeOrder") {
     [updatedProduct] = await db

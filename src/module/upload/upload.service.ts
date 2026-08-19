@@ -4,8 +4,9 @@ import logger from "@app/logger.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { createPublicId } from "@shared/helper.ts";
-import { AssetType, Result } from "@shared/types.ts";
+import { AssetTypeEnum, Result } from "@shared/types.ts";
 import Env from "env.ts";
+import { z } from "zod";
 
 export interface UploadResult {
  asset_id: string;
@@ -29,10 +30,11 @@ export interface UploadResult {
  original_filename: string;
 }
 
-export interface UploadData {
- file: string;
- folder: AssetType;
-}
+export const UploadDataSchema = z.object({
+ file: z.string(),
+ folder: AssetTypeEnum,
+});
+export type UploadData = z.infer<typeof UploadDataSchema>;
 
 class UploadService {
  uploadImage = async (
@@ -97,13 +99,13 @@ class UploadService {
     ];
    }
 
-    const data = (await response.json()) as UploadResult;
-    return [data, null];
-   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return [null, APIError.internalServer(message)];
-   }
-  };
- }
+   const data = (await response.json()) as UploadResult;
+   return [data, null];
+  } catch (error) {
+   const message = error instanceof Error ? error.message : String(error);
+   return [null, APIError.internalServer(message)];
+  }
+ };
+}
 
 export default new UploadService();

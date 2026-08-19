@@ -10,13 +10,12 @@ import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import * as helper from "@shared/helper.ts";
 import {
  Pagination,
  Result,
- T,
  TCartItem,
  TMerchantPaginatedOrders,
+ TOrder,
  TOrderAndItems,
  TOrderItemsWithProduct,
  TOrderWithUser,
@@ -27,6 +26,13 @@ import { and, count, desc, eq, inArray, lt, ne, SQL, sql } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
+import {
+ getMerchantIdFromProductId,
+ getMerchantIdFromUser,
+ isLowStock,
+ parsePagination,
+ validateOrderForCart,
+} from "@shared/helper.ts";
 
 const mutex = new Mutex();
 
@@ -91,7 +97,7 @@ class OrderService {
   if (e || !data) return [null, e];
 
   const [result, err] = await mutex.runExclusive(async () => {
-   const [orders, e] = await helper.validateOrderForCart(cartId, userId);
+   const [orders, e] = await validateOrderForCart(cartId, userId);
    if (e || !orders) return [null, e];
 
    type OrderItemDraft = {
@@ -109,9 +115,7 @@ class OrderService {
      );
      if (e || Number(productData?.quantity) <= 0) return [null, e];
 
-     const [merchantId, err] = await helper.getMerchantIdFromProductId(
-      v.productId,
-     );
+     const [merchantId, err] = await getMerchantIdFromProductId(v.productId);
 
      if (err || !merchantId) return [null, err];
 
@@ -189,7 +193,7 @@ class OrderService {
   status?: string,
   pagination: Pagination = {},
  ): Promise<Result<TUserOrderWithItems[], AppError>> => {
-  const { limit, offset } = helper.parsePagination(pagination);
+  const { limit, offset } = parsePagination(pagination);
 
   const orderRows = await db
    .select({ id: order.id })
@@ -223,7 +227,7 @@ class OrderService {
       ...row.orderItem,
       lineTotal: Number(row.orderItem.lineTotal),
       product: row.product,
-      lowStock: helper.isLowStock(Number(row.product.quantity)),
+      lowStock: isLowStock(Number(row.product.quantity)),
      })),
     };
    }),
@@ -251,7 +255,7 @@ class OrderService {
      ...orderItem,
      lineTotal: Number(orderItem.lineTotal),
      product,
-     lowStock: helper.isLowStock(Number(product.quantity)),
+     lowStock: isLowStock(Number(product.quantity)),
     })),
    },
    null,
@@ -263,9 +267,9 @@ class OrderService {
   filter: TOrderFilter,
   pagination: Pagination,
  ): Promise<Result<TMerchantPaginatedOrders, AppError>> => {
-  const { limit, pageNumber, offset } = helper.parsePagination(pagination);
+  const { limit, pageNumber, offset } = parsePagination(pagination);
 
-  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+  const [merchantId, e] = await getMerchantIdFromUser(userId);
 
   if (e) return [null, e];
 
@@ -330,8 +334,8 @@ class OrderService {
   userId: string,
   orderId: string,
   status: z.infer<typeof UpdateOrderStatusDto>["status"],
- ): Promise<Result<T<"order">, AppError>> {
-  const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+ ): Promise<Result<TOrder, AppError>> {
+  const [merchantId, e] = await getMerchantIdFromUser(userId);
 
   if (e) return [null, e];
 
@@ -388,7 +392,7 @@ class OrderService {
  }
 
  @Transactional()
- async cancelOrder(orderId: string): Promise<Result<T<"order">, AppError>> {
+ async cancelOrder(orderId: string): Promise<Result<TOrder, AppError>> {
   const [cancelledOrder] = await db
    .update(order)
    .set({

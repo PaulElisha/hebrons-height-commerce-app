@@ -2,7 +2,7 @@
 import logger from "@app/logger.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import {
- EventBus,
+ EventBroker,
  EventType,
  OrderCancelledPayload,
  OrderPlacedPayload,
@@ -11,7 +11,7 @@ import FA from "fasy";
 
 import InventoryService from "./inventory.service.ts";
 
-EventBus.on(EventType.ORDER_PLACED).subscribe({
+EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderPlacedPayload>(
    payload.outboxId,
@@ -31,7 +31,7 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
  },
 });
 
-EventBus.on(EventType.ORDER_CANCELLED).subscribe({
+EventBroker.subscribe(EventType.ORDER_CANCELLED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderCancelledPayload>(
    payload.outboxId,

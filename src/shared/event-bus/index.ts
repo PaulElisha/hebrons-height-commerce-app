@@ -1,11 +1,10 @@
 /** @format */
 
-import { Bus } from "./event-bus.ts";
+import { Broker } from "./pub-sub.ts";
 
 export type {
- CartLowStockAlertPayload,
  EventContract,
- IEventBus,
+ IEventBroker,
  LowStockAlertPayload,
  OrderCancelledPayload,
  OrderPlacedPayload,
@@ -17,6 +16,6 @@ export type {
  StripePaymentInitializedPayload,
  StripePaymentVerifiedPayload,
 } from "./types.ts";
-export { Bus } from "./event-bus.ts";
+export { Broker } from "./pub-sub.ts";
 export { EventType } from "./config.ts";
-export const EventBus = new Bus();
+export const EventBroker = new Broker();

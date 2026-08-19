@@ -5,20 +5,21 @@ import CartService from "@module/cart/cart.service.ts";
 import { ProductParams } from "@module/product/product.controller.ts";
 import { APIResponse, TCartAndItem } from "@shared/types.ts";
 import type { NextFunction, Request, Response } from "express";
+import z from "zod";
 
-export interface CartParams {
- cartId?: string;
-}
+export const CartParams = z.object({
+ cartId: z.string(),
+});
 
 class CartController {
  addToCart = asyncHandler(
   async (
-   req: Request<ProductParams>,
+   req: Request<z.infer<typeof ProductParams>>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
 
    const [data, err] = await CartService.addToCart(userId, productId);
 
@@ -34,12 +35,12 @@ class CartController {
 
  removeFromCart = asyncHandler(
   async (
-   req: Request<ProductParams>,
+   req: Request<z.infer<typeof ProductParams>>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
 
    const [data, err] = await CartService.removeFromCart(userId, productId);
 
@@ -55,12 +56,12 @@ class CartController {
 
  incrementCartItem = asyncHandler(
   async (
-   req: Request<ProductParams>,
+   req: Request<z.infer<typeof ProductParams>>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
 
    const [data, err] = await CartService.incrementItem(userId, productId);
 
@@ -76,12 +77,12 @@ class CartController {
 
  decrementCartItem = asyncHandler(
   async (
-   req: Request<ProductParams>,
+   req: Request<z.infer<typeof ProductParams>>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const productId = String(req.params.productId);
+   const productId = req.params.productId;
 
    const [data, err] = await CartService.decrementItem(userId, productId);
 
@@ -97,12 +98,12 @@ class CartController {
 
  getUserCart = asyncHandler(
   async (
-   req: Request<CartParams>,
+   req: Request<z.infer<typeof CartParams>>,
    res: Response<APIResponse<TCartAndItem>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
-   const cartId = String(req.params.cartId);
+   const cartId = req.params.cartId;
 
    const [data, err] = await CartService.getUserCart(userId, cartId);
 

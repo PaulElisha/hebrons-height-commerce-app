@@ -1,9 +1,11 @@
 /** @format */
 import authenticate from "@middleware/authenticate.ts";
 import roleGuard from "@middleware/role-guard.ts";
+import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
-import CartController from "./cart.controller.ts";
+import { ProductParams } from "@module/product/product.controller.ts";
+import CartController, { CartParams } from "./cart.controller.ts";
 
 class CartRouter {
  router: Router;
@@ -15,11 +17,31 @@ class CartRouter {
  }
 
  initializeRoutes() {
-  this.router.get("/:cartId", CartController.getUserCart);
-  this.router.put("/:productId", CartController.addToCart);
-  this.router.put("/:productId/increment", CartController.incrementCartItem);
-  this.router.put("/:productId/decrement", CartController.decrementCartItem);
-  this.router.delete("/:productId", CartController.removeFromCart);
+  this.router.get(
+   "/:cartId",
+   validate(CartParams, "params"),
+   CartController.getUserCart,
+  );
+  this.router.put(
+   "/:productId",
+   validate(ProductParams, "params"),
+   CartController.addToCart,
+  );
+  this.router.put(
+   "/:productId/increment",
+   validate(ProductParams, "params"),
+   CartController.incrementCartItem,
+  );
+  this.router.put(
+   "/:productId/decrement",
+   validate(ProductParams, "params"),
+   CartController.decrementCartItem,
+  );
+  this.router.delete(
+   "/:productId",
+   validate(ProductParams, "params"),
+   CartController.removeFromCart,
+  );
  }
 }
 

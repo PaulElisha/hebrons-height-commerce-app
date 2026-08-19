@@ -6,11 +6,11 @@ import { order, orderItem } from "@db/schema/order.ts";
 import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
-import * as helper from "@shared/helper.ts";
+import { getMerchantIdFromUser } from "@shared/helper.ts";
 import {
  Result,
- T,
  TAnalyticsResult,
+ TMerchant,
  TMerchantWithUser,
 } from "@shared/types.ts";
 import { and, count, desc, eq, isNull, sql, sum } from "drizzle-orm";
@@ -31,20 +31,6 @@ export const UpdateMerchantDto = z.object({
 });
 
 class MerchantService {
- getMerchantIdFromProductId = async (
-  productId: string,
- ): Promise<Result<T<"merchant">, AppError>> => {
-  const [productMerchant] = await db
-   .select()
-   .from(product)
-   .innerJoin(merchant, eq(product.merchantId, merchant.id))
-   .where(and(eq(product.id, productId), isNull(merchant.deletedAt)));
-
-  if (!productMerchant) return [null, null];
-
-  return [productMerchant.merchant, null];
- };
-
  getMerchantProfile = async (
   userId: string,
  ): Promise<Result<TMerchantWithUser, AppError>> => {
@@ -63,7 +49,7 @@ class MerchantService {
  createMerchantProfile = async (
   userId: string,
   body: z.infer<typeof CreateMerchantDto>,
- ): Promise<Result<T<"merchant">, AppError>> => {
+ ): Promise<Result<TMerchant, AppError>> => {
   const [newMerchant] = await db
    .insert(merchant)
    .values({
@@ -82,7 +68,7 @@ class MerchantService {
   userId: string,
   merchantId: string,
   body: z.infer<typeof UpdateMerchantDto>,
- ): Promise<Result<T<"merchant">, AppError>> => {
+ ): Promise<Result<TMerchant, AppError>> => {
   const updateData: Partial<typeof merchant.$inferInsert> = {};
 
   if (body.businessName !== undefined)
@@ -123,7 +109,7 @@ class MerchantService {
  getAnalytics = async (
   userId: string,
  ): Promise<Result<TAnalyticsResult, AppError>> => {
-  const [merchantId, err] = await helper.getMerchantIdFromUser(userId);
+  const [merchantId, err] = await getMerchantIdFromUser(userId);
   if (err || !merchantId) return [null, err];
 
   const [totalResult] = await db

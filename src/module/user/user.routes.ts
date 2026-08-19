@@ -5,7 +5,7 @@ import { user } from "@db/schema/auth.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/util/async-handler.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
-import { APIResponse, T } from "@shared/types.ts";
+import { APIResponse, TUser } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Request, Response, Router } from "express";
 
@@ -21,7 +21,7 @@ class UserRouter {
  initializeRoutes() {
   this.router.get(
    "/profile",
-   asyncHandler(async (req: Request, res: Response<APIResponse<T<"user">>>) => {
+   asyncHandler(async (req: Request, res: Response<APIResponse<TUser>>) => {
     const user = req.user;
     res.json({
      status: "ok",
@@ -33,7 +33,7 @@ class UserRouter {
 
   this.router.put(
    "/update",
-   asyncHandler(async (req: Request, res: Response<APIResponse<T<"user">>>) => {
+   asyncHandler(async (req: Request, res: Response<APIResponse<TUser>>) => {
     const body = req.body;
     const userId = req.user.id;
 

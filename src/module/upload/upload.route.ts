@@ -1,9 +1,11 @@
 /** @format */
 import authenticate from "@middleware/authenticate.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
+import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
 import UploadController from "./upload.controller.ts";
+import { UploadDataSchema } from "./upload.service.ts";
 
 class UploadRouter {
  router: Router;
@@ -15,7 +17,11 @@ class UploadRouter {
  }
 
  initializeRoutes() {
-  this.router.post("/upload-image", UploadController.uploadImage);
+  this.router.post(
+  "/upload-image",
+  validate(UploadDataSchema),
+  UploadController.uploadImage,
+ );
  }
 }
 

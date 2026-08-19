@@ -7,7 +7,7 @@ import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import { Result, T } from "@shared/types.ts";
+import { Result, TOrderItems } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import Env from "env.ts";
 import FA from "fasy";
@@ -108,7 +108,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
     mode: data.mode,
     customer_email: data.email,
     line_items: await FA.concurrent.map(
-     async (i: T<"orderItems">) => ({
+     async (i: TOrderItems) => ({
       price_data: {
        currency: data.currency,
        product_data: {

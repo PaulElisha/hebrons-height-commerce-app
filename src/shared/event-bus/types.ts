@@ -1,6 +1,6 @@
 /** @format */
 import type { PaymentCheckoutResult } from "@module/payment/payment.service.ts";
-import type { T } from "@shared/types.ts";
+import type { TOrder, TPayment } from "@shared/types.ts";
 import type { Observable } from "rxjs";
 import type Stripe from "stripe";
 
@@ -16,12 +16,12 @@ export type OutboxEventContract = EventContract & {
  payload: Record<string, unknown> & { outboxId: string };
 };
 
-export interface IEventBus<EventContract> {
+export interface IEventBroker<EventContract> {
  publish(event: EventContract): void;
- on(
+ subscribe(
   event: (typeof EventType)[keyof typeof EventType],
  ): Observable<EventContract>;
- subscribe(): Observable<EventContract>;
+ listen(): Observable<EventContract>;
 }
 
 export interface OrderPlacedPayload {
@@ -45,13 +45,6 @@ export interface OrderCancelledPayload {
 }
 
 export interface LowStockAlertPayload {
- productId: string;
- userId: string;
- productName: string;
- quantity: number;
-}
-
-export interface CartLowStockAlertPayload {
  productId: string;
  userId: string;
  productName: string;
@@ -92,6 +85,6 @@ export interface StripePaymentVerifiedPayload {
 }
 
 export interface PaymentFulfilledPayload {
- updatedPayment: T<"payment">;
- updatedOrder: T<"order">;
+ updatedPayment: TPayment;
+ updatedOrder: TOrder;
 }

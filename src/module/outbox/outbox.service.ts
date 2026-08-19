@@ -4,7 +4,7 @@ import logger from "@app/logger.ts";
 import db from "@db/db.ts";
 import { outbox } from "@db/schema/outbox.ts";
 import AppError from "@shared/error/app-error.ts";
-import { EventBus } from "@shared/event-bus/index.ts";
+import { EventBroker } from "@shared/event-bus/index.ts";
 import type { EventContract } from "@shared/event-bus/types.ts";
 import { Result } from "@shared/types.ts";
 import { and, eq, isNull, lt, sql } from "drizzle-orm";
@@ -105,7 +105,7 @@ class OutboxService {
 
   await FA.concurrent.map(async (e: typeof outbox.$inferSelect) => {
    try {
-    EventBus.publish({
+    EventBroker.publish({
      event_type: e.eventType as EventContract["event_type"],
      payload: { outboxId: e.id },
     });

@@ -9,15 +9,15 @@ import {
  AssetType,
  Pagination,
  Result,
- T,
+ TMerchantProducts,
+ TOrder,
+ TProduct,
  TCartAndItem,
  TCartItem,
- TMerchantProducts,
 } from "@shared/types.ts";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import * as APIError from "./error/APIError.ts";
-import * as helper from "@shared/helper.ts";
 import AppError from "./error/app-error.ts";
 
 export const STOCK_THRESHOLDS = [10, 7, 5, 3, 1] as const;
@@ -165,7 +165,7 @@ export function createPublicId(folder: AssetType, userId: string) {
 export async function validateOrderForCart(
  cartId: string,
  userId: string,
-): Promise<Result<T<"order">[], AppError>> {
+): Promise<Result<TOrder[], AppError>> {
  try {
   const result = await db
    .select()
@@ -194,8 +194,8 @@ export function parsePagination(pagination?: Pagination) {
 export async function getMerchantProduct(
  userId: string,
  productId: string,
-): Promise<Result<T<"product">, AppError>> {
- const [merchantId, e] = await helper.getMerchantIdFromUser(userId);
+): Promise<Result<TProduct, AppError>> {
+ const [merchantId, e] = await getMerchantIdFromUser(userId);
 
  if (e) return [null, e];
 

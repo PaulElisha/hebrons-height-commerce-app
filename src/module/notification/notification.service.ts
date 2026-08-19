@@ -2,13 +2,13 @@
 import db from "@db/db.ts";
 import { notification, NotificationType } from "@db/schema/notification.ts";
 import AppError from "@shared/error/app-error.ts";
-import { Result, T } from "@shared/types.ts";
+import { Result, TNotification } from "@shared/types.ts";
 import { and, count, desc, eq } from "drizzle-orm";
 
 class NotificationService {
  getUserNotifications = async (
   userId: string,
- ): Promise<Result<T<"notification">[], AppError>> => {
+ ): Promise<Result<TNotification[], AppError>> => {
   const notifications = await db
    .select()
    .from(notification)
@@ -33,7 +33,7 @@ class NotificationService {
  markAsRead = async (
   notificationId: string,
   userId: string,
- ): Promise<Result<T<"notification">, AppError>> => {
+ ): Promise<Result<TNotification, AppError>> => {
   const [updated] = await db
    .update(notification)
    .set({ read: "read" })
@@ -59,7 +59,7 @@ class NotificationService {
   title: string,
   message: string,
   type: NotificationType,
- ): Promise<Result<T<"notification">, AppError>> => {
+ ): Promise<Result<TNotification, AppError>> => {
   const [created] = await db
    .insert(notification)
    .values({ userId, title, message, type })

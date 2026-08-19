@@ -8,16 +8,16 @@ export interface BrokerEvent {
 }
 
 class NotificationBroker {
- private notification$ = new Subject<BrokerEvent>();
+ private notificationTopic$ = new Subject<BrokerEvent>();
 
- public connectToUserEvents(userId: string, data: unknown, eventType: string) {
-  this.notification$.next({ userId, data, eventType });
+ public publish(userId: string, data: unknown, eventType: string) {
+  this.notificationTopic$.next({ userId, data, eventType });
  }
 
- public listenToUserEvents(
-  userId: string,
- ): Observable<Omit<BrokerEvent, "userId">> {
-  return this.notification$.pipe(filter((event) => event.userId === userId));
+ public subscribe(userId: string): Observable<Omit<BrokerEvent, "userId">> {
+  return this.notificationTopic$.pipe(
+   filter((event) => event.userId === userId),
+  );
  }
 }
 

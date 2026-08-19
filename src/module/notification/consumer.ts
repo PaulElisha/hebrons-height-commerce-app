@@ -3,8 +3,7 @@ import logger from "@app/logger.ts";
 import OrderService from "@module/order/order.service.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
 import {
- CartLowStockAlertPayload,
- EventBus,
+ EventBroker,
  EventType,
  LowStockAlertPayload,
  OrderCancelledPayload,
@@ -17,16 +16,16 @@ import NotificationService from "./notification.service.ts";
 import { notificationBroker } from "./broker.ts";
 
 export function connectToUserEvents() {
- EventBus.subscribe().subscribe({
+ EventBroker.listen().subscribe({
   next: ({ userId, payload, event_type }) => {
    if (!userId) return;
 
-   notificationBroker.connectToUserEvents(userId, payload, event_type);
+   notificationBroker.publish(userId, payload, event_type);
   },
  });
 }
 
-EventBus.on(EventType.ORDER_STATUS_UPDATED).subscribe({
+EventBroker.subscribe(EventType.ORDER_STATUS_UPDATED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderStatusUpdatedPayload>(
    payload.outboxId,
@@ -42,7 +41,7 @@ EventBus.on(EventType.ORDER_STATUS_UPDATED).subscribe({
  },
 });
 
-EventBus.on(EventType.ORDER_PLACED).subscribe({
+EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderPlacedPayload>(
    payload.outboxId,
@@ -58,7 +57,7 @@ EventBus.on(EventType.ORDER_PLACED).subscribe({
  },
 });
 
-EventBus.on(EventType.MERCHANT_LOW_STOCK_ALERT).subscribe({
+EventBroker.subscribe(EventType.MERCHANT_LOW_STOCK_ALERT).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<LowStockAlertPayload>(
    payload.outboxId,
@@ -76,9 +75,9 @@ EventBus.on(EventType.MERCHANT_LOW_STOCK_ALERT).subscribe({
  },
 });
 
-EventBus.on(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
+EventBroker.subscribe(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
  next: async ({ payload }) => {
-  await consumeOutboxEvent<CartLowStockAlertPayload>(
+  await consumeOutboxEvent<LowStockAlertPayload>(
    payload.outboxId,
    async ({ userId, productName, quantity }) => {
     await NotificationService.createNotification(
@@ -92,7 +91,7 @@ EventBus.on(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
  },
 });
 
-EventBus.on(EventType.ORDER_CANCELLED).subscribe({
+EventBroker.subscribe(EventType.ORDER_CANCELLED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderCancelledPayload>(
    payload.outboxId,
@@ -115,7 +114,7 @@ EventBus.on(EventType.ORDER_CANCELLED).subscribe({
  },
 });
 
-EventBus.on(EventType.PAYMENT_FULFILLED).subscribe({
+EventBroker.subscribe(EventType.PAYMENT_FULFILLED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaymentFulfilledPayload>(
    payload.outboxId,

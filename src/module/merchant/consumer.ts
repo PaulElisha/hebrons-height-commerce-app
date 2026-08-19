@@ -2,9 +2,9 @@
 
 // /** @format */
 // import logger from "@shared/util/logger.ts";
-// import { EventBus, EventType } from "@shared/event-bus/index.ts";
+// import { EventBroker, EventType } from "@shared/event-bus/index.ts";
 
-// EventBus.on(EventType.ORDER_PLACED).subscribe({
+// EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
 //  next: async (_payload) => {},
 //  error: (err) => {
 //   logger.error({ err });

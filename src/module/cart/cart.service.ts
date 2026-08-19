@@ -1,9 +1,9 @@
 /** @format */
-import * as helper from "@shared/helper.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
 import AppError from "@shared/error/app-error.ts";
 
 import CartBase from "./base.ts";
+import { getCartAndItems } from "@shared/helper.ts";
 
 class CartService {
  addToCart = async (
@@ -54,7 +54,7 @@ class CartService {
   userId: string,
   cartId: string,
  ): Promise<Result<TCartAndItem, AppError>> => {
-  return await helper.getCartAndItems(cartId, userId);
+  return await getCartAndItems(cartId, userId);
  };
 }
 

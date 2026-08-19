@@ -3,19 +3,23 @@ import logger from "@app/logger.ts";
 import { catchError, filter, map, Observable, of, retry, Subject } from "rxjs";
 
 import { EventType } from "./config.ts";
-import type { EventContract, IEventBus, OutboxEventContract } from "./types.ts";
+import type {
+ EventContract,
+ IEventBroker,
+ OutboxEventContract,
+} from "./types.ts";
 
-export class Bus implements IEventBus<EventContract> {
- private eventBus$ = new Subject<EventContract>();
+export class Broker implements IEventBroker<EventContract> {
+ private eventTopic$ = new Subject<EventContract>();
 
  publish(event: EventContract) {
-  this.eventBus$.next(event);
+  this.eventTopic$.next(event);
  }
 
- on(
+ subscribe(
   event: (typeof EventType)[keyof typeof EventType],
  ): Observable<OutboxEventContract> {
-  return this.eventBus$.asObservable().pipe(
+  return this.eventTopic$.asObservable().pipe(
    filter((update) => update?.event_type === event),
    map(
     (update): OutboxEventContract => ({
@@ -34,8 +38,8 @@ export class Bus implements IEventBus<EventContract> {
   );
  }
 
- subscribe(): Observable<OutboxEventContract> {
-  return this.eventBus$.asObservable().pipe(
+ listen(): Observable<OutboxEventContract> {
+  return this.eventTopic$.asObservable().pipe(
    map(
     (update): OutboxEventContract => ({
      event_type: update.event_type,

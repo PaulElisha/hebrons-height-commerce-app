@@ -10,7 +10,7 @@ import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { EventType, PaystackChargeEvent } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import { Result, T, TPaymentVerificationResult } from "@shared/types.ts";
+import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import Env from "env.ts";
@@ -23,7 +23,7 @@ class WebhookHandler {
   userId: string,
   orderId: string,
   paymentData: z.infer<typeof PaymentData>,
- ): Promise<Result<T<"payment">, AppError>> {
+ ): Promise<Result<TPayment, AppError>> {
   const [paymentRecord, err] = await PaymentService.createPayment(
    userId,
    orderId,
