@@ -1,7 +1,7 @@
 /** @format */
 import db from "@db/db.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
-import { cartItem } from "@schema/cart.ts";
+import { cartItem } from "@db/schema/cart.ts";
 import {
  EventBus,
  EventType,

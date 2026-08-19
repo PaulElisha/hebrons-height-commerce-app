@@ -1,8 +1,8 @@
 /** @format */
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
-import { order } from "@schema/order.ts";
-import { payment } from "@schema/payment.ts";
+import { order } from "@db/schema/order.ts";
+import { payment } from "@db/schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { Result, T } from "@shared/types.ts";

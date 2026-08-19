@@ -1,12 +1,12 @@
 /** @format */
 import db from "@db/db.ts";
-import { user } from "@schema/auth.ts";
-import { category, subcategory } from "@schema/category.ts";
-import { merchant } from "@schema/merchant.ts";
-import { notification } from "@schema/notification.ts";
-import { order, orderItem } from "@schema/order.ts";
-import { payment } from "@schema/payment.ts";
-import { product } from "@schema/product.ts";
+import { user } from "@db/schema/auth.ts";
+import { category, subcategory } from "@db/schema/category.ts";
+import { merchant } from "@db/schema/merchant.ts";
+import { notification } from "@db/schema/notification.ts";
+import { order, orderItem } from "@db/schema/order.ts";
+import { payment } from "@db/schema/payment.ts";
+import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import * as helper from "@shared/helper.ts";

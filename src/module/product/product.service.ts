@@ -1,8 +1,8 @@
 /** @format */
 import db from "@db/db.ts";
-import { category, subcategory } from "@schema/category.ts";
-import { merchant } from "@schema/merchant.ts";
-import { product } from "@schema/product.ts";
+import { category, subcategory } from "@db/schema/category.ts";
+import { merchant } from "@db/schema/merchant.ts";
+import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import * as helper from "@shared/helper.ts";

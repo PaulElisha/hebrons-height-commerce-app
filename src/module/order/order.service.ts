@@ -3,9 +3,9 @@
 import db from "@db/db.ts";
 import CartService from "@module/cart/cart.service.ts";
 import InventoryService from "@module/inventory/inventory.service.ts";
-import { user } from "@schema/auth.ts";
-import { order, orderItem } from "@schema/order.ts";
-import { product } from "@schema/product.ts";
+import { user } from "@db/schema/auth.ts";
+import { order, orderItem } from "@db/schema/order.ts";
+import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";

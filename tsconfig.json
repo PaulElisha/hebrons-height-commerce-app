@@ -40,7 +40,7 @@
         "./src/shared/util/*"
       ],
       "@schema/*": [
-        "./src/schema/*"
+        "src/config/db/schema/*"
       ],
       "@template/*": [
         "./src/shared/template/*"

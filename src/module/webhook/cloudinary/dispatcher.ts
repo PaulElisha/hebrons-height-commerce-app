@@ -1,8 +1,8 @@
 /** @format */
 import db from "@db/db.ts";
-import { user } from "@schema/auth.ts";
-import { merchant } from "@schema/merchant.ts";
-import { product } from "@schema/product.ts";
+import { user } from "@db/schema/auth.ts";
+import { merchant } from "@db/schema/merchant.ts";
+import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { getMerchantIdFromUser } from "@shared/helper.ts";

@@ -1,9 +1,9 @@
 /** @format */
 import db from "@db/db.ts";
-import { cart, cartItem } from "@schema/cart.ts";
-import { merchant } from "@schema/merchant.ts";
-import { order, orderItem } from "@schema/order.ts";
-import { product } from "@schema/product.ts";
+import { cart, cartItem } from "@db/schema/cart.ts";
+import { merchant } from "@db/schema/merchant.ts";
+import { order, orderItem } from "@db/schema/order.ts";
+import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";

@@ -3,8 +3,8 @@ import db from "@db/db.ts";
 import MerchantService from "@module/merchant/merchant.service.ts";
 import OrderService from "@module/order/order.service.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
-import { user } from "@schema/auth.ts";
-import { merchant } from "@schema/merchant.ts";
+import { user } from "@db/schema/auth.ts";
+import { merchant } from "@db/schema/merchant.ts";
 import {
  CartLowStockAlertPayload,
  EventBus,

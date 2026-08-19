@@ -1,6 +1,6 @@
 /** @format */
 import db from "@db/db.ts";
-import { cartItem } from "@schema/cart.ts";
+import { cartItem } from "@db/schema/cart.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { Result, T } from "@shared/types.ts";

@@ -1,10 +1,10 @@
 /** @format */
 import db from "@db/db.ts";
-import { cart, cartItem } from "@schema/cart.ts";
-import { category, subcategory } from "@schema/category.ts";
-import { merchant } from "@schema/merchant.ts";
-import { order } from "@schema/order.ts";
-import { product } from "@schema/product.ts";
+import { cart, cartItem } from "@db/schema/cart.ts";
+import { category, subcategory } from "@db/schema/category.ts";
+import { merchant } from "@db/schema/merchant.ts";
+import { order } from "@db/schema/order.ts";
+import { product } from "@db/schema/product.ts";
 import {
  AssetType,
  Pagination,

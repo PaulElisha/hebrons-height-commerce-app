@@ -1,7 +1,7 @@
 {
     "editor.fontFamily": "Fira Code",
     "editor.fontLigatures": true,
-    "editor.fontSize": 13,
+    "editor.fontSize": 12,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     // "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
     "editor.formatOnPaste": false, // required
@@ -41,6 +41,7 @@
         "path/*#join", // ignore path, path/posix and path/win32, but only join symbol
         "path/*#join,resolve",
     ],
-    "workbench.colorTheme": "Cursor Dark"
+    "workbench.colorTheme": "Cursor Dark",
+    "debug.terminal.clearBeforeReusing": true
     // set as "true" to run 'prettier' last not first
 }

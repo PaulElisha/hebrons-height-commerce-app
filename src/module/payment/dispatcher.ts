@@ -2,7 +2,7 @@
 import stripeClient from "@app/stripe.ts";
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
-import { product } from "@schema/product.ts";
+import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";

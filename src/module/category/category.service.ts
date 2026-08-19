@@ -1,6 +1,6 @@
 /** @format */
 import db from "@db/db.ts";
-import { category, subcategory } from "@schema/category.ts";
+import { category, subcategory } from "@db/schema/category.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import AppError from "@shared/error/app-error.ts";
 import { Result, TCategory, TSubcategory } from "@shared/types.ts";

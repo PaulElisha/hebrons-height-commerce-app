@@ -1,7 +1,7 @@
 /** @format */
 import db from "@db/db.ts";
 import InventoryService from "@module/inventory/inventory.service.ts";
-import { cart, cartItem } from "@schema/cart.ts";
+import { cart, cartItem } from "@db/schema/cart.ts";
 import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import * as helper from "@shared/helper.ts";
@@ -39,9 +39,7 @@ class CartBase {
  }
 
  @Transactional()
- async modifyCart(
-  userIntent: Intent,
- ): Promise<Result<TCartAndItem, AppError>> {
+ async modifyCart(userIntent: Intent): Promise<Result<TCartAndItem, AppError>> {
   const { userId, productId, intent } = userIntent;
 
   let [userCart] = await db
@@ -66,8 +64,7 @@ class CartBase {
      productId,
     );
 
-    if (existingItem)
-     return await helper.getCartAndItems(userCart.id, userId);
+    if (existingItem) return await helper.getCartAndItems(userCart.id, userId);
 
     const [price, err] =
      await InventoryService.checkInventoryThreshold(productId);

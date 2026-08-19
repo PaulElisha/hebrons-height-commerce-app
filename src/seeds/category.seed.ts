@@ -1,6 +1,6 @@
 /** @format */
 
-import { category, subcategory } from "@schema/category.ts";
+import { category, subcategory } from "@db/schema/category.ts";
 import { and, eq } from "drizzle-orm";
 
 import db from "../config/db/db.ts";
