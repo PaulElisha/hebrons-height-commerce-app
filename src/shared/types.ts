@@ -14,7 +14,7 @@ export interface APIResponse<T> {
  data?: T | null;
 }
 
-export type Result<T, U> = [T | null, null | U];
+export type Result<T, U = Error> = [T | null, null | U];
 
 export type MailerCallback<T, U> = (
  transporter: T,
@@ -152,8 +152,10 @@ export interface TProduct {
  updatedAt: Date;
 }
 
-export interface TMerchantInfo
- extends Pick<TMerchant, "id" | "businessName" | "businessLogo"> {
+export interface TMerchantInfo extends Pick<
+ TMerchant,
+ "id" | "businessName" | "businessLogo"
+> {
  status: string;
 }
 
@@ -194,8 +196,10 @@ export interface TMerchant {
  updatedAt: Date;
 }
 
-export interface TOrderWithUser
- extends Pick<TOrder, "id" | "subtotal" | "deliveryAddress" | "createdAt"> {
+export interface TOrderWithUser extends Pick<
+ TOrder,
+ "id" | "subtotal" | "deliveryAddress" | "createdAt"
+> {
  user: TUser;
 }
 

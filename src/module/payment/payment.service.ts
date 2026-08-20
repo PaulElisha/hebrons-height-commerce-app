@@ -1,10 +1,10 @@
 /** @format */
+import asError from "@shared/error/as-error.ts";
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
 import { order } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import AppError from "@shared/error/app-error.ts";
 import { Result, TPayment } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
@@ -57,14 +57,18 @@ class PaymentService {
   userId: string,
   orderId: string,
   checkout: z.infer<typeof CheckoutData>,
- ): Promise<Result<PaymentCheckoutResult, AppError>> => {
-  const [paymentResponse, err] = await FetchRail[checkout.rail](
-   userId,
-   orderId,
-   checkout,
-  );
+ ): Promise<Result<PaymentCheckoutResult>> => {
+  try {
+   const rail = FetchRail[checkout.rail];
 
-  return [paymentResponse, err];
+   if (!rail) return [null, APIError.badRequest("Unsupported payment rail")];
+
+   const [paymentResponse, err] = await rail(userId, orderId, checkout);
+
+   return [paymentResponse, err];
+  } catch (err) {
+   return [null, asError(err)];
+  }
  };
 
  @Transactional()
@@ -72,7 +76,7 @@ class PaymentService {
   userId: string,
   orderId: string,
   paymentData: z.infer<typeof PaymentData>,
- ): Promise<Result<TPayment, AppError>> {
+ ): Promise<Result<TPayment>> {
   const [data, err] = await OrderService.getOrderDetails(userId, orderId);
 
   if (err || !data) return [null, err];
@@ -149,30 +153,34 @@ class PaymentService {
 
  verifyPayment = async (
   reference: string,
- ): Promise<Result<PaystackVerifiedData, AppError>> => {
-  const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/${reference}`, {
-   method: "GET",
-   headers: {
-    Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
-    "Content-Type": "application/json",
-   },
-  });
+ ): Promise<Result<PaystackVerifiedData>> => {
+  try {
+   const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/${reference}`, {
+    method: "GET",
+    headers: {
+     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+     "Content-Type": "application/json",
+    },
+   });
 
-  if (!response.ok) {
-   const errBody = await response.json().catch(() => ({}));
+   if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
 
-   return [
-    null,
-    APIError.badRequest(errBody.message || "Paystack Payment failed"),
-   ];
+    return [
+     null,
+     APIError.badRequest(errBody.message || "Paystack Payment failed"),
+    ];
+   }
+
+   const responseData = await response.json();
+
+   if (!responseData.status || responseData.data?.status !== "success")
+    return [null, APIError.badRequest("Payment not verified")];
+
+   return [responseData.data, null];
+  } catch (err) {
+   return [null, asError(err)];
   }
-
-  const responseData = await response.json();
-
-  if (!responseData.status || responseData.data?.status !== "success")
-   return [null, APIError.badRequest("Payment not verified")];
-
-  return [responseData.data, null];
  };
 }
 

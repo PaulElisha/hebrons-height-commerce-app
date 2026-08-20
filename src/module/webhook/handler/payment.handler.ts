@@ -7,7 +7,6 @@ import PaymentService, {
 import { order } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import AppError from "@shared/error/app-error.ts";
 import { EventType, PaystackChargeEvent } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
@@ -23,7 +22,7 @@ class WebhookHandler {
   userId: string,
   orderId: string,
   paymentData: z.infer<typeof PaymentData>,
- ): Promise<Result<TPayment, AppError>> {
+ ): Promise<Result<TPayment>> {
   const [paymentRecord, err] = await PaymentService.createPayment(
    userId,
    orderId,
@@ -49,7 +48,7 @@ class WebhookHandler {
   paidAmount: number,
   paidAtDate: Date,
   isFailure: boolean,
- ): Promise<Result<TPaymentVerificationResult, AppError>> {
+ ): Promise<Result<TPaymentVerificationResult>> {
   const [paymentRecord] = await db
    .select()
    .from(payment)
@@ -125,7 +124,7 @@ class WebhookHandler {
 
  async handlePaystackPaymentVerified(
   event: PaystackChargeEvent,
- ): Promise<Result<TPaymentVerificationResult, AppError>> {
+ ): Promise<Result<TPaymentVerificationResult>> {
   const reference = event.data?.reference;
   const paidAmount = Number(event.data?.amount) / Env.SCALER;
   const paidAtDate = event.data?.paid_at
@@ -142,7 +141,7 @@ class WebhookHandler {
  async handleStripePaymentVerified(
   session: Stripe.Checkout.Session,
   eventType: string,
- ): Promise<Result<TPaymentVerificationResult, AppError>> {
+ ): Promise<Result<TPaymentVerificationResult>> {
   const reference = session.id;
   const paidAmount = Number(session.amount_total) / Env.SCALER;
   const paidAtDate = session.created

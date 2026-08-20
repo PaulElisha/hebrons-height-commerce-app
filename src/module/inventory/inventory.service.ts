@@ -1,11 +1,11 @@
 /** @format */
+import asError from "@shared/error/as-error.ts";
 import db from "@db/db.ts";
 import { cart, cartItem } from "@db/schema/cart.ts";
 import { merchant } from "@db/schema/merchant.ts";
 import { order, orderItem } from "@db/schema/order.ts";
 import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { STOCK_THRESHOLDS } from "@shared/helper.ts";
@@ -17,50 +17,57 @@ import FA from "fasy";
 class InventoryService {
  checkProductThreshold = async (
   productId: string,
- ): Promise<Result<TProductThreshold, AppError>> => {
-  const [data] = await db
-   .select({ price: product.price, quantity: product.quantity })
-   .from(product)
-   .where(and(eq(product.id, productId), isNotNull(product.quantity)))
-   .limit(1);
+ ): Promise<Result<TProductThreshold>> => {
+  try {
+   const [data] = await db
+    .select({ price: product.price, quantity: product.quantity })
+    .from(product)
+    .where(and(eq(product.id, productId), isNotNull(product.quantity)))
+    .limit(1);
 
-  if (!data) return [null, null];
+   if (!data) return [null, null];
 
-  if (data.quantity <= 0)
-   return [null, APIError.notFound("Product is out of stock")];
+   if (data.quantity <= 0)
+    return [null, APIError.notFound("Product is out of stock")];
 
-  return [data, null];
+   return [data, null];
+  } catch (err) {
+   return [null, asError(err)];
+  }
  };
 
  checkInventoryThreshold = async (
   productId: string,
- ): Promise<Result<number, AppError>> => {
-  const [productData, err] = await this.checkProductThreshold(productId);
+ ): Promise<Result<number>> => {
+  try {
+   const [productData, err] = await this.checkProductThreshold(productId);
 
-  if (err || !productData) return [null, err];
+   if (err || !productData) return [null, err];
 
-  const { quantity: currentQuantity, price } = productData;
+   const { quantity: currentQuantity, price } = productData;
 
-  const allocatedQuantity = await db
-   .select({ totalQuantity: sum(cartItem.quantity) })
-   .from(cartItem)
-   .where(eq(cartItem.productId, productId))
-   .limit(1)
-   .then((r) => r[0]);
+   const allocatedQuantity = await db
+    .select({ totalQuantity: sum(cartItem.quantity) })
+    .from(cartItem)
+    .where(eq(cartItem.productId, productId))
+    .limit(1)
+    .then((r) => r[0]);
 
-  const currentAllocatedTotal = allocatedQuantity?.totalQuantity
-   ? Number(allocatedQuantity.totalQuantity)
-   : 0;
+   const currentAllocatedTotal = allocatedQuantity?.totalQuantity
+    ? Number(allocatedQuantity.totalQuantity)
+    : 0;
 
-  if (currentAllocatedTotal + 1 > currentQuantity)
-   return [null, APIError.internalServer("Out of stock")];
+   if (currentAllocatedTotal + 1 > currentQuantity) return [null, asError(err)];
 
-  return [Number(price), null];
+   return [Number(price), null];
+  } catch (err) {
+   return [null, asError(err)];
+  }
  };
 
  checkUserStockAtIntervals = async (
   productId: string,
- ): Promise<Result<void, AppError>> => {
+ ): Promise<Result<void>> => {
   try {
    const result = await db
     .select({
@@ -95,13 +102,13 @@ class InventoryService {
 
    return [null, null];
   } catch (err) {
-   return [null, APIError.internalServer("Failed to check user stock")];
+   return [null, asError(err)];
   }
  };
 
  checkLowStockForMerchant = async (
   productId: string,
- ): Promise<Result<void, AppError>> => {
+ ): Promise<Result<void>> => {
   try {
    const [current] = await db
     .select({
@@ -134,7 +141,7 @@ class InventoryService {
 
    return [null, null];
   } catch (err) {
-   return [null, APIError.internalServer("Failed to check low stock")];
+   return [null, asError(err)];
   }
  };
 
@@ -143,7 +150,7 @@ class InventoryService {
   productId: string,
   orderId: string,
   action: "placeOrder" | "cancelOrder",
- ): Promise<Result<TProduct, AppError>> {
+ ): Promise<Result<TProduct>> {
   try {
    const [productThreshold, err] = await this.checkProductThreshold(productId);
 
@@ -201,12 +208,7 @@ class InventoryService {
 
    return [updatedProduct, null];
   } catch (err) {
-   return [
-    null,
-    APIError.internalServer(
-     err instanceof Error ? err.message : "Unknown error",
-    ),
-   ];
+   return [null, asError(err)];
   }
  }
 }

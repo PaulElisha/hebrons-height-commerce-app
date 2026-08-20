@@ -1,8 +1,8 @@
 /** @format */
 import cloudinary from "@app/cloudinary.ts";
 import logger from "@app/logger.ts";
+import asError from "@shared/error/as-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import AppError from "@shared/error/app-error.ts";
 import { createPublicId } from "@shared/helper.ts";
 import { AssetTypeEnum, Result } from "@shared/types.ts";
 import Env from "env.ts";
@@ -40,7 +40,7 @@ class UploadService {
  uploadImage = async (
   userId: string,
   body: UploadData,
- ): Promise<Result<UploadResult, AppError>> => {
+ ): Promise<Result<UploadResult>> => {
   const timestamp = Math.floor(Date.now() / 1000);
   const publicId = createPublicId(body.folder, userId);
   const notification_url =
@@ -64,7 +64,7 @@ class UploadService {
   } catch (error) {
    const message = error instanceof Error ? error.message : String(error);
    logger.error({ err: message }, "Upload error");
-   return [null, APIError.internalServer(message)];
+   return [null, asError(error)];
   }
 
   const formData = new FormData();
@@ -103,7 +103,7 @@ class UploadService {
    return [data, null];
   } catch (error) {
    const message = error instanceof Error ? error.message : String(error);
-   return [null, APIError.internalServer(message)];
+   return [null, asError(error)];
   }
  };
 }

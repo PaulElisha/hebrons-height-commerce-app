@@ -1,4 +1,5 @@
 /** @format */
+import asError from "@shared/error/as-error.ts";
 import db from "@db/db.ts";
 import { cart, cartItem } from "@db/schema/cart.ts";
 import { category, subcategory } from "@db/schema/category.ts";
@@ -17,9 +18,6 @@ import {
 } from "@shared/types.ts";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
-import * as APIError from "./error/APIError.ts";
-import AppError from "./error/app-error.ts";
-
 export const STOCK_THRESHOLDS = [10, 7, 5, 3, 1] as const;
 
 export const isLowStock = (quantity: number): boolean =>
@@ -27,7 +25,7 @@ export const isLowStock = (quantity: number): boolean =>
 
 export async function fetchMerchantProductsFromDb(
  merchantId: string,
-): Promise<Result<TMerchantProducts, AppError>> {
+): Promise<Result<TMerchantProducts>> {
  try {
   const productsForMerchant = await db
    .select()
@@ -49,13 +47,13 @@ export async function fetchMerchantProductsFromDb(
    null,
   ];
  } catch (err) {
-  return [null, APIError.internalServer("Failed to fetch merchant products")];
+  return [null, asError(err)];
  }
 }
 
 export async function fetchMerchantProductsByUserId(
  userId: string,
-): Promise<Result<TMerchantProducts, AppError>> {
+): Promise<Result<TMerchantProducts>> {
  try {
   const productsForMerchant = await db
    .select()
@@ -71,7 +69,7 @@ export async function fetchMerchantProductsByUserId(
    null,
   ];
  } catch (err) {
-  return [null, APIError.internalServer("Failed to fetch merchant products")];
+  return [null, asError(err)];
  }
 }
 
@@ -84,36 +82,44 @@ export function merchantIdSubquery(userId: string) {
 
 export async function getMerchantIdFromUser(
  userId: string,
-): Promise<Result<string, AppError>> {
- const [relatedMerchant] = await db
-  .select({ id: merchant?.id })
-  .from(merchant)
-  .where(and(eq(merchant?.userId, userId), isNull(merchant.deletedAt)))
-  .limit(1);
+): Promise<Result<string>> {
+ try {
+  const [relatedMerchant] = await db
+   .select({ id: merchant?.id })
+   .from(merchant)
+   .where(and(eq(merchant?.userId, userId), isNull(merchant.deletedAt)))
+   .limit(1);
 
- if (!relatedMerchant) return [null, null];
+  if (!relatedMerchant) return [null, null];
 
- return [relatedMerchant.id, null];
+  return [relatedMerchant.id, null];
+ } catch (err) {
+  return [null, asError(err)];
+ }
 }
 
 export async function getMerchantIdFromProductId(
  productId: string,
-): Promise<Result<string, AppError>> {
- const [productMerchant] = await db
-  .select()
-  .from(product)
-  .innerJoin(merchant, eq(product.merchantId, merchant.id))
-  .where(and(eq(product.id, productId), isNull(merchant.deletedAt)));
+): Promise<Result<string>> {
+ try {
+  const [productMerchant] = await db
+   .select()
+   .from(product)
+   .innerJoin(merchant, eq(product.merchantId, merchant.id))
+   .where(and(eq(product.id, productId), isNull(merchant.deletedAt)));
 
- if (!productMerchant) return [null, null];
+  if (!productMerchant) return [null, null];
 
- return [productMerchant.merchant.id, null];
+  return [productMerchant.merchant.id, null];
+ } catch (err) {
+  return [null, asError(err)];
+ }
 }
 
 export const getCartAndItems = async (
  cartId: string,
  userId: string,
-): Promise<Result<TCartAndItem, AppError>> => {
+): Promise<Result<TCartAndItem>> => {
  try {
   const cartAndItems = await db
    .select()
@@ -142,20 +148,24 @@ export const getCartAndItems = async (
    null,
   ];
  } catch (err) {
-  return [null, APIError.internalServer("Failed to fetch cart")];
+  return [null, asError(err)];
  }
 };
 
 export const checkItemExistsInCart = async (
  cartId: string,
  productId: string,
-) => {
- const existingItem = await db
-  .select()
-  .from(cartItem)
-  .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
-  .limit(1);
- return existingItem[0];
+): Promise<Result<TCartItem | undefined>> => {
+ try {
+  const [existingItem] = await db
+   .select()
+   .from(cartItem)
+   .where(and(eq(cartItem.cartId, cartId), eq(cartItem.productId, productId)))
+   .limit(1);
+  return [existingItem, null];
+ } catch (err) {
+  return [null, asError(err)];
+ }
 };
 
 export function createPublicId(folder: AssetType, userId: string) {
@@ -165,7 +175,7 @@ export function createPublicId(folder: AssetType, userId: string) {
 export async function validateOrderForCart(
  cartId: string,
  userId: string,
-): Promise<Result<TOrder[], AppError>> {
+): Promise<Result<TOrder[]>> {
  try {
   const result = await db
    .select()
@@ -180,7 +190,7 @@ export async function validateOrderForCart(
 
   return [result, null];
  } catch (err) {
-  return [null, APIError.badRequest("Order already created")];
+  return [null, asError(err)];
  }
 }
 
@@ -194,25 +204,29 @@ export function parsePagination(pagination?: Pagination) {
 export async function getMerchantProduct(
  userId: string,
  productId: string,
-): Promise<Result<TProduct, AppError>> {
- const [merchantId, e] = await getMerchantIdFromUser(userId);
+): Promise<Result<TProduct>> {
+ try {
+  const [merchantId, e] = await getMerchantIdFromUser(userId);
 
- if (e) return [null, e];
+  if (e) return [null, e];
 
- const [existingProduct] = await db
-  .select()
-  .from(product)
-  .where(
-   and(
-    eq(product.id, productId),
-    inArray(product.merchantId, merchantIdSubquery(userId)),
-   ),
-  )
-  .limit(1);
+  const [existingProduct] = await db
+   .select()
+   .from(product)
+   .where(
+    and(
+     eq(product.id, productId),
+     inArray(product.merchantId, merchantIdSubquery(userId)),
+    ),
+   )
+   .limit(1);
 
- if (!existingProduct) return [null, null];
+  if (!existingProduct) return [null, null];
 
- return [existingProduct, null];
+  return [existingProduct, null];
+ } catch (err) {
+  return [null, asError(err)];
+ }
 }
 
 export async function resolveCategoryId(
@@ -222,29 +236,33 @@ export async function resolveCategoryId(
  categoryId: string | undefined;
  subCategoryId: string | undefined;
 }> {
- if (!categoryName) return { categoryId: undefined, subCategoryId: undefined };
+ try {
+  if (!categoryName) return { categoryId: undefined, subCategoryId: undefined };
 
- const [matched] = await db
-  .select({ id: category.id })
-  .from(category)
-  .where(eq(category.name, categoryName))
-  .limit(1);
+  const [matched] = await db
+   .select({ id: category.id })
+   .from(category)
+   .where(eq(category.name, categoryName))
+   .limit(1);
 
- if (!matched) return { categoryId: undefined, subCategoryId: undefined };
+  if (!matched) return { categoryId: undefined, subCategoryId: undefined };
 
- const [subMatched] = await db
-  .select({ id: subcategory.id })
-  .from(subcategory)
-  .where(
-   and(
-    eq(subcategory.categoryId, matched.id),
-    eq(subcategory.name, subCategoryName!),
-   ),
-  )
-  .limit(1);
+  const [subMatched] = await db
+   .select({ id: subcategory.id })
+   .from(subcategory)
+   .where(
+    and(
+     eq(subcategory.categoryId, matched.id),
+     eq(subcategory.name, subCategoryName!),
+    ),
+   )
+   .limit(1);
 
- return {
-  categoryId: matched.id,
-  subCategoryId: subMatched?.id,
- };
+  return {
+   categoryId: matched.id,
+   subCategoryId: subMatched?.id,
+  };
+ } catch (err) {
+  return { categoryId: undefined, subCategoryId: undefined };
+ }
 }

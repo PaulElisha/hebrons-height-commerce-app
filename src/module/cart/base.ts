@@ -2,7 +2,6 @@
 import db from "@db/db.ts";
 import InventoryService from "@module/inventory/inventory.service.ts";
 import { cart, cartItem } from "@db/schema/cart.ts";
-import AppError from "@shared/error/app-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
 import { Mutex } from "async-mutex";
@@ -39,7 +38,7 @@ class CartBase {
  }
 
  @Transactional()
- async modifyCart(userIntent: Intent): Promise<Result<TCartAndItem, AppError>> {
+ async modifyCart(userIntent: Intent): Promise<Result<TCartAndItem>> {
   const { userId, productId, intent } = userIntent;
 
   let [userCart] = await db
@@ -59,7 +58,11 @@ class CartBase {
 
   const [result, err] = await mutex.runExclusive(async () => {
    if (intent == "add") {
-    const existingItem = await checkItemExistsInCart(userCart.id, productId);
+    const [existingItem, checkErr] = await checkItemExistsInCart(
+     userCart.id,
+     productId,
+    );
+    if (checkErr) return [null, checkErr];
 
     if (existingItem) return await getCartAndItems(userCart.id, userId);
 
@@ -76,7 +79,11 @@ class CartBase {
     );
     if (actionErr) return [null, actionErr];
    } else if (intent == "increment") {
-    const existingItem = await checkItemExistsInCart(userCart.id, productId);
+    const [existingItem, checkErr] = await checkItemExistsInCart(
+     userCart.id,
+     productId,
+    );
+    if (checkErr) return [null, checkErr];
 
     if (existingItem) {
      const [price, err] =

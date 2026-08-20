@@ -1,6 +1,5 @@
 /** @format */
 import { Result, TCartAndItem } from "@shared/types.ts";
-import AppError from "@shared/error/app-error.ts";
 
 import CartBase from "./base.ts";
 import { getCartAndItems } from "@shared/helper.ts";
@@ -9,7 +8,7 @@ class CartService {
  addToCart = async (
   userId: string,
   productId: string,
- ): Promise<Result<TCartAndItem, AppError>> => {
+ ): Promise<Result<TCartAndItem>> => {
   return await CartBase.modifyCart({
    userId,
    productId,
@@ -20,7 +19,7 @@ class CartService {
  removeFromCart = async (
   userId: string,
   productId: string,
- ): Promise<Result<TCartAndItem, AppError>> => {
+ ): Promise<Result<TCartAndItem>> => {
   return await CartBase.modifyCart({
    userId,
    productId,
@@ -31,7 +30,7 @@ class CartService {
  incrementItem = async (
   userId: string,
   productId: string,
- ): Promise<Result<TCartAndItem, AppError>> => {
+ ): Promise<Result<TCartAndItem>> => {
   return await CartBase.modifyCart({
    userId,
    productId,
@@ -42,7 +41,7 @@ class CartService {
  decrementItem = async (
   userId: string,
   productId: string,
- ): Promise<Result<TCartAndItem, AppError>> => {
+ ): Promise<Result<TCartAndItem>> => {
   return await CartBase.modifyCart({
    userId,
    productId,
@@ -53,7 +52,7 @@ class CartService {
  getUserCart = async (
   userId: string,
   cartId: string,
- ): Promise<Result<TCartAndItem, AppError>> => {
+ ): Promise<Result<TCartAndItem>> => {
   return await getCartAndItems(cartId, userId);
  };
 }

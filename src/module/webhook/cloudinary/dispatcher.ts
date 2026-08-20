@@ -4,7 +4,6 @@ import { user } from "@db/schema/auth.ts";
 import { merchant } from "@db/schema/merchant.ts";
 import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import AppError from "@shared/error/app-error.ts";
 import { getMerchantIdFromUser } from "@shared/helper.ts";
 import { AssetType, Result } from "@shared/types.ts";
 import { eq, sql } from "drizzle-orm";
@@ -17,7 +16,7 @@ export interface CloudinaryWebhookPayload {
 export type FolderHandler = (
  payload: CloudinaryWebhookPayload,
  userId: string,
-) => Promise<Result<unknown, AppError>>;
+) => Promise<Result<unknown>>;
 
 export const CloudinaryFolderActions: Record<AssetType, FolderHandler> = {
  profile: async ({ secure_url }, userId) => {

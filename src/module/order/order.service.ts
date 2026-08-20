@@ -1,4 +1,5 @@
 /** @format */
+import asError from "@shared/error/as-error.ts";
 
 import db from "@db/db.ts";
 import CartService from "@module/cart/cart.service.ts";
@@ -7,7 +8,6 @@ import { user } from "@db/schema/auth.ts";
 import { order, orderItem } from "@db/schema/order.ts";
 import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import AppError from "@shared/error/app-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import {
@@ -65,26 +65,30 @@ class OrderService {
  getOrderWithUser = async (
   userId: string,
   orderId: string,
- ): Promise<Result<TOrderWithUser, AppError>> => {
-  const result = await db
-   .select({
-    id: order.id,
-    subtotal: order.subtotal,
-    deliveryAddress: order.deliveryAddress,
-    createdAt: order.createdAt,
-    user: {
-     id: user.id,
-     email: user.email,
-     name: user.name,
-    },
-   })
-   .from(order)
-   .innerJoin(user, eq(order.userId, user.id))
-   .where(and(eq(order.id, orderId), eq(order.userId, userId)));
+ ): Promise<Result<TOrderWithUser>> => {
+  try {
+   const result = await db
+    .select({
+     id: order.id,
+     subtotal: order.subtotal,
+     deliveryAddress: order.deliveryAddress,
+     createdAt: order.createdAt,
+     user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+     },
+    })
+    .from(order)
+    .innerJoin(user, eq(order.userId, user.id))
+    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-  if (!(result.length > 0)) return [null, null];
+   if (!(result.length > 0)) return [null, null];
 
-  return [result[0], null];
+   return [result[0], null];
+  } catch (err) {
+   return [null, asError(err)];
+  }
  };
 
  @Transactional()
@@ -92,7 +96,7 @@ class OrderService {
   userId: string,
   cartId: string,
   body: z.infer<typeof CreateOrderDto>,
- ): Promise<Result<string, AppError>> {
+ ): Promise<Result<string>> {
   const [data, e] = await CartService.getUserCart(userId, cartId);
   if (e || !data) return [null, e];
 
@@ -109,7 +113,7 @@ class OrderService {
    };
 
    const itemResults = await FA.concurrent.map(
-    async (v: TCartItem): Promise<OrderItemDraft | [null, AppError | null]> => {
+    async (v: TCartItem): Promise<OrderItemDraft | [null, Error | null]> => {
      const [productData, e] = await InventoryService.checkProductThreshold(
       v.productId,
      );
@@ -192,126 +196,139 @@ class OrderService {
   userId: string,
   status?: string,
   pagination: Pagination = {},
- ): Promise<Result<TUserOrderWithItems[], AppError>> => {
-  const { limit, offset } = parsePagination(pagination);
+ ): Promise<Result<TUserOrderWithItems[]>> => {
+  try {
+   const { limit, offset } = parsePagination(pagination);
 
-  const orderRows = await db
-   .select({ id: order.id })
-   .from(order)
-   .where(
-    and(eq(order.userId, userId), eq(order.orderStatus, status ?? "pending")),
-   )
-   .orderBy(desc(order.createdAt))
-   .limit(limit)
-   .offset(offset);
+   const orderRows = await db
+    .select({ id: order.id })
+    .from(order)
+    .where(
+     and(eq(order.userId, userId), eq(order.orderStatus, status ?? "pending")),
+    )
+    .orderBy(desc(order.createdAt))
+    .limit(limit)
+    .offset(offset);
 
-  if (orderRows.length <= 0) return [[], null];
+   if (orderRows.length <= 0) return [[], null];
 
-  const pageOrderIds = orderRows.map((row) => row.id);
+   const pageOrderIds = orderRows.map((row) => row.id);
 
-  const result = await db
-   .select()
-   .from(order)
-   .innerJoin(orderItem, eq(order.id, orderItem.orderId))
-   .innerJoin(product, eq(orderItem.productId, product.id))
-   .where(inArray(order.id, pageOrderIds))
-   .orderBy(desc(order.createdAt));
+   const result = await db
+    .select()
+    .from(order)
+    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+    .innerJoin(product, eq(orderItem.productId, product.id))
+    .where(inArray(order.id, pageOrderIds))
+    .orderBy(desc(order.createdAt));
 
-  return [
-   pageOrderIds.map((orderId) => {
-    const orderRows = result.filter((row) => row.orders.id === orderId);
+   return [
+    pageOrderIds.map((orderId) => {
+     const orderRows = result.filter((row) => row.orders.id === orderId);
 
-    return {
-     orders: orderRows[0].orders,
-     order_items: orderRows.map((row) => ({
-      ...row.orderItem,
-      lineTotal: Number(row.orderItem.lineTotal),
-      product: row.product,
-      lowStock: isLowStock(Number(row.product.quantity)),
-     })),
-    };
-   }),
-   null,
-  ];
+     return {
+      orders: orderRows[0].orders,
+      order_items: orderRows.map((row) => ({
+       ...row.orderItem,
+       lineTotal: Number(row.orderItem.lineTotal),
+       product: row.product,
+       lowStock: isLowStock(Number(row.product.quantity)),
+      })),
+     };
+    }),
+    null,
+   ];
+  } catch (err) {
+   return [null, asError(err)];
+  }
  };
 
  getOrderDetails = async (
   userId: string,
   orderId: string,
- ): Promise<Result<TOrderAndItems, AppError>> => {
-  const result = await db
-   .select()
-   .from(order)
-   .innerJoin(orderItem, eq(order.id, orderItem.orderId))
-   .innerJoin(product, eq(orderItem.productId, product.id))
-   .where(and(eq(order.id, orderId), eq(order.userId, userId)));
+ ): Promise<Result<TOrderAndItems>> => {
+  try {
+   const result = await db
+    .select()
+    .from(order)
+    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+    .innerJoin(product, eq(orderItem.productId, product.id))
+    .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-  if (result.length <= 0) return [null, null];
+   if (result.length <= 0) return [null, null];
 
-  return [
-   {
-    order: result[0].orders,
-    order_items: result.map(({ orderItem, product }) => ({
-     ...orderItem,
-     lineTotal: Number(orderItem.lineTotal),
-     product,
-     lowStock: isLowStock(Number(product.quantity)),
-    })),
-   },
-   null,
-  ];
+   return [
+    {
+     order: result[0].orders,
+     order_items: result.map(({ orderItem, product }) => ({
+      ...orderItem,
+      lineTotal: Number(orderItem.lineTotal),
+      product,
+      lowStock: isLowStock(Number(product.quantity)),
+     })),
+    },
+    null,
+   ];
+  } catch (err) {
+   return [null, asError(err)];
+  }
  };
 
  getMerchantOrders = async (
   userId: string,
   filter: TOrderFilter,
   pagination: Pagination,
- ): Promise<Result<TMerchantPaginatedOrders, AppError>> => {
-  const { limit, pageNumber, offset } = parsePagination(pagination);
+ ): Promise<Result<TMerchantPaginatedOrders>> => {
+  try {
+   const { limit, pageNumber, offset } = parsePagination(pagination);
 
-  const [merchantId, e] = await getMerchantIdFromUser(userId);
+   const [merchantId, e] = await getMerchantIdFromUser(userId);
 
-  if (e) return [null, e];
+   if (e) return [null, e];
 
-  const filters: SQL[] = [eq(orderItem.merchantId, merchantId!)];
+   const filters: SQL[] = [eq(orderItem.merchantId, merchantId!)];
 
-  if (filter?.status) {
-   filters?.push(eq(order?.orderStatus, filter?.status)!);
-  }
+   if (filter?.status) {
+    filters?.push(eq(order?.orderStatus, filter?.status)!);
+   }
 
-  const fetchedOrders = await db
-   .select()
-   .from(order)
-   .innerJoin(orderItem, eq(order.id, orderItem.orderId))
-   .where(and(...filters))
-   .limit(limit)
-   .offset(offset)
-   .orderBy(desc(order.createdAt));
+   const fetchedOrders = await db
+    .select()
+    .from(order)
+    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+    .where(and(...filters))
+    .limit(limit)
+    .offset(offset)
+    .orderBy(desc(order.createdAt));
 
-  const [totalCountResult] = await db
-   .select({ totalCount: count() })
-   .from(order)
-   .where(and(...filters));
+   const [totalCountResult] = await db
+    .select({ totalCount: count() })
+    .from(order)
+    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+    .where(and(...filters));
 
-  const totalOrders = Number(totalCountResult?.totalCount);
-  const totalPages = Math.ceil(totalOrders / limit);
+   const totalOrders = Number(totalCountResult?.totalCount);
+   const totalPages = Math.ceil(totalOrders / limit);
 
-  return [
-   {
-    fetchedOrders,
-    pagination: {
-     limit,
-     pageNumber,
-     totalOrders,
-     totalPages,
-     offset,
+   return [
+    {
+     fetchedOrders,
+     pagination: {
+      limit,
+      pageNumber,
+      totalOrders,
+      totalPages,
+      offset,
+     },
     },
-   },
-   null,
-  ];
+    null,
+   ];
+  } catch (err) {
+   return [null, asError(err)];
+  }
  };
 
- clearPendingOrders = async (): Promise<Result<void, AppError>> => {
+ clearPendingOrders = async (): Promise<Result<void>> => {
   try {
    await db
     .delete(order)
@@ -319,13 +336,16 @@ class OrderService {
      and(
       lt(order.createdAt, sql`now() - interval '1 day'`),
       eq(order.orderStatus, "pending"),
-      eq(orderItem.orderId, order.id),
+      inArray(
+       order.id,
+       db.select({ orderId: orderItem.orderId }).from(orderItem),
+      ),
      ),
     );
 
    return [null, null];
   } catch (err) {
-   return [null, APIError.internalServer("Failed to clear pending orders")];
+   return [null, asError(err)];
   }
  };
 
@@ -334,7 +354,7 @@ class OrderService {
   userId: string,
   orderId: string,
   status: z.infer<typeof UpdateOrderStatusDto>["status"],
- ): Promise<Result<TOrder, AppError>> {
+ ): Promise<Result<TOrder>> {
   const [merchantId, e] = await getMerchantIdFromUser(userId);
 
   if (e) return [null, e];
@@ -392,7 +412,7 @@ class OrderService {
  }
 
  @Transactional()
- async cancelOrder(orderId: string): Promise<Result<TOrder, AppError>> {
+ async cancelOrder(orderId: string): Promise<Result<TOrder>> {
   const [cancelledOrder] = await db
    .update(order)
    .set({
