@@ -665,7 +665,28 @@ const spec = {
         type: "object",
         properties: {
           orders: { $ref: "#/components/schemas/Order" },
-          orderItem: { $ref: "#/components/schemas/OrderItem" },
+          orderItem: {
+            allOf: [
+              { $ref: "#/components/schemas/OrderItem" },
+              {
+                type: "object",
+                properties: {
+                  lineTotal: { type: "integer" },
+                  product: {
+                    allOf: [{ $ref: "#/components/schemas/Product" }],
+                    nullable: true,
+                    description:
+                      "Product details — null when the product record is missing",
+                  },
+                  lowStock: {
+                    type: "boolean",
+                    description:
+                      "True when the product's stock is at or below the low-stock threshold (false when product is null)",
+                  },
+                },
+              },
+            ],
+          },
         },
       },
       UserOrderWithItems: {

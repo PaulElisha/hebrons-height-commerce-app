@@ -117,15 +117,12 @@ class ProductController {
    res: Response<APIResponse<TProductWithMerchant[]>>,
    next: NextFunction,
   ) => {
-   const pageSizeValue = Number(req.query.pageSize);
-   const pageNumberValue = Number(req.query.pageNumber);
+    const { pageSize, pageNumber } = req.query;
 
-   const pagination = {
-    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
-    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
-   };
-
-   const [data, err] = await ProductService.getLatestProducts(pagination);
+    const [data, err] = await ProductService.getLatestProducts({
+     pageSize,
+     pageNumber,
+    });
 
    if (err) return next(err);
 
@@ -143,21 +140,12 @@ class ProductController {
    res: Response<APIResponse<TPaginatedProducts>>,
    next: NextFunction,
   ) => {
-   const pageSizeValue = Number(req.query.pageSize);
-   const pageNumberValue = Number(req.query.pageNumber);
+    const { search, category, subCategory, pageSize, pageNumber } = req.query;
 
-   const pagination = {
-    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
-    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
-   };
-
-   const filters = {
-    search: req.query.search,
-    category: req.query.category,
-    subCategory: req.query.subCategory,
-   };
-
-   const [data, err] = await ProductService.getProducts(filters, pagination);
+    const [data, err] = await ProductService.getProducts(
+     { search, category, subCategory },
+     { pageSize, pageNumber },
+    );
 
    if (err) return next(err);
 

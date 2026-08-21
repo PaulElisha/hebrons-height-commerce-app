@@ -10,6 +10,7 @@ import { payment } from "@db/schema/payment.ts";
 import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { isLowStock, parsePagination } from "@shared/helper.ts";
+import { ORDER_STATUSES } from "@shared/types.ts";
 import {
  Pagination,
  Result,
@@ -76,9 +77,11 @@ export const SendNotificationDto = z.object({
 
 export const AdminQuery = z.object({
  search: z.string().optional(),
- approvalStatus: z.string().optional(),
- orderStatus: z.string().optional(),
- paymentStatus: z.string().optional(),
+ approvalStatus: z.enum(["pending", "approved", "rejected"]).optional(),
+ orderStatus: z.enum(ORDER_STATUSES).optional(),
+ paymentStatus: z
+  .enum(["pending", "initialized", "paid", "failed", "cancelled", "refunded"])
+  .optional(),
 });
 export type TAdminQuery = z.infer<typeof AdminQuery>;
 
@@ -261,7 +264,7 @@ class AdminService {
    const filters: SQL[] = [isNull(merchant.deletedAt)];
 
    if (query?.approvalStatus) {
-    filters.push(eq(merchant.approvalStatus, query.approvalStatus as any));
+    filters.push(eq(merchant.approvalStatus, query.approvalStatus));
    }
 
    const result = await db
@@ -362,7 +365,7 @@ class AdminService {
    const filters: SQL[] = [];
 
    if (query?.orderStatus) {
-    filters.push(eq(order.orderStatus, query.orderStatus as any));
+    filters.push(eq(order.orderStatus, query.orderStatus));
    }
 
    const result = await db
@@ -530,7 +533,7 @@ class AdminService {
    const filters: SQL[] = [];
 
    if (query?.paymentStatus) {
-    filters.push(eq(payment.status, query.paymentStatus as any));
+    filters.push(eq(payment.status, query.paymentStatus));
    }
 
    const result = await db

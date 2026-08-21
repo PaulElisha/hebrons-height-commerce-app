@@ -11,6 +11,7 @@ import * as APIError from "@shared/error/APIError.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import {
+ ORDER_STATUSES,
  Pagination,
  Result,
  TCartItem,
@@ -37,12 +38,12 @@ import {
 const mutex = new Mutex();
 
 export const OrderStatusQuery = z.object({
- status: z.string().optional(),
+ status: z.enum(ORDER_STATUSES).optional(),
 });
 export type TOrderStatusQuery = z.infer<typeof OrderStatusQuery>;
 
 export const OrderFilter = z.object({
- status: z.string().optional(),
+ status: z.enum(ORDER_STATUSES).optional(),
 });
 export type TOrderFilter = z.infer<typeof OrderFilter>;
 
@@ -296,6 +297,7 @@ class OrderService {
     .select()
     .from(order)
     .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+    .leftJoin(product, eq(orderItem.productId, product.id))
     .where(and(...filters))
     .limit(limit)
     .offset(offset)
@@ -312,7 +314,15 @@ class OrderService {
 
    return [
     {
-     fetchedOrders,
+     fetchedOrders: fetchedOrders.map((row) => ({
+      orders: row.orders,
+      orderItem: {
+       ...row.orderItem,
+       lineTotal: Number(row.orderItem.lineTotal),
+       product: row.product,
+       lowStock: isLowStock(Number(row.product?.quantity)),
+      },
+     })),
      pagination: {
       limit,
       pageNumber,

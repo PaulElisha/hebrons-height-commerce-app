@@ -55,22 +55,13 @@ class OrderController {
    res: Response<APIResponse<TUserOrderWithItems[]>>,
    next: NextFunction,
   ) => {
-   const userId = req.user.id;
-   const status = req.query.status;
+    const userId = req.user.id;
+    const { status, pageSize, pageNumber } = req.query;
 
-   const pageSizeValue = Number(req.query.pageSize);
-   const pageNumberValue = Number(req.query.pageNumber);
-
-   const pagination = {
-    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
-    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
-   };
-
-   const [data, err] = await OrderService.getUserOrderByStatus(
-    userId,
-    status,
-    pagination,
-   );
+    const [data, err] = await OrderService.getUserOrderByStatus(userId, status, {
+     pageSize,
+     pageNumber,
+    });
 
    if (err) return next(err);
 
@@ -109,25 +100,14 @@ class OrderController {
    res: Response<APIResponse<TMerchantPaginatedOrders>>,
    next: NextFunction,
   ) => {
-   const userId = req.user.id;
+    const userId = req.user.id;
+    const { status, pageSize, pageNumber } = req.query;
 
-   const pageSizeValue = Number(req.query.pageSize);
-   const pageNumberValue = Number(req.query.pageNumber);
-
-   const pagination = {
-    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
-    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
-   };
-
-   const filters = {
-    status: req.query.status,
-   };
-
-   const [data, err] = await OrderService.getMerchantOrders(
-    userId,
-    filters,
-    pagination,
-   );
+    const [data, err] = await OrderService.getMerchantOrders(
+     userId,
+     { status },
+     { pageSize, pageNumber },
+    );
 
    if (err) return next(err);
 

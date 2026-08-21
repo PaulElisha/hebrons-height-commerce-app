@@ -5,9 +5,16 @@ import { user } from "@db/schema/auth.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/util/async-handler.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
+import { validate } from "@shared/middleware/validate.ts";
 import { APIResponse, TUser } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Request, Response, Router } from "express";
+import z from "zod";
+
+export const UpdateUserDto = z.object({
+ name: z.string().min(1).optional(),
+ email: z.email().optional(),
+});
 
 class UserRouter {
  router: Router;
@@ -33,6 +40,7 @@ class UserRouter {
 
   this.router.put(
    "/update",
+   validate(UpdateUserDto),
    asyncHandler(async (req: Request, res: Response<APIResponse<TUser>>) => {
     const body = req.body;
     const userId = req.user.id;

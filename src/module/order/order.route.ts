@@ -4,9 +4,15 @@ import roleGuard from "@middleware/role-guard.ts";
 import { CartParams } from "@module/cart/cart.controller.ts";
 import OrderController, { OrderParams } from "@module/order/order.controller.ts";
 import { validate } from "@shared/middleware/validate.ts";
+import { PaginationSchema } from "@shared/types.ts";
 import { Router } from "express";
 
-import { CreateOrderDto } from "./order.service.ts";
+import {
+ CreateOrderDto,
+ OrderFilter,
+ OrderStatusQuery,
+ UpdateOrderStatusDto,
+} from "./order.service.ts";
 
 class OrderRouter {
  router: Router;
@@ -20,11 +26,14 @@ class OrderRouter {
   this.router.get(
    "/merchant",
    roleGuard("merchant"),
+   validate(PaginationSchema, "query"),
+   validate(OrderFilter, "query"),
    OrderController.getMerchantOrders,
   );
   this.router.put(
    "/:orderId/status",
    roleGuard("merchant"),
+   validate(UpdateOrderStatusDto),
    validate(OrderParams, "params"),
    OrderController.updateOrderStatus,
   );
@@ -32,6 +41,8 @@ class OrderRouter {
   this.router.get(
    "/status",
    roleGuard("user"),
+   validate(PaginationSchema, "query"),
+   validate(OrderStatusQuery, "query"),
    OrderController.getUserOrderByStatus,
   );
   this.router.get(

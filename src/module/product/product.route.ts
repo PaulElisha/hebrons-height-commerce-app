@@ -8,6 +8,7 @@ import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 import ProductController, { ProductParams } from "./product.controller.ts";
 import { CreateProductDto, UpdateProductDto } from "./product.service.ts";
 import { checkMerchantStatus } from "@shared/middleware/check-status.ts";
+import { PaginationSchema } from "@shared/types.ts";
 
 class ProductRouter {
  router: Router;
@@ -17,13 +18,21 @@ class ProductRouter {
  }
 
  initializeRoutes() {
-  this.router.get("/latest", ProductController.getLatestProducts);
+  this.router.get(
+   "/latest",
+   validate(PaginationSchema, "query"),
+   ProductController.getLatestProducts,
+  );
   this.router.get(
    "/by-categories",
    roleGuard("user", "merchant"),
    ProductController.getProductsByCategories,
   );
-  this.router.get("/", ProductController.getProducts);
+  this.router.get(
+   "/",
+   validate(PaginationSchema, "query"),
+   ProductController.getProducts,
+  );
   this.router.get(
    "/merchant",
    authenticate,

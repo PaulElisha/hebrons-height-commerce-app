@@ -26,9 +26,19 @@ export interface MailData<U> {
  message: string;
 }
 
+export const ORDER_STATUSES = [
+ "pending",
+ "processing",
+ "fulfilled",
+ "failed",
+ "out_for_delivery",
+ "delivered",
+ "cancelled",
+] as const;
+
 export const PaginationSchema = z.object({
- pageSize: z.coerce.number().optional(),
- pageNumber: z.coerce.number().optional(),
+ pageSize: z.coerce.number().int().min(1).max(50).optional(),
+ pageNumber: z.coerce.number().int().min(1).max(10_000_000).optional(),
 });
 export type Pagination = z.infer<typeof PaginationSchema>;
 
@@ -91,7 +101,11 @@ export type TOrderAndItems = {
 
 export type TOrderJoinRow = {
  orders: TOrder;
- orderItem: TOrderItems;
+ orderItem: TOrderItems & {
+  lineTotal: number;
+  product: TProduct | null;
+  lowStock: boolean;
+ };
 };
 
 export type TUserOrderWithItems = {

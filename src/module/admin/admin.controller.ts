@@ -75,19 +75,12 @@ class AdminController {
    res: Response<APIResponse<TAdminPaginatedUsers>>,
    next: NextFunction,
   ) => {
-   const pageSizeValue = Number(req.query.pageSize);
-   const pageNumberValue = Number(req.query.pageNumber);
+   const { search, pageSize, pageNumber } = req.query;
 
-   const pagination = {
-    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
-    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
-   };
-
-   const query = {
-    search: req.query.search,
-   };
-
-   const [data, err] = await AdminService.getUsers(query, pagination);
+   const [data, err] = await AdminService.getUsers(
+    { search },
+    { pageSize, pageNumber },
+   );
 
    if (err) return next(err);
 
@@ -125,19 +118,12 @@ req: Request<z.infer<typeof UserIdParams>>,
    res: Response<APIResponse<TAdminPaginatedMerchants>>,
    next: NextFunction,
   ) => {
-   const pageSizeValue = Number(req.query.pageSize);
-   const pageNumberValue = Number(req.query.pageNumber);
+   const { approvalStatus, pageSize, pageNumber } = req.query;
 
-   const pagination = {
-    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
-    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
-   };
-
-   const query = {
-    approvalStatus: req.query.approvalStatus,
-   };
-
-   const [data, err] = await AdminService.getMerchants(query, pagination);
+   const [data, err] = await AdminService.getMerchants(
+    { approvalStatus },
+    { pageSize, pageNumber },
+   );
 
    if (err) return next(err);
 
@@ -196,19 +182,12 @@ req: Request<z.infer<typeof MerchantIdParams>>,
    res: Response<APIResponse<TAdminPaginatedOrders>>,
    next: NextFunction,
   ) => {
-   const pageSizeValue = Number(req.query.pageSize);
-   const pageNumberValue = Number(req.query.pageNumber);
+   const { orderStatus, pageSize, pageNumber } = req.query;
 
-   const pagination = {
-    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
-    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
-   };
-
-   const query = {
-    orderStatus: req.query.orderStatus,
-   };
-
-   const [data, err] = await AdminService.getOrders(query, pagination);
+   const [data, err] = await AdminService.getOrders(
+    { orderStatus },
+    { pageSize, pageNumber },
+   );
 
    if (err) return next(err);
 
@@ -246,19 +225,12 @@ req: Request<z.infer<typeof OrderIdParams>>,
    res: Response<APIResponse<TAdminPaginatedProducts>>,
    next: NextFunction,
   ) => {
-   const pageSizeValue = Number(req.query.pageSize);
-   const pageNumberValue = Number(req.query.pageNumber);
+   const { search, pageSize, pageNumber } = req.query;
 
-   const pagination = {
-    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
-    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
-   };
-
-   const query = {
-    search: req.query.search,
-   };
-
-   const [data, err] = await AdminService.getProducts(query, pagination);
+   const [data, err] = await AdminService.getProducts(
+    { search },
+    { pageSize, pageNumber },
+   );
 
    if (err) return next(err);
 
@@ -295,19 +267,12 @@ req: Request<z.infer<typeof ProductIdParams>>,
    res: Response<APIResponse<TAdminPaginatedPayments>>,
    next: NextFunction,
   ) => {
-   const pageSizeValue = Number(req.query.pageSize);
-   const pageNumberValue = Number(req.query.pageNumber);
+   const { paymentStatus, pageSize, pageNumber } = req.query;
 
-   const pagination = {
-    pageSize: Number.isFinite(pageSizeValue) ? pageSizeValue : undefined,
-    pageNumber: Number.isFinite(pageNumberValue) ? pageNumberValue : undefined,
-   };
-
-   const query = {
-    paymentStatus: req.query.paymentStatus,
-   };
-
-   const [data, err] = await AdminService.getPayments(query, pagination);
+   const [data, err] = await AdminService.getPayments(
+    { paymentStatus },
+    { pageSize, pageNumber },
+   );
 
    if (err) return next(err);
 

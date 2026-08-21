@@ -195,13 +195,8 @@ export async function validateOrderForCart(
 }
 
 export function parsePagination(pagination?: Pagination) {
- const pageSize = Number(pagination?.pageSize);
- const limit = Math.min(
-  Math.max(Number.isFinite(pageSize) ? Math.trunc(pageSize) : 10, 1),
-  50,
- );
- const page = Number(pagination?.pageNumber);
- const pageNumber = Math.max(Number.isFinite(page) ? Math.trunc(page) : 1, 1);
+ const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
+ const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
  const offset = (pageNumber - 1) * limit;
  return { limit, pageNumber, offset };
 }

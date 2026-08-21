@@ -24,14 +24,15 @@ class PaymentRoutes {
   this.initializeRoutes();
  }
 
- initializeRoutes() {
-  this.router.get(
-   "/success",
-   asyncHandler(
-    async (
-     req: Request<{}, {}, {}, z.infer<typeof StripeSessionQuery>>,
-     res: Response,
-    ) => {
+  initializeRoutes() {
+   this.router.get(
+    "/success",
+    validate(StripeSessionQuery, "query"),
+    asyncHandler(
+     async (
+      req: Request<{}, {}, {}, z.infer<typeof StripeSessionQuery>>,
+      res: Response,
+     ) => {
      const session = await stripeClient.checkout.sessions.retrieve(
       req.query.session_id,
      );
