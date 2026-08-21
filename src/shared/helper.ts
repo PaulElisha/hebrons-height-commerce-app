@@ -194,14 +194,24 @@ export async function validateOrderForCart(
  }
 }
 
+function toInt(value: unknown): number {
+ if (value === null || value === undefined) return NaN;
+ if (typeof value === "string" && value.trim() === "") return NaN;
+ const num = Number(value);
+ return Number.isFinite(num) ? Math.trunc(num) : NaN;
+}
+
 export function parsePagination(pagination?: Pagination) {
- const pageSize = Number(pagination?.pageSize);
+ const pageSize = toInt(pagination?.pageSize);
  const limit = Math.min(
-  Math.max(Number.isFinite(pageSize) ? Math.trunc(pageSize) : 10, 1),
+  Math.max(Number.isFinite(pageSize) ? pageSize : 10, 1),
   50,
  );
- const page = Number(pagination?.pageNumber);
- const pageNumber = Math.max(Number.isFinite(page) ? Math.trunc(page) : 1, 1);
+ const page = toInt(pagination?.pageNumber);
+ const pageNumber = Math.min(
+  Math.max(Number.isFinite(page) ? page : 1, 1),
+  Number.MAX_SAFE_INTEGER,
+ );
  const offset = (pageNumber - 1) * limit;
  return { limit, pageNumber, offset };
 }
