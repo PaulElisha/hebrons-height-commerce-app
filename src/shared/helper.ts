@@ -125,7 +125,7 @@ export const getCartAndItems = async (
    .select()
    .from(cart)
    .leftJoin(cartItem, eq(cartItem.cartId, cart.id))
-   .innerJoin(product, eq(cartItem.productId, product.id))
+   .leftJoin(product, eq(cartItem.productId, product.id))
    .where(and(eq(cart.userId, userId), eq(cart.id, cartId)));
 
   if (!cartAndItems[0]?.cart) return [null, null];
@@ -195,8 +195,11 @@ export async function validateOrderForCart(
 }
 
 export function parsePagination(pagination?: Pagination) {
- const limit = Math.min(Math.max(pagination?.pageSize ?? 10, 1), 50);
- const pageNumber = Math.max(pagination?.pageNumber ?? 1, 1);
+ const limit = Math.min(
+  Math.max(pagination?.pageSize ?? 10, +pagination?.pageSize!),
+  50,
+ );
+ const pageNumber = Math.max(pagination?.pageNumber ?? 1, +limit);
  const offset = (pageNumber - 1) * limit;
  return { limit, pageNumber, offset };
 }
