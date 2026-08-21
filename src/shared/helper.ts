@@ -197,7 +197,12 @@ export async function validateOrderForCart(
 function toInt(value: unknown): number {
  if (value === null || value === undefined) return NaN;
  if (typeof value === "string" && value.trim() === "") return NaN;
- const num = Number(value);
+ let num: number;
+ try {
+  num = Number(value);
+ } catch {
+  return NaN;
+ }
  return Number.isFinite(num) ? Math.trunc(num) : NaN;
 }
 
@@ -208,9 +213,10 @@ export function parsePagination(pagination?: Pagination) {
   50,
  );
  const page = toInt(pagination?.pageNumber);
+ const maxPageNumber = Math.floor(Number.MAX_SAFE_INTEGER / limit) + 1;
  const pageNumber = Math.min(
   Math.max(Number.isFinite(page) ? page : 1, 1),
-  Number.MAX_SAFE_INTEGER,
+  maxPageNumber,
  );
  const offset = (pageNumber - 1) * limit;
  return { limit, pageNumber, offset };
