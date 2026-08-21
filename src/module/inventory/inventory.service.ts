@@ -83,22 +83,21 @@ class InventoryService {
       eq(cartItem.productId, productId),
       inArray(product.quantity, STOCK_THRESHOLDS),
      ),
-    )
-    .limit(1);
+    );
 
    if (result.length <= 0) return [null, null];
 
-   const { userId, name, quantity } = result[0];
-
-   await publishEvent({
-    event_type: EventType.USERCART_LOW_STOCK_ALERT,
-    userId,
-    payload: {
-     productId,
-     productName: name,
-     quantity: quantity,
-    },
-   });
+   await FA.concurrent.map(async ({ name, quantity, userId }: any) => {
+    await publishEvent({
+     event_type: EventType.USERCART_LOW_STOCK_ALERT,
+     userId,
+     payload: {
+      productId,
+      productName: name,
+      quantity: quantity,
+     },
+    });
+   }, result);
 
    return [null, null];
   } catch (err) {
@@ -128,14 +127,16 @@ class InventoryService {
 
    if (!current) return [null, null];
 
+   const { userId, name, quantity } = current;
+
    await publishEvent({
     event_type: EventType.MERCHANT_LOW_STOCK_ALERT,
     userId: current.userId,
     payload: {
      productId,
-     productName: current.name,
-     quantity: current.quantity,
-     userId: current.userId,
+     productName: name,
+     quantity,
+     userId,
     },
    });
 

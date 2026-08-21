@@ -357,13 +357,13 @@ class OrderService {
  ): Promise<Result<TOrder>> {
   const [merchantId, e] = await getMerchantIdFromUser(userId);
 
-  if (e) return [null, e];
+  if (e || !merchantId) return [null, e];
 
   const [orderItemForMerchant] = await db
    .select()
    .from(orderItem)
    .where(
-    and(eq(orderItem.orderId, orderId), eq(orderItem.merchantId, merchantId!)),
+    and(eq(orderItem.orderId, orderId), eq(orderItem.merchantId, merchantId)),
    )
    .limit(1);
 
