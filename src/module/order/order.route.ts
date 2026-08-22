@@ -2,7 +2,9 @@
 import authenticate from "@middleware/authenticate.ts";
 import roleGuard from "@middleware/role-guard.ts";
 import { CartParams } from "@module/cart/cart.controller.ts";
-import OrderController, { OrderParams } from "@module/order/order.controller.ts";
+import OrderController, {
+ OrderParams,
+} from "@module/order/order.controller.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { PaginationSchema } from "@shared/types.ts";
 import { Router } from "express";
@@ -23,19 +25,19 @@ class OrderRouter {
  }
 
  initializeRoutes() {
-   this.router.get(
-    "/merchant",
-    roleGuard("merchant"),
-    validate(PaginationSchema, "query"),
-    validate(OrderFilter, "query"),
-    OrderController.getMerchantOrders,
-   );
-   this.router.get(
-    "/merchant/:orderId",
-    roleGuard("merchant"),
-    validate(OrderParams, "params"),
-    OrderController.getMerchantOrderDetails,
-   );
+  this.router.get(
+   "/merchant",
+   roleGuard("merchant"),
+   validate(PaginationSchema, "query"),
+   validate(OrderFilter, "query"),
+   OrderController.getMerchantOrders,
+  );
+  this.router.get(
+   "/:orderId/merchant",
+   roleGuard("merchant"),
+   validate(OrderParams, "params"),
+   OrderController.getMerchantOrderDetails,
+  );
   this.router.put(
    "/:orderId/status",
    roleGuard("merchant"),

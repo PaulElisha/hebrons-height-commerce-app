@@ -4220,7 +4220,7 @@ const spec = {
         },
       },
     },
-    "/api/order/merchant/{orderId}": {
+    "/api/order/{orderId}/merchant": {
       get: {
         tags: ["Order"],
         summary:
