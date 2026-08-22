@@ -99,6 +99,11 @@ export type TOrderAndItems = {
  order_items: TOrderItemsWithProduct[];
 };
 
+export type TMerchantOrderAndItems = {
+ order: TOrder;
+ order_items: Omit<TOrderItemsWithProduct, "lowStock">[];
+};
+
 export type TOrderJoinRow = {
  orders: TOrder;
  orderItem: TOrderItems & {

@@ -15,6 +15,7 @@ import {
  Pagination,
  Result,
  TCartItem,
+ TMerchantOrderAndItems,
  TMerchantPaginatedOrders,
  TOrder,
  TOrderAndItems,
@@ -266,6 +267,40 @@ class OrderService {
       lineTotal: Number(orderItem.lineTotal),
       product,
       lowStock: isLowStock(Number(product.quantity)),
+     })),
+    },
+    null,
+   ];
+  } catch (err) {
+   return [null, asError(err)];
+  }
+ };
+
+ getMerchantOrderDetails = async (
+  userId: string,
+  orderId: string,
+ ): Promise<Result<TMerchantOrderAndItems>> => {
+  try {
+   const [merchantId, e] = await getMerchantIdFromUser(userId);
+
+   if (e) return [null, e];
+
+   const result = await db
+    .select()
+    .from(order)
+    .innerJoin(orderItem, eq(order.id, orderItem.orderId))
+    .innerJoin(product, eq(orderItem.productId, product.id))
+    .where(and(eq(order.id, orderId), eq(orderItem.merchantId, merchantId!)));
+
+   if (result.length <= 0) return [null, null];
+
+   return [
+    {
+     order: result[0].orders,
+     order_items: result.map(({ orderItem, product }) => ({
+      ...orderItem,
+      lineTotal: Number(orderItem.lineTotal),
+      product,
      })),
     },
     null,

@@ -5,6 +5,7 @@ import asyncHandler from "@shared/util/async-handler.ts";
 import {
  APIResponse,
  Pagination,
+ TMerchantOrderAndItems,
  TMerchantPaginatedOrders,
  TOrder,
  TOrderAndItems,
@@ -83,6 +84,30 @@ class OrderController {
    const orderId = req.params.orderId;
 
    const [data, err] = await OrderService.getOrderDetails(userId, orderId);
+
+   if (err) return next(err);
+
+   return res.status(HttpStatus.OK).json({
+    status: "ok",
+    message: "fetched order details",
+    data,
+   });
+  },
+ );
+
+ getMerchantOrderDetails = asyncHandler(
+  async (
+   req: Request<z.infer<typeof OrderParams>>,
+   res: Response<APIResponse<TMerchantOrderAndItems>>,
+   next: NextFunction,
+  ) => {
+   const userId = req.user.id;
+   const orderId = req.params.orderId;
+
+   const [data, err] = await OrderService.getMerchantOrderDetails(
+    userId,
+    orderId,
+   );
 
    if (err) return next(err);
 

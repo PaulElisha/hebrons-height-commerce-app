@@ -23,13 +23,19 @@ class OrderRouter {
  }
 
  initializeRoutes() {
-  this.router.get(
-   "/merchant",
-   roleGuard("merchant"),
-   validate(PaginationSchema, "query"),
-   validate(OrderFilter, "query"),
-   OrderController.getMerchantOrders,
-  );
+   this.router.get(
+    "/merchant",
+    roleGuard("merchant"),
+    validate(PaginationSchema, "query"),
+    validate(OrderFilter, "query"),
+    OrderController.getMerchantOrders,
+   );
+   this.router.get(
+    "/merchant/:orderId",
+    roleGuard("merchant"),
+    validate(OrderParams, "params"),
+    OrderController.getMerchantOrderDetails,
+   );
   this.router.put(
    "/:orderId/status",
    roleGuard("merchant"),

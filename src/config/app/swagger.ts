@@ -661,6 +661,27 @@ const spec = {
           },
         },
       },
+      MerchantOrderAndItems: {
+        type: "object",
+        properties: {
+          order: { $ref: "#/components/schemas/Order" },
+          order_items: {
+            type: "array",
+            items: {
+              type: "object",
+              allOf: [
+                { $ref: "#/components/schemas/OrderItem" },
+                {
+                  type: "object",
+                  properties: {
+                    product: { $ref: "#/components/schemas/Product" },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
       OrderJoinRow: {
         type: "object",
         properties: {
@@ -4174,6 +4195,66 @@ const spec = {
                           $ref: "#/components/schemas/OrderPagination",
                         },
                       },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized — invalid or missing session token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — merchant only",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/order/merchant/{orderId}": {
+      get: {
+        tags: ["Order"],
+        summary:
+          "Get order details by order ID for the authenticated user's merchant store",
+        description:
+          "Returns the order with only the line items belonging to the authenticated merchant — data is null when the order does not exist or contains no items for this merchant",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "orderId",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Order ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Fetched order details",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    status: { type: "string", example: "ok" },
+                    message: {
+                      type: "string",
+                      example: "fetched order details",
+                    },
+                    data: {
+                      allOf: [
+                        { $ref: "#/components/schemas/MerchantOrderAndItems" },
+                      ],
+                      nullable: true,
                     },
                   },
                 },
