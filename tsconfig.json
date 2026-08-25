@@ -65,7 +65,6 @@
   },
   "include": [
     "src/**/*",
-    "seeds/**/*",
     "env.ts",
     "app.ts",
     "drizzle.config.ts",

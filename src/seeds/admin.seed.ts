@@ -1,21 +1,18 @@
 /** @format */
-/**
- * Seeds an administrator account into the database.
- *
- * Credentials can be overridden via environment variables:
- *   ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD
- *
- * Usage:
- *   npm run seed:admin
- */
+
 import db from "@db/db.ts";
 import { account, user } from "@db/schema/auth.ts";
 import { hashPassword } from "@shared/util/password.ts";
 import { and, eq } from "drizzle-orm";
 
-const ADMIN_NAME = process.env.ADMIN_NAME || "Hebrons Height Admin";
+const ADMIN_NAME = process.env.ADMIN_NAME || "HebronsHeightAdmin";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@hhg.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin1234";
+if (!process.env.ADMIN_PASSWORD) {
+ throw new Error(
+  "ADMIN_PASSWORD environment variable is required — refusing to seed with a default credential",
+ );
+}
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 export async function seedAdmin(): Promise<{ id: string; email: string }> {
  if (ADMIN_PASSWORD.length < 6) {
@@ -96,9 +93,6 @@ if (invokedDirectly) {
   .then(({ id }) => {
    console.log(`admin seeded successfully (id: ${id})`);
    console.log("sign in at POST /api/auth/sign-in/email");
-   if (!process.env.ADMIN_PASSWORD) {
-    console.warn("using default password — set ADMIN_PASSWORD in production");
-   }
   })
   .catch((err) => {
    console.error("failed to seed admin:", err);

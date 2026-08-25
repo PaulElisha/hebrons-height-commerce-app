@@ -1473,7 +1473,7 @@ const spec = {
         responses: {
           "200": {
             description:
-              "Order status updated — data is null when the order does not exist. Publishes an order.status.updated event to the order owner over SSE.",
+              "Order status updated. Publishes an order.status.updated event to the order owner and merchant users over SSE.",
             content: {
               "application/json": {
                 schema: {
@@ -1484,15 +1484,20 @@ const spec = {
                       type: "string",
                       example: "order out for delivery",
                     },
-                    data: { $ref: "#/components/schemas/Order" },
+                    data: {
+                      oneOf: [
+                        { $ref: "#/components/schemas/Order" },
+                        { type: "null" },
+                      ],
+                    },
                   },
                 },
               },
             },
           },
-          "400": {
+          "422": {
             description:
-              "Invalid status — the order is already in the requested status",
+              "Invalid status — the order is already in the requested status, or the status transition is not allowed",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -3064,15 +3069,14 @@ const spec = {
                 orderId: { type: "string" },
                 status: {
                   type: "string",
-                  enum: [
-                    "pending",
-                    "processing",
-                    "fulfilled",
-                    "failed",
-                    "out_for_delivery",
-                    "delivered",
-                    "cancelled",
-                  ],
+            enum: [
+              "pending",
+              "processing",
+              "fulfilled",
+              "failed",
+              "out_for_delivery",
+              "delivered",
+            ],
                 },
                 message: {
                   type: "string",

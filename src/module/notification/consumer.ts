@@ -15,26 +15,27 @@ import {
 import NotificationService from "./notification.service.ts";
 import { notificationBroker } from "./broker.ts";
 import FA from "fasy";
-import { string } from "zod";
 
 export function connectToUserEvents() {
  EventBroker.listen().subscribe({
-  next: ({ userId, payload, event_type }) => {
+  next: ({ payload, event_type }) => {
+   const userId = payload.userId as string | undefined;
    if (!userId) return;
 
    if (Array.isArray(payload.merchantUserIds)) {
-    const userIds: string[] = payload.merchantUserIds;
+    const merchantUserIds: string[] = payload.merchantUserIds;
 
-    if (userIds.length <= 0) return;
+    if (merchantUserIds.length > 0) {
+     const { merchantUserIds: _, ...restPayload } = payload;
 
-    const { merchantUserIds, ...restPayload } = payload;
-
-    userIds.forEach((uid) =>
-     notificationBroker.publish(uid, restPayload, event_type),
-    );
+     merchantUserIds.forEach((uid) =>
+      notificationBroker.publish(uid, restPayload, event_type),
+     );
+    }
    }
 
-   notificationBroker.publish(userId, payload, event_type);
+   const { merchantUserIds: _, ...ownerPayload } = payload;
+   notificationBroker.publish(userId, ownerPayload, event_type);
   },
  });
 }
@@ -44,13 +45,16 @@ EventBroker.subscribe(EventType.ORDER_STATUS_UPDATED).subscribe({
   await consumeOutboxEvent<OrderStatusUpdatedPayload>(
    payload.outboxId,
    async ({ userId, orderId, status, message, merchantUserIds }) => {
-    const allUsers = [...merchantUserIds, userId];
+    const safeMerchantIds = Array.isArray(merchantUserIds)
+     ? merchantUserIds
+     : [];
+    const allUsers = [...new Set([...safeMerchantIds, userId])];
 
     await FA.concurrent.map(async (uid: string) => {
      await NotificationService.createNotification(
       uid,
       `Order #${orderId.slice(0, 8)}`,
-      message ?? `Your order is now ${status.replace("_", " ")}`,
+      message ?? `Your order is now ${status.replaceAll("_", " ")}`,
       "order_update",
      );
     }, allUsers);

@@ -82,8 +82,10 @@ export const SendNotificationDto = z.object({
  type: z.enum(["order_update", "stock_alert", "system"]),
 });
 
+const ADMIN_ORDER_STATUSES = ["out_for_delivery", "delivered"];
+
 export const UpdateOrderStatusDto = z.object({
- status: z.enum(ORDER_STATUSES),
+ status: z.enum(ADMIN_ORDER_STATUSES),
 });
 
 export const AdminQuery = z.object({
@@ -458,7 +460,7 @@ class AdminService {
   status: z.infer<typeof UpdateOrderStatusDto>["status"],
  ): Promise<Result<TOrder>> {
   const [existing] = await db
-   .select({ orderStatus: order.orderStatus })
+   .select({ id: order.id, orderStatus: order.orderStatus })
    .from(order)
    .where(eq(order.id, orderId))
    .limit(1);
@@ -472,12 +474,13 @@ class AdminService {
    .update(order)
    .set({
     orderStatus: status,
-    updatedAt: existing.orderStatus !== status ? new Date() : order.updatedAt,
+    updatedAt: new Date(),
    })
-   .where(eq(order.id, orderId))
+   .where(and(eq(order.id, orderId), ne(order.orderStatus, status)))
    .returning();
 
-  if (!updatedOrder) return [null, null];
+  if (!updatedOrder)
+   return [null, APIError.badRequest("Order status changed concurrently")];
 
   const result = await db
    .select()
@@ -500,7 +503,7 @@ class AdminService {
      orderId,
      merchantUserIds,
      status,
-     message: `Your order is now ${status.replace("_", " ")}`,
+     message: `Your order is now ${status.replaceAll("_", " ")}`,
     },
    });
   });
