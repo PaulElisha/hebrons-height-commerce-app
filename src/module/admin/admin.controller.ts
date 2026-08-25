@@ -13,8 +13,9 @@ import {
  TCategory,
  TMerchant,
  TMerchantWithUser,
- TNotification,
- TOrderAndItems,
+  TNotification,
+  TOrder,
+  TOrderAndItems,
  TSubcategory,
  TUserFull,
 } from "@shared/types.ts";
@@ -28,6 +29,7 @@ import AdminService, {
  SendNotificationDto,
  TAdminQuery,
  UpdateCategoryDto,
+ UpdateOrderStatusDto,
  UpdateSubcategoryDto,
 } from "./admin.service.ts";
 
@@ -211,15 +213,40 @@ req: Request<z.infer<typeof OrderIdParams>>,
 
    if (err) return next(err);
 
-   return res.status(HttpStatus.OK).json({
-    status: "ok",
-    message: "order details fetched successfully",
-    data,
-   });
-  },
- );
+    return res.status(HttpStatus.OK).json({
+     status: "ok",
+     message: "order details fetched successfully",
+     data,
+    });
+   },
+  );
 
- getProducts = asyncHandler(
+  updateOrderStatus = asyncHandler(
+   async (
+    req: Request<
+     z.infer<typeof OrderIdParams>,
+     {},
+     z.infer<typeof UpdateOrderStatusDto>
+    >,
+    res: Response<APIResponse<TOrder>>,
+    next: NextFunction,
+   ) => {
+    const orderId = req.params.orderId;
+    const { status } = req.body;
+
+    const [data, err] = await AdminService.updateOrderStatus(orderId, status);
+
+    if (err) return next(err);
+
+    return res.status(HttpStatus.OK).json({
+     status: "ok",
+     message: `order ${status.replace("_", " ")}`,
+     data,
+    });
+   },
+  );
+
+  getProducts = asyncHandler(
   async (
    req: Request<{}, {}, {}, Pagination & TAdminQuery>,
    res: Response<APIResponse<TAdminPaginatedProducts>>,

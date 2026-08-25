@@ -14,11 +14,25 @@ import {
 
 import NotificationService from "./notification.service.ts";
 import { notificationBroker } from "./broker.ts";
+import FA from "fasy";
+import { string } from "zod";
 
 export function connectToUserEvents() {
  EventBroker.listen().subscribe({
   next: ({ userId, payload, event_type }) => {
    if (!userId) return;
+
+   if (Array.isArray(payload.merchantUserIds)) {
+    const userIds: string[] = payload.merchantUserIds;
+
+    if (userIds.length <= 0) return;
+
+    const { merchantUserIds, ...restPayload } = payload;
+
+    userIds.forEach((uid) =>
+     notificationBroker.publish(uid, restPayload, event_type),
+    );
+   }
 
    notificationBroker.publish(userId, payload, event_type);
   },
@@ -29,13 +43,17 @@ EventBroker.subscribe(EventType.ORDER_STATUS_UPDATED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderStatusUpdatedPayload>(
    payload.outboxId,
-   async ({ userId, orderId, status, message }) => {
-    await NotificationService.createNotification(
-     userId,
-     `Order #${orderId.slice(0, 8)}`,
-     message ?? `Your order is now ${status.replace("_", " ")}`,
-     "order_update",
-    );
+   async ({ userId, orderId, status, message, merchantUserIds }) => {
+    const allUsers = [...merchantUserIds, userId];
+
+    await FA.concurrent.map(async (uid: string) => {
+     await NotificationService.createNotification(
+      uid,
+      `Order #${orderId.slice(0, 8)}`,
+      message ?? `Your order is now ${status.replace("_", " ")}`,
+      "order_update",
+     );
+    }, allUsers);
    },
   );
  },

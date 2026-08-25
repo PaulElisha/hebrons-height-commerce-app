@@ -29,12 +29,12 @@ class MerchantController {
    const userId = req.user.id;
    const [data, err] = await MerchantService.getMerchantProfile(userId);
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "fetched merchant profile",
-    data: data ?? undefined,
+    data: data,
    });
   },
  );

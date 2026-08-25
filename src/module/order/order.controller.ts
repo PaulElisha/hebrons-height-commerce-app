@@ -18,7 +18,6 @@ import OrderService, {
  CreateOrderDto,
  TOrderFilter,
  TOrderStatusQuery,
- UpdateOrderStatusDto,
 } from "./order.service.ts";
 
 export const OrderParams = z.object({
@@ -56,13 +55,13 @@ class OrderController {
    res: Response<APIResponse<TUserOrderWithItems[]>>,
    next: NextFunction,
   ) => {
-    const userId = req.user.id;
-    const { status, pageSize, pageNumber } = req.query;
+   const userId = req.user.id;
+   const { status, pageSize, pageNumber } = req.query;
 
-    const [data, err] = await OrderService.getUserOrderByStatus(userId, status, {
-     pageSize,
-     pageNumber,
-    });
+   const [data, err] = await OrderService.getUserOrderByStatus(userId, status, {
+    pageSize,
+    pageNumber,
+   });
 
    if (err) return next(err);
 
@@ -125,45 +124,20 @@ class OrderController {
    res: Response<APIResponse<TMerchantPaginatedOrders>>,
    next: NextFunction,
   ) => {
-    const userId = req.user.id;
-    const { status, pageSize, pageNumber } = req.query;
+   const userId = req.user.id;
+   const { status, pageSize, pageNumber } = req.query;
 
-    const [data, err] = await OrderService.getMerchantOrders(
-     userId,
-     { status },
-     { pageSize, pageNumber },
-    );
+   const [data, err] = await OrderService.getMerchantOrders(
+    userId,
+    { status },
+    { pageSize, pageNumber },
+   );
 
    if (err) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "merchant orders fetched successfully",
-    data,
-   });
-  },
- );
-
- updateOrderStatus = asyncHandler(
-  async (
-   req: Request<z.infer<typeof OrderParams>, {}, z.infer<typeof UpdateOrderStatusDto>>,
-   res: Response<APIResponse<TOrder>>,
-   next: NextFunction,
-  ) => {
-   const userId = req.user.id;
-   const orderId = req.params.orderId;
-   const { status } = req.body;
-
-   const [data, err] = await OrderService.updateOrderStatus(
-    userId,
-    orderId,
-    status,
-   );
-   if (err) return next(err);
-
-   return res.status(HttpStatus.OK).json({
-    status: "ok",
-    message: `order ${status.replace("_", " ")}`,
     data,
    });
   },

@@ -9,7 +9,7 @@ export async function publishEvent(event: EventContract) {
   event_type: event.event_type,
   payload: {
    ...event.payload,
-   ...(event.userId ? { userId: event.userId } : {}),
+   ...(event.userId ? { userId: event.userId } : { userId: null }),
   },
  });
 

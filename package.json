@@ -13,7 +13,8 @@
     "db:migrate": "npx drizzle-kit migrate",
     "db:push": "npx drizzle-kit push",
     "db:studio": "npx drizzle-kit studio",
-    "seed": "tsx seeds/product.seed.ts"
+    "seed:product": "tsx seeds/product.seed.ts",
+    "seed:admin": "tsx seeds/admin.seed.ts"
   },
   "keywords": [],
   "author": "paul elisha",

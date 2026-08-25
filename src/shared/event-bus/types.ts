@@ -35,6 +35,7 @@ export interface OrderStatusUpdatedPayload {
  userId: string;
  orderId: string;
  status: string;
+ merchantUserIds: string[];
  message?: string;
 }
 

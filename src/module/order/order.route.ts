@@ -13,7 +13,6 @@ import {
  CreateOrderDto,
  OrderFilter,
  OrderStatusQuery,
- UpdateOrderStatusDto,
 } from "./order.service.ts";
 
 class OrderRouter {
@@ -38,14 +37,6 @@ class OrderRouter {
    validate(OrderParams, "params"),
    OrderController.getMerchantOrderDetails,
   );
-  this.router.put(
-   "/:orderId/status",
-   roleGuard("merchant"),
-   validate(UpdateOrderStatusDto),
-   validate(OrderParams, "params"),
-   OrderController.updateOrderStatus,
-  );
-
   this.router.get(
    "/status",
    roleGuard("user"),
