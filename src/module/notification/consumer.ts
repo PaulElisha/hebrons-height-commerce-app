@@ -14,13 +14,28 @@ import {
 
 import NotificationService from "./notification.service.ts";
 import { notificationBroker } from "./broker.ts";
+import FA from "fasy";
 
 export function connectToUserEvents() {
  EventBroker.listen().subscribe({
-  next: ({ userId, payload, event_type }) => {
+  next: ({ payload, event_type }) => {
+   const userId = payload.userId as string | undefined;
    if (!userId) return;
 
-   notificationBroker.publish(userId, payload, event_type);
+   if (Array.isArray(payload.merchantUserIds)) {
+    const merchantUserIds: string[] = payload.merchantUserIds;
+
+    if (merchantUserIds.length > 0) {
+     const { merchantUserIds: _, ...restPayload } = payload;
+
+     merchantUserIds.forEach((uid) =>
+      notificationBroker.publish(uid, restPayload, event_type),
+     );
+    }
+   }
+
+   const { merchantUserIds: _, ...ownerPayload } = payload;
+   notificationBroker.publish(userId, ownerPayload, event_type);
   },
  });
 }
@@ -29,13 +44,20 @@ EventBroker.subscribe(EventType.ORDER_STATUS_UPDATED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderStatusUpdatedPayload>(
    payload.outboxId,
-   async ({ userId, orderId, status, message }) => {
-    await NotificationService.createNotification(
-     userId,
-     `Order #${orderId.slice(0, 8)}`,
-     message ?? `Your order is now ${status.replace("_", " ")}`,
-     "order_update",
-    );
+   async ({ userId, orderId, status, message, merchantUserIds }) => {
+    const safeMerchantIds = Array.isArray(merchantUserIds)
+     ? merchantUserIds
+     : [];
+    const allUsers = [...new Set([...safeMerchantIds, userId])];
+
+    await FA.concurrent.map(async (uid: string) => {
+     await NotificationService.createNotification(
+      uid,
+      `Order #${orderId.slice(0, 8)}`,
+      message ?? `Your order is now ${status.replaceAll("_", " ")}`,
+      "order_update",
+     );
+    }, allUsers);
    },
   );
  },

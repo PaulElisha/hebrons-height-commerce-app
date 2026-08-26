@@ -20,6 +20,7 @@ import {
  ReviewMerchantDto,
  SendNotificationDto,
  UpdateCategoryDto,
+ UpdateOrderStatusDto,
  UpdateSubcategoryDto,
 } from "./admin.service.ts";
 
@@ -71,11 +72,18 @@ class AdminRouter {
    validate(AdminQuery, "query"),
    AdminController.getOrders,
   );
-  this.router.get(
-   "/orders/:orderId",
-   validate(OrderIdParams, "params"),
-   AdminController.getOrderDetails,
-  );
+   this.router.get(
+    "/orders/:orderId",
+    validate(OrderIdParams, "params"),
+    AdminController.getOrderDetails,
+   );
+   this.router.put(
+    "/orders/:orderId/status",
+    validate(UpdateOrderStatusDto),
+    validate(OrderIdParams, "params"),
+    AdminController.updateOrderStatus,
+   );
+
 
   this.router.get(
    "/products",

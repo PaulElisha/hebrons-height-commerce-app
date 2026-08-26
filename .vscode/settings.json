@@ -41,8 +41,9 @@
         "path/*#join", // ignore path, path/posix and path/win32, but only join symbol
         "path/*#join,resolve",
     ],
-    "workbench.colorTheme": "Cursor Dark",
+    "workbench.colorTheme": "Cursor Dark Midnight",
     "debug.terminal.clearBeforeReusing": true,
-    "workbench.iconTheme": null
+    "workbench.iconTheme": null,
+    "workbench.preferredDarkColorTheme": "Cursor Dark Midnight"
     // set as "true" to run 'prettier' last not first
 }

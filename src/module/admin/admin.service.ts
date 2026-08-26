@@ -9,7 +9,13 @@ import { order, orderItem } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import { isLowStock, parsePagination } from "@shared/helper.ts";
+import {
+ getUserfromMerchantId,
+ isLowStock,
+ parsePagination,
+} from "@shared/helper.ts";
+import { EventType } from "@shared/event-bus/index.ts";
+import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { ORDER_STATUSES } from "@shared/types.ts";
 import {
  Pagination,
@@ -24,6 +30,7 @@ import {
  TMerchant,
  TMerchantWithUser,
  TNotification,
+ TOrder,
  TOrderAndItems,
  TProductWithMerchant,
  TSubcategory,
@@ -42,7 +49,7 @@ import {
  sql,
  sum,
 } from "drizzle-orm";
-import { Transactional } from "drizzle-transactional";
+import { Transactional, runOnTransactionCommit } from "drizzle-transactional";
 import z from "zod";
 
 export const ReviewMerchantDto = z.object({
@@ -73,6 +80,12 @@ export const SendNotificationDto = z.object({
  title: z.string(),
  message: z.string(),
  type: z.enum(["order_update", "stock_alert", "system"]),
+});
+
+const ADMIN_ORDER_STATUSES = ["out_for_delivery", "delivered"];
+
+export const UpdateOrderStatusDto = z.object({
+ status: z.enum(ADMIN_ORDER_STATUSES),
 });
 
 export const AdminQuery = z.object({
@@ -440,6 +453,63 @@ class AdminService {
    return [null, asError(err)];
   }
  };
+
+ @Transactional()
+ async updateOrderStatus(
+  orderId: string,
+  status: z.infer<typeof UpdateOrderStatusDto>["status"],
+ ): Promise<Result<TOrder>> {
+  const [existing] = await db
+   .select({ id: order.id, orderStatus: order.orderStatus })
+   .from(order)
+   .where(eq(order.id, orderId))
+   .limit(1);
+
+  if (!existing) return [null, null];
+
+  if (existing.orderStatus === status)
+   return [null, APIError.badRequest(`Order is already in ${status} status`)];
+
+  const [updatedOrder] = await db
+   .update(order)
+   .set({
+    orderStatus: status,
+    updatedAt: new Date(),
+   })
+   .where(and(eq(order.id, orderId), ne(order.orderStatus, status)))
+   .returning();
+
+  if (!updatedOrder)
+   return [null, APIError.badRequest("Order status changed concurrently")];
+
+  const result = await db
+   .select()
+   .from(orderItem)
+   .where(eq(orderItem.orderId, orderId));
+
+  const merchantIds = result
+   .filter((r) => r.merchantId)
+   .map((r) => r.merchantId);
+
+  const merchantUserIds = (await getUserfromMerchantId(merchantIds))
+   .filter((r) => r.user)
+   .map((r) => r.user.id);
+
+  runOnTransactionCommit(() => {
+   publishEvent({
+    event_type: EventType.ORDER_STATUS_UPDATED,
+    userId: updatedOrder.userId,
+    payload: {
+     orderId,
+     merchantUserIds,
+     status,
+     message: `Your order is now ${status.replaceAll("_", " ")}`,
+    },
+   });
+  });
+
+  return [updatedOrder, null];
+ }
 
  getProducts = async (
   query: TAdminQuery,

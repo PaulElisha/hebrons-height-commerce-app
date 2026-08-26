@@ -1,6 +1,7 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
 import asyncHandler from "@shared/util/async-handler.ts";
+import * as APIError from "@shared/error/APIError.ts";
 import {
  APIResponse,
  TAnalyticsResult,
@@ -29,12 +30,13 @@ class MerchantController {
    const userId = req.user.id;
    const [data, err] = await MerchantService.getMerchantProfile(userId);
 
-   if (err) return next(err);
+   if (err || !data)
+    return next(APIError.notFound("Merchant profile not found"));
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
     message: "fetched merchant profile",
-    data: data ?? undefined,
+    data: data,
    });
   },
  );

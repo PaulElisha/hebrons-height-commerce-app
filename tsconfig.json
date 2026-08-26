@@ -7,7 +7,7 @@
     ],
     "paths": {
       "@*": [
-        ".*"
+        "./.*"
       ],
       "@shared/*": [
         "./src/shared/*"
@@ -40,17 +40,14 @@
         "./src/shared/util/*"
       ],
       "@schema/*": [
-        "src/config/db/schema/*"
+        "./src/config/db/schema/*"
       ],
       "@template/*": [
         "./src/shared/template/*"
       ],
     },
     "outDir": "./dist",
-    "rootDir": ".",
-    "baseUrl": ".",
     "strict": true,
-    "ignoreDeprecations": "6.0",
     "experimentalDecorators": true,
     "noEmit": true,
     "target": "ES2022",

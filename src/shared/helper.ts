@@ -15,8 +15,12 @@ import {
  TProduct,
  TCartAndItem,
  TCartItem,
+ TUser,
+ TMerchant,
+ TMerchantWithUser,
 } from "@shared/types.ts";
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import { user } from "@db/schema/auth.ts";
 
 export const STOCK_THRESHOLDS = [10, 7, 5, 3, 1] as const;
 
@@ -72,6 +76,14 @@ export async function fetchMerchantProductsByUserId(
   return [null, asError(err)];
  }
 }
+
+export const getUserfromMerchantId = async (merchantIds: Array<string>) => {
+ return await db
+  .select()
+  .from(user)
+  .leftJoin(merchant, eq(merchant.userId, user.id))
+  .where(inArray(merchant.id, merchantIds));
+};
 
 export function merchantIdSubquery(userId: string) {
  return db

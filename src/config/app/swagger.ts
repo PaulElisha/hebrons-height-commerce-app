@@ -763,9 +763,17 @@ const spec = {
         properties: {
           status: {
             type: "string",
-            enum: ["out_for_delivery", "delivered"],
+            enum: [
+              "pending",
+              "processing",
+              "fulfilled",
+              "failed",
+              "out_for_delivery",
+              "delivered",
+              "cancelled",
+            ],
             description:
-              "New order status. Flow: processing → out_for_delivery → delivered",
+              "New order status — set by an administrator because an order can span multiple merchants' items",
           },
         },
       },
@@ -1416,6 +1424,83 @@ const spec = {
                     data: { $ref: "#/components/schemas/OrderAndItems" },
                   },
                 },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized — invalid or missing session token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — admin only",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/admin/orders/{orderId}/status": {
+      put: {
+        tags: ["Admin"],
+        summary: "Update an order's status (admin only)",
+        description:
+          "Order-level status changes are restricted to administrators because a single order can span multiple merchants' items — no individual merchant may mutate the shared order. Merchants keep read-only visibility of orders containing their products via /api/order/merchant and /api/order/{orderId}/merchant.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "orderId",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Order ID",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateOrderStatusDto" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "Order status updated. Publishes an order.status.updated event to the order owner and merchant users over SSE.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    status: { type: "string", example: "ok" },
+                    message: {
+                      type: "string",
+                      example: "order out for delivery",
+                    },
+                    data: {
+                      oneOf: [
+                        { $ref: "#/components/schemas/Order" },
+                        { type: "null" },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "422": {
+            description:
+              "Invalid status — the order is already in the requested status, or the status transition is not allowed",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
               },
             },
           },
@@ -2984,15 +3069,14 @@ const spec = {
                 orderId: { type: "string" },
                 status: {
                   type: "string",
-                  enum: [
-                    "pending",
-                    "processing",
-                    "fulfilled",
-                    "failed",
-                    "out_for_delivery",
-                    "delivered",
-                    "cancelled",
-                  ],
+            enum: [
+              "pending",
+              "processing",
+              "fulfilled",
+              "failed",
+              "out_for_delivery",
+              "delivered",
+            ],
                 },
                 message: {
                   type: "string",
@@ -4453,78 +4537,6 @@ const spec = {
           "422": {
             description:
               "Order already cancelled or already paid — cannot cancel",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-              },
-            },
-          },
-        },
-      },
-    },
-    "/api/order/{orderId}/status": {
-      put: {
-        tags: ["Order"],
-        summary: "Update order status (merchant only)",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "orderId",
-            in: "path",
-            required: true,
-            schema: { type: "string" },
-            description: "Order ID",
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/UpdateOrderStatusDto" },
-            },
-          },
-        },
-        responses: {
-          "200": {
-            description:
-              "Order status updated — data is null when the order is not for this merchant",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    status: { type: "string", example: "ok" },
-                    message: {
-                      type: "string",
-                      example: "order out for delivery",
-                    },
-                    data: {
-                      allOf: [{ $ref: "#/components/schemas/Order" }],
-                      nullable: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-          "401": {
-            description: "Unauthorized — invalid or missing session token",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-              },
-            },
-          },
-          "403": {
-            description: "Forbidden — merchant only",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-              },
-            },
-          },
-          "400": {
-            description: "Invalid status transition",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },

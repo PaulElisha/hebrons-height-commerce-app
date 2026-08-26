@@ -48,10 +48,6 @@ export const OrderFilter = z.object({
 });
 export type TOrderFilter = z.infer<typeof OrderFilter>;
 
-export const UpdateOrderStatusDto = z.object({
- status: z.enum(["out_for_delivery", "delivered"]),
-});
-
 export const CreateOrderDto = z.object({
  deliveryAddress: z.object({
   address: z.string(),
@@ -114,27 +110,24 @@ class OrderService {
     lineTotal: number;
    };
 
-   const itemResults = await FA.concurrent.map(
-    async (v: TCartItem): Promise<OrderItemDraft | [null, Error | null]> => {
-     const [productData, e] = await InventoryService.checkProductThreshold(
-      v.productId,
-     );
-     if (e || Number(productData?.quantity) <= 0) return [null, e];
+   const itemResults = await FA.concurrent.map(async (v: TCartItem) => {
+    const [productData, e] = await InventoryService.checkProductThreshold(
+     v.productId,
+    );
+    if (e || Number(productData?.quantity) <= 0) return [null, e];
 
-     const [merchantId, err] = await getMerchantIdFromProductId(v.productId);
+    const [merchantId, err] = await getMerchantIdFromProductId(v.productId);
 
-     if (err || !merchantId) return [null, err];
+    if (err || !merchantId) return [null, err];
 
-     return {
-      productId: v.productId,
-      merchantId,
-      quantity: v.quantity,
-      unitPrice: v.price,
-      lineTotal: v.quantity * v.price,
-     };
-    },
-    data.cart_items || [],
-   );
+    return {
+     productId: v.productId,
+     merchantId,
+     quantity: v.quantity,
+     unitPrice: v.price,
+     lineTotal: v.quantity * v.price,
+    };
+   }, data.cart_items || []);
 
    const validItems = itemResults.filter(
     (i: OrderItemDraft): i is OrderItemDraft => !Array.isArray(i),
@@ -283,14 +276,14 @@ class OrderService {
   try {
    const [merchantId, e] = await getMerchantIdFromUser(userId);
 
-   if (e) return [null, e];
+   if (e || !merchantId) return [null, e];
 
    const result = await db
     .select()
     .from(order)
     .innerJoin(orderItem, eq(order.id, orderItem.orderId))
     .innerJoin(product, eq(orderItem.productId, product.id))
-    .where(and(eq(order.id, orderId), eq(orderItem.merchantId, merchantId!)));
+    .where(and(eq(order.id, orderId), eq(orderItem.merchantId, merchantId)));
 
    if (result.length <= 0) return [null, null];
 
@@ -393,68 +386,6 @@ class OrderService {
    return [null, asError(err)];
   }
  };
-
- @Transactional()
- async updateOrderStatus(
-  userId: string,
-  orderId: string,
-  status: z.infer<typeof UpdateOrderStatusDto>["status"],
- ): Promise<Result<TOrder>> {
-  const [merchantId, e] = await getMerchantIdFromUser(userId);
-
-  if (e || !merchantId) return [null, e];
-
-  const [orderItemForMerchant] = await db
-   .select()
-   .from(orderItem)
-   .where(
-    and(eq(orderItem.orderId, orderId), eq(orderItem.merchantId, merchantId)),
-   )
-   .limit(1);
-
-  if (!orderItemForMerchant) return [null, null];
-
-  const [updatedOrder] = await db
-   .update(order)
-   .set({
-    orderStatus: status,
-    updatedAt: new Date(),
-   })
-   .where(
-    and(
-     eq(order.id, orderId),
-     status === "out_for_delivery"
-      ? eq(order.orderStatus, "processing")
-      : eq(order.orderStatus, "out_for_delivery"),
-    ),
-   )
-   .returning();
-
-  if (!updatedOrder) {
-   return [
-    null,
-    APIError.badRequest(
-     status === "out_for_delivery"
-      ? "Order must be in processing status to mark as out for delivery"
-      : "Order must be out for delivery to mark as delivered",
-    ),
-   ];
-  }
-
-  runOnTransactionCommit(() => {
-   publishEvent({
-    event_type: EventType.ORDER_STATUS_UPDATED,
-    userId: updatedOrder.userId,
-    payload: {
-     orderId,
-     status,
-     message: `Your order is now ${status.replace("_", " ")}`,
-    },
-   });
-  });
-
-  return [updatedOrder, null];
- }
 
  @Transactional()
  async cancelOrder(orderId: string): Promise<Result<TOrder>> {
