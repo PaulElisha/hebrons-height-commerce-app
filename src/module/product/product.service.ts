@@ -169,8 +169,7 @@ class ProductService {
     .leftJoin(merchant, eq(product.merchantId, merchant.id))
     .where(and(...filters))
     .limit(limit)
-    .offset(offset)
-    .orderBy(desc(product.createdAt));
+    .offset(offset);
 
    const [totalCountResult] = await db
     .select({ totalCount: count() })
