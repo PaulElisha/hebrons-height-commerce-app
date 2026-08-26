@@ -1,6 +1,6 @@
 /** @format */
 
-import "../../env.ts";
+import "@/env.ts";
 
 import db from "@db/db.ts";
 import { account, user } from "@db/schema/auth.ts";

@@ -12,7 +12,7 @@ import Stripe from "stripe";
 import z from "zod";
 
 import { FetchRail } from "./dispatcher.ts";
-import Env from "env.ts";
+import Env from "@/env.ts";
 
 export const VerifyPaymentParams = z.object({
  reference: z.string(),

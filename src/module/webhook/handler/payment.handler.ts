@@ -12,7 +12,7 @@ import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
-import Env from "env.ts";
+import Env from "@/env.ts";
 import Stripe from "stripe";
 import z from "zod";
 

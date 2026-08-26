@@ -5,7 +5,7 @@ import asError from "@shared/error/as-error.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { createPublicId } from "@shared/helper.ts";
 import { AssetTypeEnum, Result } from "@shared/types.ts";
-import Env from "env.ts";
+import Env from "@/env.ts";
 import { z } from "zod";
 
 export interface UploadResult {
