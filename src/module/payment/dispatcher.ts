@@ -9,7 +9,7 @@ import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, TOrderItems } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
-import Env from "env.ts";
+import Env from "@/env.ts";
 import FA from "fasy";
 import z from "zod";
 

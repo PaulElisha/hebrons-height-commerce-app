@@ -5,7 +5,7 @@ import stripeClient from "@app/stripe.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import Env from "env.ts";
+import Env from "@/env.ts";
 import { Request, Response } from "express";
 import Stripe from "stripe";
 
@@ -22,9 +22,7 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
  } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
 
-  return res
-   .status(HttpStatus.BAD_REQUEST)
-   .send(`Webhook Error: ${message}`);
+  return res.status(HttpStatus.BAD_REQUEST).send(`Webhook Error: ${message}`);
  }
 
  try {
