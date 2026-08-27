@@ -22,7 +22,7 @@ export function connectToUserEvents() {
    const userId = payload.userId as string | undefined;
    if (!userId) return;
 
-   if (Array.isArray(payload.merchantUserIds)) {
+   if (payload.merchantUserIds && Array.isArray(payload.merchantUserIds)) {
     const merchantUserIds: string[] = payload.merchantUserIds;
 
     if (merchantUserIds.length > 0) {

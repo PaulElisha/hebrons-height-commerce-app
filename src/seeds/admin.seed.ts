@@ -4,15 +4,18 @@ import db from "@db/db.ts";
 import { account, user } from "@db/schema/auth.ts";
 import { hashPassword } from "@shared/util/password.ts";
 import { and, eq } from "drizzle-orm";
+import Env from "@/env.ts";
 
-const ADMIN_NAME = process.env.ADMIN_NAME || "HebronsHeightAdmin";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@hhg.com";
+const ADMIN_NAME = Env.ADMIN_NAME;
+const ADMIN_EMAIL = Env.ADMIN_EMAIL;
+
 if (!process.env.ADMIN_PASSWORD) {
  throw new Error(
   "ADMIN_PASSWORD environment variable is required — refusing to seed with a default credential",
  );
 }
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+const ADMIN_PASSWORD = Env.ADMIN_PASSWORD;
 
 export async function seedAdmin(): Promise<{ id: string; email: string }> {
  if (ADMIN_PASSWORD.length < 6) {

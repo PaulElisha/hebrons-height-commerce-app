@@ -56,6 +56,10 @@ const EnvSchema = z.object({
  STRIPE_WEBHOOK_SECRET: z.string(),
 
  SCALER: z.coerce.number().default(100),
+
+ ADMIN_NAME: z.string(),
+ ADMIN_EMAIL: z.string().email(),
+ ADMIN_PASSWORD: z.string(),
 });
 
 export type EnvType = z.infer<typeof EnvSchema>;
