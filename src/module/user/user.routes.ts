@@ -21,7 +21,7 @@ class UserRouter {
  constructor() {
   this.router = Router();
   this.router.use(authenticate);
-  this.router.use(roleGuard("user", "merchant"));
+  this.router.use(roleGuard("user", "merchant", "admin"));
   this.initializeRoutes();
  }
 
