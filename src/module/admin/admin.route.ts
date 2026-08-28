@@ -33,15 +33,15 @@ class AdminRouter {
   this.initializeRoutes();
  }
 
-  initializeRoutes() {
-   this.router.get("/analytics", AdminController.getAnalytics);
+ initializeRoutes() {
+  this.router.get("/analytics", AdminController.getAnalytics);
 
-   this.router.get(
-    "/users",
-    validate(PaginationSchema, "query"),
-    validate(AdminQuery, "query"),
-    AdminController.getUsers,
-   );
+  this.router.get(
+   "/users",
+   validate(PaginationSchema, "query"),
+   validate(AdminQuery, "query"),
+   AdminController.getUsers,
+  );
   this.router.get(
    "/users/:userId",
    validate(UserIdParams, "params"),
@@ -72,18 +72,17 @@ class AdminRouter {
    validate(AdminQuery, "query"),
    AdminController.getOrders,
   );
-   this.router.get(
-    "/orders/:orderId",
-    validate(OrderIdParams, "params"),
-    AdminController.getOrderDetails,
-   );
-   this.router.put(
-    "/orders/:orderId/status",
-    validate(UpdateOrderStatusDto),
-    validate(OrderIdParams, "params"),
-    AdminController.updateOrderStatus,
-   );
-
+  this.router.get(
+   "/orders/:orderId",
+   validate(OrderIdParams, "params"),
+   AdminController.getOrderDetails,
+  );
+  this.router.put(
+   "/orders/:orderId/status",
+   validate(UpdateOrderStatusDto),
+   validate(OrderIdParams, "params"),
+   AdminController.updateOrderStatus,
+  );
 
   this.router.get(
    "/products",

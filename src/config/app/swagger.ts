@@ -2568,7 +2568,7 @@ const spec = {
           },
           "403": {
             description:
-              "Forbidden — user or merchant role required (administrators are rejected)",
+              "Forbidden — user, merchant, or admin role required",
           },
         },
       },
@@ -2604,17 +2604,17 @@ const spec = {
               },
             },
           },
-          "401": {
-            description: "Unauthorized — invalid or missing session token",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-              },
-            },
-          },
+           "401": {
+             description: "Unauthorized — invalid or missing session token",
+             content: {
+               "application/json": {
+                 schema: { $ref: "#/components/schemas/Error" },
+               },
+             },
+           },
           "403": {
             description:
-              "Forbidden — user or merchant role required (administrators are rejected)",
+              "Forbidden — user, merchant, or admin role required",
           },
         },
       },
@@ -3004,7 +3004,7 @@ const spec = {
         tags: ["Notification"],
         summary: "SSE stream for real-time events",
         description:
-          "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the payload itself no longer contains the `userId` (it moved to the event envelope) but always includes an `outboxId` that correlates to the underlying outbox row. Raw provider webhook events without a top-level `userId` (e.g. `payment.paystack.checkout.verified`) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. The `inventory.low_stock` event is published from the inventory service WITH a top-level `userId` (the merchant's user ID), so it IS streamed to the merchant. The `PAYMENT_FULFILLED` event is published from the payment verification handler WITH a top-level `userId`, so it IS streamed to the user. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
+          "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the `userId` is present both on the event envelope (used for routing) and inside the delivered JSON payload. Every delivered payload also includes an `outboxId` that correlates to the underlying outbox row. Raw provider webhook events without a top-level `userId` (e.g. `payment.paystack.checkout.verified`) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. The `inventory.low_stock` event is published from the inventory service WITH a top-level `userId` (the merchant's user ID), so it IS streamed to the merchant. The `PAYMENT_FULFILLED` event is published from the payment verification handler WITH a top-level `userId`, so it IS streamed to the user. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": {
@@ -3046,8 +3046,15 @@ const spec = {
             description: "A new order was placed by the user.",
             data: {
               type: "object",
-              required: ["cartId", "orderId", "productIds", "outboxId"],
+              required: [
+                "userId",
+                "cartId",
+                "orderId",
+                "productIds",
+                "outboxId",
+              ],
               properties: {
+                userId: { type: "string" },
                 cartId: { type: "string" },
                 orderId: { type: "string" },
                 productIds: { type: "array", items: { type: "string" } },
@@ -3064,8 +3071,9 @@ const spec = {
               "An order's status changed (e.g. out_for_delivery, delivered).",
             data: {
               type: "object",
-              required: ["orderId", "status", "outboxId"],
+              required: ["userId", "orderId", "status", "outboxId"],
               properties: {
+                userId: { type: "string" },
                 orderId: { type: "string" },
                 status: {
                   type: "string",
@@ -3094,8 +3102,9 @@ const spec = {
             description: "An order was cancelled.",
             data: {
               type: "object",
-              required: ["orderId", "productIds", "outboxId"],
+              required: ["userId", "orderId", "productIds", "outboxId"],
               properties: {
+                userId: { type: "string" },
                 orderId: { type: "string" },
                 productIds: { type: "array", items: { type: "string" } },
                 outboxId: {
@@ -3111,8 +3120,15 @@ const spec = {
               "A product in the user's cart is running low on stock.",
             data: {
               type: "object",
-              required: ["productId", "productName", "quantity", "outboxId"],
+              required: [
+                "userId",
+                "productId",
+                "productName",
+                "quantity",
+                "outboxId",
+              ],
               properties: {
+                userId: { type: "string" },
                 productId: { type: "string" },
                 productName: { type: "string" },
                 quantity: { type: "integer" },
@@ -3154,8 +3170,9 @@ const spec = {
               "A Stripe checkout session was created for the user's order.",
             data: {
               type: "object",
-              required: ["orderId", "stripeData", "outboxId"],
+              required: ["userId", "orderId", "stripeData", "outboxId"],
               properties: {
+                userId: { type: "string" },
                 orderId: { type: "string" },
                 stripeData: {
                   type: "object",
@@ -3183,8 +3200,9 @@ const spec = {
               "A Paystack checkout was initialized for the user's order.",
             data: {
               type: "object",
-              required: ["orderId", "paystackData", "outboxId"],
+              required: ["userId", "orderId", "paystackData", "outboxId"],
               properties: {
+                userId: { type: "string" },
                 orderId: { type: "string" },
                 paystackData: {
                   type: "object",
@@ -3213,8 +3231,14 @@ const spec = {
               "A payment was fulfilled (published from the payment verification handler) — the order is marked paid and fulfilled.",
             data: {
               type: "object",
-              required: ["updatedPayment", "updatedOrder", "outboxId"],
+              required: [
+                "userId",
+                "updatedPayment",
+                "updatedOrder",
+                "outboxId",
+              ],
               properties: {
+                userId: { type: "string" },
                 updatedPayment: {
                   type: "object",
                   required: ["id", "orderId", "status", "paymentReference"],
