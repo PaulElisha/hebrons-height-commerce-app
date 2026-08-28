@@ -49,7 +49,7 @@ import {
  sql,
  sum,
 } from "drizzle-orm";
-import { Transactional, runOnTransactionCommit } from "drizzle-transactional";
+import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import z from "zod";
 
 export const ReviewMerchantDto = z.object({
@@ -334,7 +334,6 @@ class AdminService {
   }
  };
 
- @Transactional()
  reviewMerchant = async (
   merchantId: string,
   body: z.infer<typeof ReviewMerchantDto>,
@@ -455,10 +454,10 @@ class AdminService {
  };
 
  @Transactional()
- async updateOrderStatus(
+ updateOrderStatus = async (
   orderId: string,
   status: z.infer<typeof UpdateOrderStatusDto>["status"],
- ): Promise<Result<TOrder>> {
+ ): Promise<Result<TOrder>> => {
   const [existing] = await db
    .select({ id: order.id, orderStatus: order.orderStatus })
    .from(order)
@@ -509,7 +508,7 @@ class AdminService {
   });
 
   return [updatedOrder, null];
- }
+ };
 
  getProducts = async (
   query: TAdminQuery,
@@ -678,7 +677,6 @@ class AdminService {
   return [newCategory, null];
  };
 
- @Transactional()
  updateCategory = async (
   categoryId: string,
   body: z.infer<typeof UpdateCategoryDto>,
@@ -719,7 +717,6 @@ class AdminService {
   return [updatedCategory, null];
  };
 
- @Transactional()
  createSubcategory = async (
   categoryId: string,
   body: z.infer<typeof CreateSubcategoryDto>,
@@ -779,7 +776,6 @@ class AdminService {
   }
  };
 
- @Transactional()
  sendNotification = async (
   body: z.infer<typeof SendNotificationDto>,
  ): Promise<Result<TNotification>> => {

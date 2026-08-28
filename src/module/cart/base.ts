@@ -20,7 +20,6 @@ interface Intent {
 }
 
 class CartBase {
- @Transactional()
  async calculateTotalAmount(cartId: string, userId: string) {
   const [result] = await db
    .select({
@@ -35,6 +34,15 @@ class CartBase {
     subtotal: result.subtotal,
    })
    .where(and(eq(cart.id, cartId), eq(cart.userId, userId)));
+ }
+
+ @Transactional()
+ async clearCartItems(cartId: string, userId: string) {
+  await db
+   .delete(cartItem)
+   .where(and(eq(cartItem.userId, userId), eq(cartItem.cartId, cartId)));
+
+  await this.calculateTotalAmount(cartId, userId);
  }
 
  @Transactional()

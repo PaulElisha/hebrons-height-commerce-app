@@ -81,7 +81,7 @@ class OrderService {
     .innerJoin(user, eq(order.userId, user.id))
     .where(and(eq(order.id, orderId), eq(order.userId, userId)));
 
-   if (!(result.length > 0)) return [null, null];
+   if (result.length < 0) return [null, null];
 
    return [result[0], null];
   } catch (err) {
