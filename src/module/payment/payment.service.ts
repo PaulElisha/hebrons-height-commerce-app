@@ -24,7 +24,7 @@ export const CheckoutData = z.object({
  rail: z.enum(["initializePaystackCheckout", "initializeStripeCheckout"]),
  metadata: z.record(z.string(), z.unknown()).optional(),
  callback_url: z.url().optional(),
- mode: z.custom<Stripe.Checkout.SessionCreateParams.Mode>().optional(),
+ mode: z.enum(["payment", "setup", "subscription"]).optional(),
 });
 
 export const PaymentData = CheckoutData.extend({

@@ -28,7 +28,7 @@ class OrderController {
  placeOrder = asyncHandler(
   async (
    req: Request<z.infer<typeof CartParams>, {}, z.infer<typeof CreateOrderDto>>,
-   res: Response<APIResponse<{ orderId: string | null }>>,
+   res: Response<APIResponse<{ orderId: string }>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;
@@ -37,7 +37,7 @@ class OrderController {
 
    const [orderId, err] = await OrderService.placeOrder(userId, cartId, body);
 
-   if (err) return next(err);
+   if (err || !orderId) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
@@ -63,7 +63,7 @@ class OrderController {
     pageNumber,
    });
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",

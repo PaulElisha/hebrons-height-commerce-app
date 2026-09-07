@@ -7,7 +7,7 @@ import AppError from "@shared/error/app-error.ts";
 import { EventBroker } from "@shared/event-bus/index.ts";
 import type { EventContract } from "@shared/event-bus/types.ts";
 import { Result } from "@shared/types.ts";
-import { and, eq, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import FA from "fasy";
 
 export const MAX_OUTBOX_ATTEMPTS = 5;
@@ -45,7 +45,9 @@ class OutboxService {
    .insert(outbox)
    .values({
     eventType: event.event_type,
-    payload: event.payload as Record<string, unknown>,
+    payload: event.userId
+     ? { ...(event.payload as Record<string, unknown>), userId: event.userId }
+     : { ...(event.payload as Record<string, unknown>) },
    })
    .returning();
   return row;
@@ -53,7 +55,7 @@ class OutboxService {
 
  static async fetchById(
   outboxId: string,
- ): Promise<Result<typeof outbox.$inferSelect, AppError>> {
+ ): Promise<Result<typeof outbox.$inferSelect>> {
   const [row] = await db
    .select()
    .from(outbox)
@@ -67,8 +69,16 @@ class OutboxService {
  static async update(outboxId: string): Promise<void> {
   await db
    .update(outbox)
-   .set({ processedAt: new Date() })
-   .where(and(eq(outbox.id, outboxId), isNull(outbox.processedAt)));
+   .set({
+    processedAt: new Date(),
+    attempts: sql`${outbox.attempts} + 1`,
+   })
+   .where(
+    and(
+     eq(outbox.id, outboxId),
+     or(isNull(outbox.processedAt), lt(outbox.attempts, MAX_OUTBOX_ATTEMPTS)),
+    ),
+   );
  }
 
  static async markFailed(outboxId: string, error: string): Promise<void> {
@@ -99,7 +109,7 @@ class OutboxService {
    .select()
    .from(outbox)
    .where(
-    and(isNull(outbox.processedAt), lt(outbox.attempts, MAX_OUTBOX_ATTEMPTS)),
+    or(isNull(outbox.processedAt), lt(outbox.attempts, MAX_OUTBOX_ATTEMPTS)),
    )
    .orderBy(outbox.createdAt);
 

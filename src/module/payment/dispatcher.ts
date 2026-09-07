@@ -14,6 +14,7 @@ import FA from "fasy";
 import z from "zod";
 
 import { CheckoutData, PaymentCheckoutResult } from "./payment.service.ts";
+import Stripe from "stripe";
 
 type Rail = z.infer<typeof CheckoutData>["rail"];
 
@@ -121,7 +122,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
           .select({ name: product.name })
           .from(product)
           .where(eq(product.id, i.productId))
-          .then((res) => res[0]?.name ?? "Unknown product"),
+          .then((res) => res[0]?.name),
         },
         unit_amount: Math.round(i.unitPrice * Env.SCALER),
        },
@@ -136,9 +137,9 @@ export const FetchRail: Record<Rail, RailHandler> = {
      success_url: `${Env.BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
      cancel_url: `${Env.BASE_URL}/cancel`,
     })
-    .then(async (session) => {
+    .then(async (session: Stripe.Checkout.Session) => {
      if (!session.url) {
-      return [null, asError(err)];
+      return [null, APIError.badRequest("Stripe Payment failed")];
      }
 
      const res: PaymentCheckoutResult = {

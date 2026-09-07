@@ -454,10 +454,10 @@ class AdminService {
  };
 
  @Transactional()
- updateOrderStatus = async (
+ async updateOrderStatus(
   orderId: string,
   status: z.infer<typeof UpdateOrderStatusDto>["status"],
- ): Promise<Result<TOrder>> => {
+ ): Promise<Result<TOrder>> {
   const [existing] = await db
    .select({ id: order.id, orderStatus: order.orderStatus })
    .from(order)
@@ -491,8 +491,8 @@ class AdminService {
    .map((r) => r.merchantId);
 
   const merchantUserIds = (await getUserfromMerchantId(merchantIds))
-   .filter((r) => r.user)
-   .map((r) => r.user.id);
+   .filter((r) => !!r.user)
+   .map((r) => r.user.id ?? r.user.id);
 
   runOnTransactionCommit(() => {
    publishEvent({
@@ -508,7 +508,7 @@ class AdminService {
   });
 
   return [updatedOrder, null];
- };
+ }
 
  getProducts = async (
   query: TAdminQuery,
@@ -640,9 +640,9 @@ class AdminService {
  };
 
  @Transactional()
- createCategory = async (
+ async createCategory(
   body: z.infer<typeof CreateCategoryDto>,
- ): Promise<Result<TCategory>> => {
+ ): Promise<Result<TCategory>> {
   const [existing] = await db
    .select({ id: category.id })
    .from(category)
@@ -675,7 +675,7 @@ class AdminService {
   }
 
   return [newCategory, null];
- };
+ }
 
  updateCategory = async (
   categoryId: string,
