@@ -832,7 +832,7 @@ const spec = {
           },
           mode: {
             type: "string",
-            enum: ["payment", "subscription", "setup"],
+            enum: ["payment", "setup", "subscription"],
             description: "Stripe checkout mode (Stripe rail only)",
           },
           metadata: {
@@ -859,7 +859,7 @@ const spec = {
           },
           mode: {
             type: "string",
-            enum: ["payment", "subscription", "setup"],
+            enum: ["payment", "setup", "subscription"],
             nullable: true,
           },
           callbackUrl: { type: "string", format: "uri", nullable: true },
@@ -4945,6 +4945,211 @@ const spec = {
           },
           "500": {
             description: "Failed to upload image to Cloudinary",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/stripe/webhook": {
+      post: {
+        tags: ["Webhooks"],
+        summary: "Stripe webhook receiver",
+        description:
+          "Receives Stripe webhook events (raw JSON body with `stripe-signature` header). On `checkout.session.completed`/`checkout.session.expired`, publishes a `stripe.payment.verified` event to process the payment asynchronously. Not called by clients.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                description: "Raw Stripe event payload as delivered by Stripe",
+                properties: {
+                  id: { type: "string", example: "evt_xxx" },
+                  type: { type: "string", example: "checkout.session.completed" },
+                  data: { type: "object" },
+                },
+              },
+            },
+          },
+        },
+        parameters: [
+          {
+            name: "stripe-signature",
+            in: "header",
+            required: true,
+            schema: { type: "string" },
+            description: "Stripe webhook signature used to verify the event",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Event received and handled",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { received: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid webhook signature or payload",
+            content: {
+              "text/plain": { schema: { type: "string" } },
+            },
+          },
+          "500": {
+            description: "Failed to process the event",
+            content: {
+              "text/plain": { schema: { type: "string" } },
+            },
+          },
+        },
+      },
+    },
+    "/api/paystack/webhook": {
+      post: {
+        tags: ["Webhooks"],
+        summary: "Paystack webhook receiver",
+        description:
+          "Receives Paystack webhook events (raw JSON body, verified via the `x-paystack-signature` header). On `charge.success`/`charge.failed`, publishes a `paystack.payment.verified` event to process the payment asynchronously. Returns an empty payload when the event type is unhandled. Not called by clients.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                description: "Raw Paystack event payload as delivered by Paystack",
+                properties: {
+                  event: { type: "string", example: "charge.success" },
+                  data: {
+                    type: "object",
+                    properties: {
+                      metadata: {
+                        type: "object",
+                        properties: {
+                          orderId: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        parameters: [
+          {
+            name: "x-paystack-signature",
+            in: "header",
+            required: true,
+            schema: { type: "string" },
+            description: "Paystack webhook signature used to verify the event",
+          },
+        ],
+        responses: {
+          "200": {
+            description:
+              "Event received and handled — unhandled event types return an empty 200",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { received: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Missing/invalid signature or malformed JSON payload",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "500": {
+            description: "Failed to process the event",
+            content: {
+              "text/plain": { schema: { type: "string" } },
+            },
+          },
+        },
+      },
+    },
+    "/api/cloudinary/webhook": {
+      post: {
+        tags: ["Webhooks"],
+        summary: "Cloudinary notification webhook",
+        description:
+          "Receives Cloudinary upload notification webhooks. Verifies the `x-cld-timestamp` and `x-cld-signature` headers, then dispatches on the asset folder parsed from `public_id` (`profile`, `product`, `business`, `additional`) to update the related record's image fields. Not called by clients. Request body must be the exact raw payload as sent by Cloudinary.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["public_id", "secure_url"],
+                properties: {
+                  public_id: {
+                    type: "string",
+                    description:
+                      "Cloudinary public ID following `{folder}-{userId}` — e.g. `profile-usr_xxx`",
+                  },
+                  secure_url: { type: "string", format: "uri" },
+                },
+              },
+            },
+          },
+        },
+        parameters: [
+          {
+            name: "x-cld-timestamp",
+            in: "header",
+            required: true,
+            schema: { type: "string" },
+            description: "Cloudinary notification timestamp (unix seconds)",
+          },
+          {
+            name: "x-cld-signature",
+            in: "header",
+            required: true,
+            schema: { type: "string" },
+            description: "Cloudinary notification signature (SHA-1 HMAC)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Notification verified and record updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    status: { type: "string", example: "ok" },
+                    message: { type: "string", example: "upload completed" },
+                    data: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid timestamp or unsupported upload folder",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "403": {
+            description: "Missing security headers or invalid signature",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },

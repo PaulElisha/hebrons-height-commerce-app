@@ -492,7 +492,7 @@ class AdminService {
 
   const merchantUserIds = (await getUserfromMerchantId(merchantIds))
    .filter((r) => !!r.user)
-   .map((r) => r.user.id ?? r.user.id);
+   .map((r) => r.user.id);
 
   runOnTransactionCommit(() => {
    publishEvent({
