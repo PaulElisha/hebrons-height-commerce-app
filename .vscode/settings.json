@@ -43,7 +43,12 @@
     ],
     "workbench.colorTheme": "Cursor Dark Midnight",
     "debug.terminal.clearBeforeReusing": true,
-    "workbench.iconTheme": null,
-    "workbench.preferredDarkColorTheme": "Cursor Dark Midnight"
+    "workbench.iconTheme": "vs-minimal",
+    "workbench.preferredDarkColorTheme": "Cursor Dark Midnight",
+    "workbench.preferredHighContrastColorTheme": "Cursor Dark Midnight",
+    "workbench.tree.indent": 4,
+    "workbench.tree.renderIndentGuides": "always",
+    "workbench.editor.alwaysShowEditorActions": true,
+    "workbench.preferredHighContrastLightColorTheme": "Cursor Dark Midnight"
     // set as "true" to run 'prettier' last not first
 }
