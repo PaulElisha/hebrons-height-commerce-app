@@ -386,6 +386,8 @@ class AdminService {
      subtotal: order.subtotal,
      deliveryAddress: order.deliveryAddress,
      createdAt: order.createdAt,
+     orderStatus: order.orderStatus,
+     paymentStatus: order.paymentStatus,
      user: {
       id: user.id,
       email: user.email,

@@ -196,7 +196,7 @@ class AdminController {
     { pageSize, pageNumber },
    );
 
-   if (err) return next(err);
+   if (err || !data) return next(err);
 
    return res.status(HttpStatus.OK).json({
     status: "ok",
