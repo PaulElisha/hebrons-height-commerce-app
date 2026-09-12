@@ -72,6 +72,7 @@ export interface PaystackChargeEvent {
   reference: string;
   amount: number;
   paid_at?: string;
+  gateway_response?: string;
  };
 }
 
@@ -88,4 +89,16 @@ export interface StripePaymentVerifiedPayload {
 export interface PaymentFulfilledPayload {
  updatedPayment: TPayment;
  updatedOrder: TOrder;
+}
+
+export interface PaymentFailedPayload {
+ userId: string;
+ orderId: string;
+ reason: string;
+ paymentId: string;
+}
+
+export interface PaymentInitializedPayload {
+ userId: string;
+ orderId: string;
 }

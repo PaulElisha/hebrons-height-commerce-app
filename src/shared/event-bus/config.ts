@@ -15,4 +15,6 @@ export enum EventType {
  STRIPE_PAYMENT_VERIFIED = "payment.stripe.checkout.verified",
  USERCART_LOW_STOCK_ALERT = "cart.low_stock",
  PAYMENT_FULFILLED = "PAYMENT_FULFILLED",
+ PAYMENT_FAILED = "payment.failed",
+ PAYMENT_INITIALIZED = "payment.initialized",
 }
