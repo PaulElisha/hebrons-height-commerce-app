@@ -3004,7 +3004,7 @@ const spec = {
         tags: ["Notification"],
         summary: "SSE stream for real-time events",
         description:
-          "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the `userId` is present both on the event envelope (used for routing) and inside the delivered JSON payload. Every delivered payload also includes an `outboxId` that correlates to the underlying outbox row. Raw provider webhook events without a top-level `userId` (e.g. `payment.paystack.checkout.verified`) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. The `inventory.low_stock` event is published from the inventory service WITH a top-level `userId` (the merchant's user ID), so it IS streamed to the merchant. The `PAYMENT_FULFILLED`, `payment.failed`, and `payment.initialized` events are published from the payment verification handler WITH a top-level `userId`, so they ARE streamed to the user. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
+          "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the `userId` is present both on the event envelope (used for routing) and inside the delivered JSON payload. Every delivered payload also includes an `outboxId` that correlates to the underlying outbox row. Raw provider webhook events without a top-level `userId` (e.g. `payment.paystack.checkout.verified`) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. The `inventory.low_stock` event is published from the inventory service WITH a top-level `userId` (the merchant's user ID), so it IS streamed to the merchant. The `PAYMENT_FULFILLED` and `payment.failed` events are published from the payment verification handler, and `payment.initialized` from the payment initialization handler — all WITH a top-level `userId`, so they ARE streamed to the user. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": {
@@ -4995,7 +4995,7 @@ const spec = {
         tags: ["Webhooks"],
         summary: "Stripe webhook receiver",
         description:
-          "Receives Stripe webhook events (raw JSON body with `stripe-signature` header). On `checkout.session.completed`/`checkout.session.expired`, publishes a `stripe.payment.verified` event to process the payment asynchronously. Not called by clients.",
+          "Receives Stripe webhook events (raw JSON body with `stripe-signature` header). On `checkout.session.completed`/`checkout.session.expired`, publishes a `payment.stripe.checkout.verified` event. An expired (failed) session triggers a `payment.failed` event that a consumer processes to mark the payment and order as failed and create a notification with the failure reason. Not called by clients.",
         requestBody: {
           required: true,
           content: {
@@ -5053,7 +5053,7 @@ const spec = {
         tags: ["Webhooks"],
         summary: "Paystack webhook receiver",
         description:
-          "Receives Paystack webhook events (raw JSON body, verified via the `x-paystack-signature` header). On `charge.success`/`charge.failed`, publishes a `paystack.payment.verified` event to process the payment asynchronously. Returns an empty payload when the event type is unhandled. Not called by clients.",
+          "Receives Paystack webhook events (raw JSON body, verified via the `x-paystack-signature` header). On `charge.success`/`charge.failed`, publishes a `payment.paystack.checkout.verified` event. A `charge.failed` event triggers a `payment.failed` event that a consumer processes to mark the payment and order as failed and create a notification with the failure reason. Returns an empty payload when the event type is unhandled. Not called by clients.",
         requestBody: {
           required: true,
           content: {
