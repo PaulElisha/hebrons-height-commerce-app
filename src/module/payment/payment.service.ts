@@ -5,7 +5,7 @@ import OrderService from "@module/order/order.service.ts";
 import { order } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import { Result, TPayment } from "@shared/types.ts";
+import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import Stripe from "stripe";
@@ -13,6 +13,7 @@ import z from "zod";
 
 import { FetchRail } from "./dispatcher.ts";
 import Env from "@/env.ts";
+import logger from "@app/logger.ts";
 
 export const VerifyPaymentParams = z.object({
  reference: z.string(),
@@ -144,7 +145,7 @@ class PaymentService {
     paymentReference: paymentData.reference,
     currency: paymentData.currency,
     paymentProvider: paymentData.paymentProvider,
-    attempts: 2,
+    attempts: 0,
    })
    .returning();
 
@@ -164,12 +165,15 @@ class PaymentService {
    });
 
    if (!response.ok) {
-    const errBody = await response.json().catch(() => ({}));
+    const errBody = await response.json().catch((e: Error) => {
+     logger.error(
+      { err: String(e.message), reference },
+      "[...Paystack error body]",
+     );
+     return { message: String(e.message ?? "Paystack Payment failed") };
+    });
 
-    return [
-     null,
-     APIError.badRequest(errBody.message || "Paystack Payment failed"),
-    ];
+    return [null, APIError.badRequest(errBody.message)];
    }
 
    const responseData = await response.json();

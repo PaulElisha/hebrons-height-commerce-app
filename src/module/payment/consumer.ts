@@ -1,15 +1,19 @@
 /** @format */
 import logger from "@app/logger.ts";
+import NotificationService from "@module/notification/notification.service.ts";
 import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
+import PaymentService from "@module/payment/payment.service.ts";
 import WebHookHandler from "@module/webhook/handler/payment.handler.ts";
 import {
  EventBroker,
  EventType,
  PaystackPaymentInitializedPayload,
  PaystackPaymentVerifiedPayload,
+ PaymentFailedPayload,
  StripePaymentInitializedPayload,
  StripePaymentVerifiedPayload,
 } from "@shared/event-bus/index.ts";
+import { publishEvent } from "@shared/event-bus/publish-event.ts";
 
 EventBroker.subscribe(EventType.PAYSTACK_PAYMENT_INITIALIZED).subscribe({
  next: async ({ payload }) => {
@@ -104,6 +108,28 @@ EventBroker.subscribe(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
 
   logger.error({ err: msg }, "Error consuming Stripe payment verified event");
 
+  throw err;
+ },
+});
+
+EventBroker.subscribe(EventType.PAYMENT_FAILED).subscribe({
+ next: async ({ payload }) => {
+  await consumeOutboxEvent<PaymentFailedPayload>(
+   payload.outboxId,
+   async ({ userId, orderId, reason, paymentId }) => {
+    const [, err] = await WebHookHandler.handlePaymentFailure(paymentId);
+    if (err) throw err;
+
+    await publishEvent({
+     event_type: EventType.PAYMENT_FAILED,
+     payload: { userId, orderId, reason },
+    });
+   },
+  );
+ },
+ error: (err: unknown) => {
+  const msg = err instanceof Error ? err?.message : String(err);
+  logger.error({ err: msg }, "Error consuming payment failed event");
   throw err;
  },
 });

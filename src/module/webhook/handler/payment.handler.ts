@@ -39,7 +39,73 @@ class WebhookHandler {
    })
    .where(eq(order.id, orderId));
 
+  if (paymentRecord.status === "pending") {
+   await db
+    .update(payment)
+    .set({
+     status: "initialized",
+     updatedAt: new Date(),
+    })
+    .where(eq(payment.id, paymentRecord.id));
+  }
+
   return [paymentRecord, null];
+ }
+
+ @Transactional()
+ async handlePaymentFailure(
+  paymentId: string,
+ ): Promise<Result<TPaymentVerificationResult>> {
+  const [paymentRecord] = await db
+   .select()
+   .from(payment)
+   .where(eq(payment.id, paymentId))
+   .for("update");
+
+  if (!paymentRecord) return [null, APIError.notFound("Payment not found")];
+
+  const [orderRecord] = await db
+   .select()
+   .from(order)
+   .where(eq(order.id, paymentRecord.orderId))
+   .for("update");
+
+  if (!orderRecord) return [null, APIError.notFound("Order not found")];
+
+  if (
+   orderRecord.orderStatus === "failed" ||
+   paymentRecord.status === "failed"
+  ) {
+   return [{ payment: paymentRecord, order: orderRecord }, null];
+  }
+
+  const [updatedPayment] = await db
+   .update(payment)
+   .set({
+    status: "failed",
+    attempts: paymentRecord.attempts ?? 0 + 1,
+    updatedAt: new Date(),
+   })
+   .where(eq(payment.id, paymentRecord.id))
+   .returning();
+
+  const [updatedOrder] = await db
+   .update(order)
+   .set({
+    orderStatus: "failed",
+    paymentStatus: "failed",
+    updatedAt: new Date(),
+   })
+   .where(eq(order.id, orderRecord.id))
+   .returning();
+
+  return [
+   {
+    payment: updatedPayment,
+    order: updatedOrder,
+   },
+   null,
+  ];
  }
 
  @Transactional()
@@ -48,6 +114,7 @@ class WebhookHandler {
   paidAmount: number,
   paidAtDate: Date,
   isFailure: boolean,
+  failureReason?: string,
  ): Promise<Result<TPaymentVerificationResult>> {
   const [paymentRecord] = await db
    .select()
@@ -62,27 +129,16 @@ class WebhookHandler {
   }
 
   if (isFailure) {
-   const [updatedPayment] = await db
-    .update(payment)
-    .set({
-     status: "failed",
-     updatedAt: new Date(),
-     attempts: 1,
-    })
-    .where(eq(payment.id, paymentRecord.id))
-    .returning();
-
-   const [updatedOrder] = await db
-    .update(order)
-    .set({
-     orderStatus: "failed",
-     paymentStatus: "failed",
-     updatedAt: new Date(),
-    })
-    .where(eq(order.id, paymentRecord.orderId))
-    .returning();
-
-   return [{ payment: updatedPayment, order: updatedOrder }, null];
+   await publishEvent({
+    event_type: EventType.PAYMENT_FAILED,
+    userId: paymentRecord.userId,
+    payload: {
+     userId: paymentRecord.userId,
+     orderId: paymentRecord.orderId,
+     paymentId: paymentRecord.id,
+     reason: failureReason,
+    },
+   });
   }
 
   const recordedAmount = Number(paymentRecord.amount) / Env.SCALER;
@@ -135,7 +191,15 @@ class WebhookHandler {
   if (!reference)
    return [null, APIError.badRequest("Missing payment reference")];
 
-  return await this.verifyPayment(reference, paidAmount, paidAtDate, isFailure);
+  return await this.verifyPayment(
+   reference,
+   paidAmount,
+   paidAtDate,
+   isFailure,
+   isFailure
+    ? (event.data?.gateway_response ?? "Third-party payment failed")
+    : undefined,
+  );
  }
 
  async handleStripePaymentVerified(
@@ -149,7 +213,13 @@ class WebhookHandler {
    : new Date();
   const isFailure = eventType === "checkout.session.expired";
 
-  return await this.verifyPayment(reference, paidAmount, paidAtDate, isFailure);
+  return await this.verifyPayment(
+   reference,
+   paidAmount,
+   paidAtDate,
+   isFailure,
+   isFailure ? "Checkout session expired" : undefined,
+  );
  }
 }
 

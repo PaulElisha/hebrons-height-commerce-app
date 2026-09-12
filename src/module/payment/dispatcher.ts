@@ -15,6 +15,7 @@ import z from "zod";
 
 import { CheckoutData, PaymentCheckoutResult } from "./payment.service.ts";
 import Stripe from "stripe";
+import logger from "@app/logger.ts";
 
 type Rail = z.infer<typeof CheckoutData>["rail"];
 
@@ -62,12 +63,11 @@ export const FetchRail: Record<Rail, RailHandler> = {
    });
 
    if (!response.ok) {
-    const errBody = await response.json().catch(() => ({}));
-
-    return [
-     null,
-     APIError.badRequest(errBody.message || "Paystack Payment failed"),
-    ];
+    const errBody = await response.json().catch((e: Error) => {
+     logger.error({ err: String(e.message) }, "[...Paystack error body]");
+     return { message: String(e.message) };
+    });
+    return [null, APIError.badRequest(errBody.message)];
    }
 
    const responseData = await response.json();

@@ -9,7 +9,9 @@ import {
  OrderCancelledPayload,
  OrderPlacedPayload,
  OrderStatusUpdatedPayload,
+ PaymentFailedPayload,
  PaymentFulfilledPayload,
+ PaymentInitializedPayload,
 } from "@shared/event-bus/index.ts";
 
 import NotificationService from "./notification.service.ts";
@@ -147,6 +149,42 @@ EventBroker.subscribe(EventType.PAYMENT_FULFILLED).subscribe({
      updatedOrder.userId,
      "Payment Successful",
      `Payment received — order #${updatedOrder.id.slice(0, 8)} is now fulfilled`,
+     "order_update",
+    );
+   },
+  );
+ },
+});
+
+EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
+ next: async ({ payload }) => {
+  await consumeOutboxEvent<PaymentInitializedPayload>(
+   payload.outboxId,
+   async ({ userId, orderId }) => {
+    if (!userId) return;
+
+    await NotificationService.createNotification(
+     userId,
+     "Payment Initialized",
+     `Your payment for order #${orderId.slice(0, 8)} has been initialized`,
+     "order_update",
+    );
+   },
+  );
+ },
+});
+
+EventBroker.subscribe(EventType.PAYMENT_FAILED).subscribe({
+ next: async ({ payload }) => {
+  await consumeOutboxEvent<PaymentFailedPayload>(
+   payload.outboxId,
+   async ({ userId, orderId, reason }) => {
+    if (!userId) return;
+
+    await NotificationService.createNotification(
+     userId,
+     "Payment Failed",
+     `Third-party payment for order #${orderId.slice(0, 8)} failed — ${reason}`,
      "order_update",
     );
    },

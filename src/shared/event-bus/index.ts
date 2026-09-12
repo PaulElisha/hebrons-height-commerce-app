@@ -12,7 +12,9 @@ export type {
  PaystackChargeEvent,
  PaystackPaymentInitializedPayload,
  PaystackPaymentVerifiedPayload,
+ PaymentFailedPayload,
  PaymentFulfilledPayload,
+ PaymentInitializedPayload,
  StripePaymentInitializedPayload,
  StripePaymentVerifiedPayload,
 } from "./types.ts";
