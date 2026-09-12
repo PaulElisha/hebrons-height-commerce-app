@@ -3004,7 +3004,7 @@ const spec = {
         tags: ["Notification"],
         summary: "SSE stream for real-time events",
         description:
-          "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the `userId` is present both on the event envelope (used for routing) and inside the delivered JSON payload. Every delivered payload also includes an `outboxId` that correlates to the underlying outbox row. Raw provider webhook events without a top-level `userId` (e.g. `payment.paystack.checkout.verified`) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. The `inventory.low_stock` event is published from the inventory service WITH a top-level `userId` (the merchant's user ID), so it IS streamed to the merchant. The `PAYMENT_FULFILLED` and `payment.failed` events are published from the payment verification handler, and `payment.initialized` from the payment initialization handler — all WITH a top-level `userId`, so they ARE streamed to the user. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
+          "Server-Sent Events stream. Connect with the auth session cookie or Bearer token, then listen for the named event types below via EventSource.addEventListener(eventName, cb). Each message body is the JSON payload for that event. A `: ping` comment heartbeat is sent every 30 seconds to keep the connection alive. Only events published with a top-level `userId` are delivered to that user's stream — the `userId` is present both on the event envelope (used for routing) and inside the delivered JSON payload. Every delivered payload also includes an `outboxId` that correlates to the underlying outbox row. Raw provider webhook events without a top-level `userId` (e.g. `payment.paystack.checkout.verified`) are NOT streamed — they are persisted as database notifications instead and fetched via `GET /api/notification`. The `inventory.low_stock` event is published from the inventory service WITH a top-level `userId` (the merchant's user ID), so it IS streamed to the merchant. The `PAYMENT_FULFILLED` and `payment.failed` events are published from the payment verification handler, while `payment.initialized` and the `order.status.updated` event for the `processing` transition are published from the payment initialization handler — all WITH a top-level `userId` and only after the surrounding DB transaction commits, so they ARE streamed to the user. See the `x-sse-events` extension below for the full list of deliverable event names and payload shapes.",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": {
@@ -3068,10 +3068,16 @@ const spec = {
           {
             event: "order.status.updated",
             description:
-              "An order's status changed (e.g. out_for_delivery, delivered).",
+              "An order's status changed (e.g. out_for_delivery, delivered, or processing when a payment is initialized). When published from the payment initialization handler, the order transitions to processing and the consumer creates a 'Your order is now processing' notification.",
             data: {
               type: "object",
-              required: ["userId", "orderId", "status", "outboxId"],
+              required: [
+                "userId",
+                "orderId",
+                "status",
+                "merchantUserIds",
+                "outboxId",
+              ],
               properties: {
                 userId: { type: "string" },
                 orderId: { type: "string" },
@@ -3085,6 +3091,12 @@ const spec = {
               "out_for_delivery",
               "delivered",
             ],
+                },
+                merchantUserIds: {
+                  type: "array",
+                  items: { type: "string" },
+                  description:
+                    "Merchant users to also notify — empty for the payment-initialized processing transition",
                 },
                 message: {
                   type: "string",
@@ -3228,7 +3240,7 @@ const spec = {
           {
             event: "PAYMENT_FULFILLED",
             description:
-              "A payment was fulfilled (published from the payment verification handler) — the order is marked paid and fulfilled.",
+              "A payment was fulfilled (published from the payment verification handler once the transaction commits) — the order is marked paid and fulfilled.",
             data: {
               type: "object",
               required: [
@@ -3273,7 +3285,7 @@ const spec = {
           {
             event: "payment.failed",
             description:
-              "A third-party payment failed (published from the payment verification handler) — a consumer marks the payment and order as failed and creates a notification with the failure reason.",
+              "A third-party payment failed (published from the payment verification handler once the transaction commits) — a consumer marks the payment and order as failed and creates a notification with the failure reason.",
             data: {
               type: "object",
               required: ["userId", "paymentId", "orderId", "reason", "outboxId"],
@@ -3292,7 +3304,7 @@ const spec = {
           {
             event: "payment.initialized",
             description:
-              "A checkout was initialized (published from the payment initialization handler) — the payment is marked initialized and a consumer creates a 'Payment Initialized' notification.",
+              "A checkout was initialized — published from the handlePaymentInitialized webhook handler (on transaction commit) for both Paystack and Stripe initializations; the payment is marked initialized and a consumer creates a 'Payment Initialized' notification.",
             data: {
               type: "object",
               required: ["userId", "orderId", "outboxId"],
