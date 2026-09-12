@@ -63,6 +63,9 @@ export const product = pgTable(
   index("product_listing_idx")
    .on(table.status, table.createdAt)
    .where(sql`${table.deletedAt} IS NULL`),
+  index("product_status_category_idx")
+   .on(table.status, table.category)
+   .where(sql`${table.deletedAt} IS NULL`),
   index("product_search_idx").using(
    "gin",
    table.name.op("gin_trgm_ops"),

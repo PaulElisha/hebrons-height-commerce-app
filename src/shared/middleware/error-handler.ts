@@ -37,8 +37,8 @@ const errorHandler = (
  }
 
  return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  message: "Unknown error",
-  error: "Unknown error occurred",
+  message: "Internal Server error",
+  error: "Unknown error",
   status: "error",
  });
 };

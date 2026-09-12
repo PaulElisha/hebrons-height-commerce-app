@@ -76,5 +76,6 @@ export const payment = pgTable(
   ),
   index("payment_reference_idx").on(table.paymentReference),
   index("payment_user_idx").on(table.userId),
+  index("payment_status_created_idx").on(table.status, table.createdAt),
  ],
 );
