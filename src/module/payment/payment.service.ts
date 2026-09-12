@@ -114,7 +114,8 @@ class PaymentService {
      accessCode: paymentData.access_code,
      authorizationUrl: paymentData.checkout_url,
      status:
-      existingPayment.status === "failed" ? "pending" : existingPayment.status,
+      existingPayment.status !== "failed" ? existingPayment.status : "pending",
+     attempts: (existingPayment.attempts ?? 0) + 1,
      updatedAt: new Date(),
     })
     .where(eq(payment.id, existingPayment.id))

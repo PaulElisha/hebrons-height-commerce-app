@@ -11,7 +11,7 @@ import { EventType, PaystackChargeEvent } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
-import { Transactional } from "drizzle-transactional";
+import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import Env from "@/env.ts";
 import Stripe from "stripe";
 import z from "zod";
@@ -49,6 +49,25 @@ class WebhookHandler {
     .where(eq(payment.id, paymentRecord.id));
   }
 
+  runOnTransactionCommit(() => {
+   publishEvent({
+    event_type: EventType.PAYMENT_INITIALIZED,
+    userId,
+    payload: { userId, orderId },
+   });
+
+   publishEvent({
+    event_type: EventType.ORDER_STATUS_UPDATED,
+    userId,
+    payload: {
+     userId,
+     orderId,
+     status: "processing",
+     merchantUserIds: [],
+    },
+   });
+  });
+
   return [paymentRecord, null];
  }
 
@@ -83,7 +102,6 @@ class WebhookHandler {
    .update(payment)
    .set({
     status: "failed",
-    attempts: paymentRecord.attempts ?? 0 + 1,
     updatedAt: new Date(),
    })
    .where(eq(payment.id, paymentRecord.id))
@@ -129,15 +147,17 @@ class WebhookHandler {
   }
 
   if (isFailure) {
-   await publishEvent({
-    event_type: EventType.PAYMENT_FAILED,
-    userId: paymentRecord.userId,
-    payload: {
+   runOnTransactionCommit(() => {
+    publishEvent({
+     event_type: EventType.PAYMENT_FAILED,
      userId: paymentRecord.userId,
-     orderId: paymentRecord.orderId,
-     paymentId: paymentRecord.id,
-     reason: failureReason,
-    },
+     payload: {
+      userId: paymentRecord.userId,
+      orderId: paymentRecord.orderId,
+      paymentId: paymentRecord.id,
+      reason: failureReason,
+     },
+    });
    });
   }
 
@@ -166,13 +186,15 @@ class WebhookHandler {
    .where(eq(order.id, paymentRecord.orderId))
    .returning();
 
-  await publishEvent({
-   event_type: EventType.PAYMENT_FULFILLED,
-   userId: updatedOrder.userId,
-   payload: {
-    updatedPayment,
-    updatedOrder,
-   },
+  runOnTransactionCommit(() => {
+   publishEvent({
+    event_type: EventType.PAYMENT_FULFILLED,
+    userId: updatedOrder.userId,
+    payload: {
+     updatedPayment,
+     updatedOrder,
+    },
+   });
   });
 
   return [{ payment: updatedPayment, order: updatedOrder }, null];
