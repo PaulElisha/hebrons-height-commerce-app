@@ -26,5 +26,8 @@ export const outbox = pgTable(
   index("outbox_unprocessed_idx")
    .on(t.processedAt)
    .where(sql`${t.processedAt} IS NULL`),
+  index("outbox_unprocessed_created_idx")
+   .on(t.createdAt)
+   .where(sql`${t.processedAt} IS NULL`),
  ],
 );

@@ -98,6 +98,7 @@ export const order = pgTable(
    )})`,
   ),
   index("order_user_status_idx").on(table.userId, table.orderStatus),
+  index("order_user_created_idx").on(table.userId, table.createdAt),
   index("order_cart_idx").on(table.cartId),
   index("order_status_created_idx").on(table.orderStatus, table.createdAt),
  ],

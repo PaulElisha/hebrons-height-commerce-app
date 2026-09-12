@@ -44,5 +44,8 @@ export const merchant = pgTable(
    )})`,
   ),
   index("merchant_approval_status_idx").on(table.approvalStatus),
+  index("merchant_active_created_idx")
+   .on(table.approvalStatus, table.createdAt)
+   .where(sql`${table.deletedAt} IS NULL`),
  ],
 );
