@@ -13,9 +13,11 @@ import FA from "fasy";
 export const MAX_OUTBOX_ATTEMPTS = 5;
 
 export const consumeOutboxEvent = async <T = Record<string, unknown>>(
- outboxId: string,
+ outboxId: string | undefined,
  cb: (payload: T) => Promise<void>,
 ) => {
+ if (!outboxId) return logger.info("Missing outbox id");
+
  const [outboxEvent, e] = await OutboxService.fetchById(outboxId);
 
  if (e || !outboxEvent) return logger.info("Event already processed");
@@ -45,9 +47,7 @@ class OutboxService {
    .insert(outbox)
    .values({
     eventType: event.event_type,
-    payload: event.userId
-     ? { ...(event.payload as Record<string, unknown>), userId: event.userId }
-     : { ...(event.payload as Record<string, unknown>) },
+    payload: event.payload,
    })
    .returning();
   return row;

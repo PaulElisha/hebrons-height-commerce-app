@@ -173,8 +173,8 @@ class OrderService {
   runOnTransactionCommit(() => {
    publishEvent({
     event_type: EventType.ORDER_PLACED,
-    userId,
     payload: {
+     userId,
      cartId,
      orderId: result?.orderId,
      productIds: result?.productIds,
@@ -428,8 +428,8 @@ class OrderService {
   runOnTransactionCommit(() => {
    publishEvent({
     event_type: EventType.ORDER_CANCELLED,
-    userId: cancelledOrder.userId,
     payload: {
+     userId: cancelledOrder.userId,
      productIds,
      orderId: cancelledOrder.id,
     },

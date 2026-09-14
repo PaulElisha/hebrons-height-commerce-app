@@ -8,20 +8,17 @@ import { EventType } from "./config.ts";
 
 export interface EventContract {
  event_type: string;
- userId?: string;
- payload: Record<string, unknown>;
+ payload: Record<string, unknown> & { userId?: string; outboxId?: string };
 }
-
-export type OutboxEventContract = EventContract & {
- payload: Record<string, unknown> & { outboxId: string };
-};
 
 export interface IEventBroker<EventContract> {
  publish(event: EventContract): void;
  subscribe(
   event: (typeof EventType)[keyof typeof EventType],
  ): Observable<EventContract>;
- listen(): Observable<EventContract>;
+ listen(
+  eventTypes?: (typeof EventType)[keyof typeof EventType][],
+ ): Observable<EventContract>;
 }
 
 export interface OrderPlacedPayload {

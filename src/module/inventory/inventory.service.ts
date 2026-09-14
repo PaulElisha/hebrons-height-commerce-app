@@ -90,8 +90,8 @@ class InventoryService {
    await FA.concurrent.map(async ({ name, quantity, userId }: any) => {
     await publishEvent({
      event_type: EventType.USERCART_LOW_STOCK_ALERT,
-     userId,
      payload: {
+      userId,
       productId,
       productName: name,
       quantity: quantity,
@@ -131,12 +131,11 @@ class InventoryService {
 
    await publishEvent({
     event_type: EventType.MERCHANT_LOW_STOCK_ALERT,
-    userId: current.userId,
     payload: {
+     userId,
      productId,
      productName: name,
      quantity,
-     userId,
     },
    });
 

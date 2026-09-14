@@ -95,8 +95,8 @@ class NotificationController {
   });
 
   const subscription = notificationBroker.subscribe(userId).subscribe({
-   next: ({ data, eventType }) => {
-    session.push(data, eventType);
+   next: ({ data, event_type }) => {
+    session.push(data, event_type);
    },
    error: (err: Error) => {
     const msg = err.message;

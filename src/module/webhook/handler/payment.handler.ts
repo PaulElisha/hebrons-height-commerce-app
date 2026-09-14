@@ -4,7 +4,7 @@ import db from "@db/db.ts";
 import PaymentService, {
  PaymentData,
 } from "@module/payment/payment.service.ts";
-import { order } from "@db/schema/order.ts";
+import { order, orderItem } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventType, PaystackChargeEvent } from "@shared/event-bus/index.ts";
@@ -15,6 +15,7 @@ import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import Env from "@/env.ts";
 import Stripe from "stripe";
 import z from "zod";
+import { getUserfromMerchantId } from "@shared/helper.ts";
 
 class WebhookHandler {
  @Transactional()
@@ -49,21 +50,32 @@ class WebhookHandler {
     .where(eq(payment.id, paymentRecord.id));
   }
 
+  const result = await db
+   .select()
+   .from(orderItem)
+   .where(eq(orderItem.orderId, orderId));
+
+  const merchantIds = result
+   .filter((r) => r.merchantId)
+   .map((r) => r.merchantId);
+
+  const merchantUserIds = (await getUserfromMerchantId(merchantIds))
+   .filter((r) => r.user.id === r.merchant?.userId)
+   .map((r) => r.user.id);
+
   runOnTransactionCommit(() => {
    publishEvent({
     event_type: EventType.PAYMENT_INITIALIZED,
-    userId,
     payload: { userId, orderId },
    });
 
    publishEvent({
     event_type: EventType.ORDER_STATUS_UPDATED,
-    userId,
     payload: {
      userId,
      orderId,
      status: "processing",
-     merchantUserIds: [],
+     merchantUserIds,
     },
    });
   });
@@ -150,7 +162,6 @@ class WebhookHandler {
    runOnTransactionCommit(() => {
     publishEvent({
      event_type: EventType.PAYMENT_FAILED,
-     userId: paymentRecord.userId,
      payload: {
       userId: paymentRecord.userId,
       orderId: paymentRecord.orderId,
@@ -189,8 +200,8 @@ class WebhookHandler {
   runOnTransactionCommit(() => {
    publishEvent({
     event_type: EventType.PAYMENT_FULFILLED,
-    userId: updatedOrder.userId,
     payload: {
+     userId: updatedOrder.userId,
      updatedPayment,
      updatedOrder,
     },
