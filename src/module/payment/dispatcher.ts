@@ -87,8 +87,8 @@ export const FetchRail: Record<Rail, RailHandler> = {
    if (responseData?.data)
     await publishEvent({
      event_type: EventType.PAYSTACK_PAYMENT_INITIALIZED,
-     userId,
      payload: {
+      userId,
       paystackData: res,
       orderId,
      },
@@ -155,8 +155,8 @@ export const FetchRail: Record<Rail, RailHandler> = {
 
      await publishEvent({
       event_type: EventType.STRIPE_PAYMENT_INITIALIZED,
-      userId,
       payload: {
+       userId,
        stripeData: res,
        orderId,
       },

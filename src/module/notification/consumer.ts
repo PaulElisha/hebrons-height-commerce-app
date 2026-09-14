@@ -18,17 +18,30 @@ import NotificationService from "./notification.service.ts";
 import { notificationBroker } from "./broker.ts";
 import FA from "fasy";
 
-export function connectToUserEvents() {
- EventBroker.listen().subscribe({
+const NOTIFICATION_EVENTS = [
+ EventType.ORDER_PLACED,
+ EventType.ORDER_ACCEPTED,
+ EventType.ORDER_REJECTED,
+ EventType.ORDER_CANCELLED,
+ EventType.ORDER_STATUS_UPDATED,
+ EventType.MERCHANT_LOW_STOCK_ALERT,
+ EventType.USERCART_LOW_STOCK_ALERT,
+ EventType.PAYMENT_FULFILLED,
+ EventType.PAYMENT_INITIALIZED,
+ EventType.PAYMENT_FAILED,
+];
+
+export function connectUserToNotification() {
+ EventBroker.listen(NOTIFICATION_EVENTS).subscribe({
   next: ({ payload, event_type }) => {
-   const userId = payload.userId as string | undefined;
+   const userId = payload?.userId;
    if (!userId) return;
 
    if (payload.merchantUserIds && Array.isArray(payload.merchantUserIds)) {
     const merchantUserIds: string[] = payload.merchantUserIds;
 
-    if (merchantUserIds.length > 0) {
-     const { merchantUserIds: _, ...restPayload } = payload;
+    if (merchantUserIds.length) {
+     const { merchantUserIds, ...restPayload } = payload;
 
      merchantUserIds.forEach((uid) =>
       notificationBroker.publish(uid, restPayload, event_type),
