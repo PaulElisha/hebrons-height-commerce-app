@@ -40,8 +40,7 @@ export class Broker implements IEventBroker<EventContract> {
   return this.eventTopic$.asObservable().pipe(
    filter(
     (update) =>
-     !eventTypes ||
-     eventTypes.includes(update.event_type as EventType),
+     !eventTypes || eventTypes.includes(update.event_type as EventType),
    ),
    map(
     (update): EventContract => ({

@@ -1,17 +1,17 @@
 /** @format */
 import logger from "@app/logger.ts";
 import NotificationService from "@module/notification/notification.service.ts";
-import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
+import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 import PaymentService from "@module/payment/payment.service.ts";
-import WebHookHandler from "@module/webhook/handler/payment.handler.ts";
+import WebHookHandler from "@module/webhook/payment/payment.handler.ts";
 import {
  EventBroker,
  EventType,
- PaystackPaymentInitializedPayload,
  PaystackPaymentVerifiedPayload,
  PaymentFailedPayload,
  StripePaymentInitializedPayload,
  StripePaymentVerifiedPayload,
+ PaystackPaymentInitializedPayload,
 } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 
@@ -47,7 +47,10 @@ EventBroker.subscribe(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
   await consumeOutboxEvent<PaystackPaymentVerifiedPayload>(
    payload.outboxId,
    async ({ event, orderId }) => {
-    const [, err] = await WebHookHandler.handlePaystackPaymentVerified(event);
+    const [, err] = await WebHookHandler.handlePaystackPaymentVerified(
+     event,
+     orderId,
+    );
     if (err) throw err;
     logger.info({}, "[...Paystack verification completed]");
    },
@@ -93,10 +96,10 @@ EventBroker.subscribe(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<StripePaymentVerifiedPayload>(
    payload.outboxId,
-   async ({ event: session, eventType }) => {
+   async ({ event, orderId }) => {
     const [, err] = await WebHookHandler.handleStripePaymentVerified(
-     session,
-     eventType,
+     event,
+     orderId,
     );
     if (err) throw err;
     logger.info({}, "[...Stripe verification completed]");
@@ -119,11 +122,6 @@ EventBroker.subscribe(EventType.PAYMENT_FAILED).subscribe({
    async ({ userId, orderId, reason, paymentId }) => {
     const [, err] = await WebHookHandler.handlePaymentFailure(paymentId);
     if (err) throw err;
-
-    await publishEvent({
-     event_type: EventType.PAYMENT_FAILED,
-     payload: { userId, orderId, reason },
-    });
    },
   );
  },

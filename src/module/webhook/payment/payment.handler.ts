@@ -10,7 +10,7 @@ import * as APIError from "@shared/error/APIError.ts";
 import { EventType, PaystackChargeEvent } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import Env from "@/env.ts";
 import Stripe from "stripe";
@@ -140,11 +140,10 @@ class WebhookHandler {
 
  @Transactional()
  async verifyPayment(
+  orderId: string,
   reference: string,
   paidAmount: number,
   paidAtDate: Date,
-  isFailure: boolean,
-  failureReason?: string,
  ): Promise<Result<TPaymentVerificationResult>> {
   const [paymentRecord] = await db
    .select()
@@ -154,22 +153,14 @@ class WebhookHandler {
 
   if (!paymentRecord) return [null, APIError.notFound("Payment not found")];
 
+  if (paymentRecord.orderId !== orderId)
+   return [
+    null,
+    APIError.badRequest("[Invalid Payment]: Payment is not for order"),
+   ];
+
   if (paymentRecord.status === "paid" || paymentRecord.status === "failed") {
    return [{ payment: paymentRecord }, null];
-  }
-
-  if (isFailure) {
-   runOnTransactionCommit(() => {
-    publishEvent({
-     event_type: EventType.PAYMENT_FAILED,
-     payload: {
-      userId: paymentRecord.userId,
-      orderId: paymentRecord.orderId,
-      paymentId: paymentRecord.id,
-      reason: failureReason,
-     },
-    });
-   });
   }
 
   const recordedAmount = Number(paymentRecord.amount) / Env.SCALER;
@@ -184,7 +175,12 @@ class WebhookHandler {
     paidAt: paidAtDate,
     updatedAt: new Date(),
    })
-   .where(eq(payment.orderId, paymentRecord.orderId))
+   .where(
+    and(
+     eq(payment.orderId, paymentRecord.orderId),
+     eq(payment.status, "initialized"),
+    ),
+   )
    .returning();
 
   const [updatedOrder] = await db
@@ -194,7 +190,12 @@ class WebhookHandler {
     orderStatus: "fulfilled",
     updatedAt: new Date(),
    })
-   .where(eq(order.id, paymentRecord.orderId))
+   .where(
+    and(
+     eq(order.id, paymentRecord.orderId),
+     eq(order.orderStatus, "processing"),
+    ),
+   )
    .returning();
 
   runOnTransactionCommit(() => {
@@ -213,46 +214,32 @@ class WebhookHandler {
 
  async handlePaystackPaymentVerified(
   event: PaystackChargeEvent,
+  orderId: string,
  ): Promise<Result<TPaymentVerificationResult>> {
   const reference = event.data?.reference;
-  const paidAmount = Number(event.data?.amount) / Env.SCALER;
-  const paidAtDate = event.data?.paid_at
-   ? new Date(event.data.paid_at)
-   : new Date();
-  const isFailure = event.event === "charge.failed";
 
   if (!reference)
    return [null, APIError.badRequest("Missing payment reference")];
 
-  return await this.verifyPayment(
-   reference,
-   paidAmount,
-   paidAtDate,
-   isFailure,
-   isFailure
-    ? (event.data?.gateway_response ?? "Third-party payment failed")
-    : undefined,
-  );
+  const paidAmount = Number(event.data?.amount) / Env.SCALER;
+  const paidAtDate = event.data?.paid_at
+   ? new Date(event.data.paid_at)
+   : new Date();
+
+  return await this.verifyPayment(orderId, reference, paidAmount, paidAtDate);
  }
 
  async handleStripePaymentVerified(
   session: Stripe.Checkout.Session,
-  eventType: string,
+  orderId: string,
  ): Promise<Result<TPaymentVerificationResult>> {
   const reference = session.id;
   const paidAmount = Number(session.amount_total) / Env.SCALER;
   const paidAtDate = session.created
    ? new Date(session.created * 1000)
    : new Date();
-  const isFailure = eventType === "checkout.session.expired";
 
-  return await this.verifyPayment(
-   reference,
-   paidAmount,
-   paidAtDate,
-   isFailure,
-   isFailure ? "Checkout session expired" : undefined,
-  );
+  return await this.verifyPayment(orderId, reference, paidAmount, paidAtDate);
  }
 }
 

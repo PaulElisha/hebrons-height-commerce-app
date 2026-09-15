@@ -74,13 +74,13 @@ export interface PaystackChargeEvent {
 }
 
 export interface PaystackPaymentVerifiedPayload {
- orderId?: string;
+ orderId: string;
  event: PaystackChargeEvent;
 }
 
 export interface StripePaymentVerifiedPayload {
+ orderId: string;
  event: Stripe.Checkout.Session;
- eventType: string;
 }
 
 export interface PaymentFulfilledPayload {

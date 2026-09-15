@@ -4,7 +4,7 @@ import "@module/email/consumer.ts";
 import "@module/inventory/consumer.ts";
 import "@module/merchant/consumer.ts";
 import "@module/notification/consumer.ts";
-import "@module/payment/consumer.ts";
+import "@module/webhook/payment/consumer.ts";
 
 import cors from "@app/cors.ts";
 import helmet from "@app/helmet.ts";
@@ -41,9 +41,9 @@ import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
 import OutboxService from "@module/outbox/outbox.service.ts";
-import { connectUserToNotification } from "@module/notification/consumer.ts";
+import { listenToNotificationEvents } from "@module/notification/consumer.ts";
 
-connectUserToNotification();
+listenToNotificationEvents();
 initializeDrizzleTransactionalContext();
 addTransactionalDrizzleDatabase(db as any);
 
