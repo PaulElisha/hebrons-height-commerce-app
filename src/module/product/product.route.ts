@@ -7,7 +7,6 @@ import { Router } from "express";
 import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 import ProductController, { ProductParams } from "./product.controller.ts";
 import { CreateProductDto, UpdateProductDto } from "./product.service.ts";
-import { checkMerchantStatus } from "@shared/middleware/check-status.ts";
 import { PaginationSchema } from "@shared/types.ts";
 
 class ProductRouter {
@@ -53,23 +52,21 @@ class ProductRouter {
    validate(MerchantParams, "params"),
    ProductController.getProductForMerchant,
   );
-  this.router.post(
-   "/",
-   authenticate,
-   roleGuard("merchant"),
-   // checkMerchantStatus("approved"),
-   validate(CreateProductDto),
-   ProductController.createProduct,
-  );
-  this.router.put(
-   "/:productId",
-   authenticate,
-   roleGuard("merchant"),
-   // checkMerchantStatus("approved"),
-   validate(UpdateProductDto),
-   validate(ProductParams, "params"),
-   ProductController.updateProduct,
-  );
+this.router.post(
+    "/",
+    authenticate,
+    roleGuard("merchant"),
+    validate(CreateProductDto),
+    ProductController.createProduct,
+   );
+   this.router.put(
+    "/:productId",
+    authenticate,
+    roleGuard("merchant"),
+    validate(UpdateProductDto),
+    validate(ProductParams, "params"),
+    ProductController.updateProduct,
+   );
   this.router.delete(
    "/:productId",
    authenticate,

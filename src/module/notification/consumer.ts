@@ -15,43 +15,7 @@ import {
 } from "@shared/event-bus/index.ts";
 
 import NotificationService from "./notification.service.ts";
-import { notificationBroker } from "./broker.ts";
 import FA from "fasy";
-
-const NOTIFICATION_EVENTS = [
- EventType.ORDER_PLACED,
- EventType.ORDER_CANCELLED,
- EventType.ORDER_STATUS_UPDATED,
- EventType.MERCHANT_LOW_STOCK_ALERT,
- EventType.USERCART_LOW_STOCK_ALERT,
- EventType.PAYMENT_FULFILLED,
- EventType.PAYMENT_INITIALIZED,
- EventType.PAYMENT_FAILED,
-];
-
-export function listenToNotificationEvents() {
- EventBroker.listen(NOTIFICATION_EVENTS).subscribe({
-  next: ({ payload, event_type }) => {
-   const userId = payload?.userId;
-   if (!userId) return;
-
-   if (payload.merchantUserIds && Array.isArray(payload.merchantUserIds)) {
-    const merchantUserIds: string[] = payload.merchantUserIds;
-
-    if (merchantUserIds.length) {
-     const { merchantUserIds, ...restPayload } = payload;
-
-     merchantUserIds.forEach((uid) =>
-      notificationBroker.publish(uid, restPayload, event_type),
-     );
-    }
-   }
-
-   const { merchantUserIds: _, ...ownerPayload } = payload;
-   notificationBroker.publish(userId, ownerPayload, event_type);
-  },
- });
-}
 
 EventBroker.subscribe(EventType.ORDER_STATUS_UPDATED).subscribe({
  next: async ({ payload }) => {
@@ -160,7 +124,7 @@ EventBroker.subscribe(EventType.PAYMENT_FULFILLED).subscribe({
      updatedOrder.userId,
      "Payment Successful",
      `Payment received — order #${updatedOrder.id.slice(0, 8)} is now fulfilled`,
-     "order_update",
+     "payment_update",
     );
    },
   );
@@ -178,7 +142,7 @@ EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
      userId,
      "Payment Initialized",
      `Your payment for order #${orderId.slice(0, 8)} has been initialized`,
-     "order_update",
+     "payment_update",
     );
    },
   );
@@ -196,7 +160,7 @@ EventBroker.subscribe(EventType.PAYMENT_FAILED).subscribe({
      userId,
      "Payment Failed",
      `Third-party payment for order #${orderId.slice(0, 8)} failed — ${reason}`,
-     "order_update",
+     "payment_update",
     );
    },
   );

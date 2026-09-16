@@ -10,7 +10,7 @@ import z from "zod";
 
 import PaymentService, {
  CheckoutData,
- PaymentCheckoutResult,
+ PaymentResponseData,
  PaystackVerifiedData,
  VerifyPaymentParams,
 } from "./payment.service.ts";
@@ -19,7 +19,7 @@ class PaymentController {
  initialize = asyncHandler(
   async (
    req: Request<z.infer<typeof OrderParams>, {}, z.infer<typeof CheckoutData>>,
-   res: Response<APIResponse<PaymentCheckoutResult>>,
+   res: Response<APIResponse<PaymentResponseData>>,
    next: NextFunction,
   ) => {
    const userId = req.user.id;

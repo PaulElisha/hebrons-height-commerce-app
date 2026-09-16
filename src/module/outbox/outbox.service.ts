@@ -3,7 +3,6 @@
 import logger from "@app/logger.ts";
 import db from "@db/db.ts";
 import { outbox } from "@db/schema/outbox.ts";
-import AppError from "@shared/error/app-error.ts";
 import { EventBroker } from "@shared/event-bus/index.ts";
 import type { EventContract } from "@shared/event-bus/types.ts";
 import { Result } from "@shared/types.ts";

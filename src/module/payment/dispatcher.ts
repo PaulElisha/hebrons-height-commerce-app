@@ -7,7 +7,6 @@ import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import WebHookHandler from "@module/webhook/payment/payment.handler.ts";
 import { Result, TOrderItems } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import Env from "@/env.ts";

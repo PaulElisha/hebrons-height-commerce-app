@@ -519,7 +519,7 @@ const spec = {
           message: { type: "string" },
           type: {
             type: "string",
-            enum: ["order_update", "stock_alert", "system"],
+            enum: ["order_update", "stock_alert", "system", "payment_update"],
           },
         },
       },
@@ -883,7 +883,7 @@ const spec = {
           message: { type: "string" },
           type: {
             type: "string",
-            enum: ["order_update", "stock_alert", "system"],
+            enum: ["order_update", "stock_alert", "system", "payment_update"],
           },
           read: { type: "string", enum: ["read", "unread"] },
           createdAt: { type: "string", format: "date-time" },

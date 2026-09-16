@@ -1,7 +1,7 @@
 /** @format */
 import db from "@db/db.ts";
 import OrderService from "@module/order/order.service.ts";
-import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
+import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 import { user } from "@db/schema/auth.ts";
 import { merchant } from "@db/schema/merchant.ts";
 import {

@@ -5,6 +5,8 @@ import { notification, NotificationType } from "@db/schema/notification.ts";
 import { Result, TNotification } from "@shared/types.ts";
 import { and, count, desc, eq } from "drizzle-orm";
 
+import { notificationBroker } from "./broker.ts";
+
 class NotificationService {
  getUserNotifications = async (
   userId: string,
@@ -81,6 +83,10 @@ class NotificationService {
     .insert(notification)
     .values({ userId, title, message, type })
     .returning();
+
+   if (created) {
+    notificationBroker.publish(created.userId, created, created.type);
+   }
 
    return [created, null];
   } catch (err) {

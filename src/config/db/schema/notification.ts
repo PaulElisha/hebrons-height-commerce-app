@@ -4,10 +4,11 @@ import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.ts";
 
-export const notificationTypes: readonly [string, string, string] = [
+export const notificationTypes: readonly [string, string, string, string] = [
  "order_update",
  "stock_alert",
  "system",
+ "payment_update",
 ] as const;
 export type NotificationType = (typeof notificationTypes)[number];
 
