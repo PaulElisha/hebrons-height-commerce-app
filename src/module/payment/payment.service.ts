@@ -8,7 +8,6 @@ import * as APIError from "@shared/error/APIError.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
-import Stripe from "stripe";
 import z from "zod";
 
 import { FetchRail } from "./dispatcher.ts";

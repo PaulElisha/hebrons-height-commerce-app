@@ -6,7 +6,6 @@ import HttpStatus from "@shared/enum/http.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import PaymentService from "@module/payment/payment.service.ts";
 import Env from "@/env.ts";
 import { Request, Response } from "express";
 import Stripe from "stripe";

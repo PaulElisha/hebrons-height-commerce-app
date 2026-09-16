@@ -16,6 +16,7 @@ import {
 } from "@shared/helper.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
+import { notificationBroker } from "@module/notification/broker.ts";
 import { ORDER_STATUSES } from "@shared/types.ts";
 import {
  Pagination,
@@ -79,7 +80,7 @@ export const SendNotificationDto = z.object({
  userId: z.string().optional(),
  title: z.string(),
  message: z.string(),
- type: z.enum(["order_update", "stock_alert", "system"]),
+ type: z.enum(["order_update", "stock_alert", "system", "payment_update"]),
 });
 
 const ADMIN_ORDER_STATUSES = ["out_for_delivery", "delivered"];
@@ -799,6 +800,8 @@ class AdminService {
 
    if (!created) return [null, null];
 
+   notificationBroker.publish(created.userId, created, created.type);
+
    return [created, null];
   }
 
@@ -806,12 +809,14 @@ class AdminService {
 
   if (allUsers.length <= 0) return [null, null];
 
-  const [created] = await db
+  const created = await db
    .insert(notification)
    .values(allUsers.map((u) => ({ userId: u.id, title, message, type })))
    .returning();
 
-  return [created, null];
+  created.forEach((n) => notificationBroker.publish(n.userId, n, n.type));
+
+  return [created[0], null];
  };
 }
 

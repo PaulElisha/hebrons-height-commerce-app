@@ -2,7 +2,6 @@
 import "@module/cart/consumer.ts";
 import "@module/email/consumer.ts";
 import "@module/inventory/consumer.ts";
-import "@module/merchant/consumer.ts";
 import "@module/notification/consumer.ts";
 import "@module/webhook/payment/consumer.ts";
 
@@ -40,10 +39,7 @@ import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
-import OutboxService from "@module/outbox/outbox.service.ts";
-import { listenToNotificationEvents } from "@module/notification/consumer.ts";
 
-listenToNotificationEvents();
 initializeDrizzleTransactionalContext();
 addTransactionalDrizzleDatabase(db as any);
 
@@ -132,14 +128,6 @@ class App {
   this.app.listen(Env.PORT, () => {
    logger.info(`Server is running on ${Env.BASE_URL}`);
   });
-
-  // OutboxService.replayUnprocessed().then((count) => {
-  //  if (count > 0) logger.info(`Replayed ${count} unprocessed outbox events.`);
-  // });
-
-  // const outboxTimer = setInterval(() => {
-  //  OutboxService.replayUnprocessed();
-  // }, 5_000).unref();
  };
 }
 

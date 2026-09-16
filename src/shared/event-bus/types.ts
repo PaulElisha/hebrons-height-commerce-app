@@ -1,10 +1,8 @@
 /** @format */
 import type { TOrder, TPayment } from "@shared/types.ts";
 import type { Observable } from "rxjs";
-import type Stripe from "stripe";
-
 import { EventType } from "./config.ts";
-import { PaymentCheckoutResult } from "@module/payment/payment.service.ts";
+import { PaymentResponseData } from "@module/payment/payment.service.ts";
 
 export interface EventContract {
  event_type: string;
@@ -81,7 +79,7 @@ export interface PaymentFailedPayload {
 }
 
 export interface PaymentInitializedPayload {
- paymentResponseData: PaymentCheckoutResult;
+ paymentResponseData: PaymentResponseData;
  userId: string;
  orderId: string;
 }

@@ -91,7 +91,7 @@ class NotificationController {
   const userId = req.user.id;
 
   const session = await createSession(req, res, {
-   keepAlive: 30_000,
+   keepAlive: 10000,
   });
 
   const subscription = notificationBroker.subscribe(userId).subscribe({

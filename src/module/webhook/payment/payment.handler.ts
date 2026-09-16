@@ -13,7 +13,6 @@ import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
 import { and, eq } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import Env from "@/env.ts";
-import Stripe from "stripe";
 import z from "zod";
 import { getUserfromMerchantId } from "@shared/helper.ts";
 
