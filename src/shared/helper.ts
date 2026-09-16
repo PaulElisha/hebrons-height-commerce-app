@@ -18,9 +18,13 @@ import {
  TUser,
  TMerchant,
  TMerchantWithUser,
+ TPayment,
 } from "@shared/types.ts";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { user } from "@db/schema/auth.ts";
+import { payment } from "@db/schema/payment.ts";
+
+import * as APIError from "@shared/error/APIError.ts";
 
 export const STOCK_THRESHOLDS = [10, 7, 5, 3, 1] as const;
 
@@ -278,3 +282,21 @@ export async function resolveCategoryId(
   return { categoryId: undefined, subCategoryId: undefined };
  }
 }
+
+export const findPaymentByReference = async (
+ reference: string,
+): Promise<Result<TPayment>> => {
+ try {
+  const [paymentRecord] = await db
+   .select()
+   .from(payment)
+   .where(eq(payment.paymentReference, reference))
+   .limit(1);
+
+  if (!paymentRecord) return [null, APIError.notFound("Payment not found")];
+
+  return [paymentRecord, null];
+ } catch (err) {
+  return [null, asError(err)];
+ }
+};

@@ -1,5 +1,5 @@
 /** @format */
-import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
+import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 import {
  EventBroker,
  EventType,

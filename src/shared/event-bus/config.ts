@@ -2,9 +2,6 @@
 
 export enum EventType {
  ORDER_PLACED = "order.placed",
- ORDER_ACCEPTED = "order.accepted",
- ORDER_REJECTED = "order.rejected",
- ORDER_PENDING = "order.pending",
  ORDER_CANCELLED = "order.cancelled",
  ORDER_STATUS_UPDATED = "order.status.updated",
  UPDATE_INVENTORY = "inventory.update",
@@ -14,7 +11,7 @@ export enum EventType {
  PAYSTACK_PAYMENT_VERIFIED = "payment.paystack.checkout.verified",
  STRIPE_PAYMENT_VERIFIED = "payment.stripe.checkout.verified",
  USERCART_LOW_STOCK_ALERT = "cart.low_stock",
- PAYMENT_FULFILLED = "PAYMENT_FULFILLED",
+ PAYMENT_FULFILLED = "payment.fulfilled",
  PAYMENT_FAILED = "payment.failed",
  PAYMENT_INITIALIZED = "payment.initialized",
 }

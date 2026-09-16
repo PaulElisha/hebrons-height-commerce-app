@@ -1,7 +1,7 @@
 /** @format */
 import logger from "@app/logger.ts";
 import OrderService from "@module/order/order.service.ts";
-import { consumeOutboxEvent } from "@module/outbox/outbox.service.ts";
+import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 import {
  EventBroker,
  EventType,
@@ -20,8 +20,6 @@ import FA from "fasy";
 
 const NOTIFICATION_EVENTS = [
  EventType.ORDER_PLACED,
- EventType.ORDER_ACCEPTED,
- EventType.ORDER_REJECTED,
  EventType.ORDER_CANCELLED,
  EventType.ORDER_STATUS_UPDATED,
  EventType.MERCHANT_LOW_STOCK_ALERT,
@@ -31,7 +29,7 @@ const NOTIFICATION_EVENTS = [
  EventType.PAYMENT_FAILED,
 ];
 
-export function connectUserToNotification() {
+export function listenToNotificationEvents() {
  EventBroker.listen(NOTIFICATION_EVENTS).subscribe({
   next: ({ payload, event_type }) => {
    const userId = payload?.userId;
