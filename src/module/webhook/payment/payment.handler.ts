@@ -7,7 +7,7 @@ import PaymentService, {
 import { order, orderItem } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import { EventType, PaystackChargeEvent } from "@shared/event-bus/index.ts";
+import { EventType, ChargeEvent } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
 import { and, eq } from "drizzle-orm";
@@ -64,11 +64,6 @@ class WebhookHandler {
    .map((r) => r.user.id);
 
   runOnTransactionCommit(() => {
-   publishEvent({
-    event_type: EventType.PAYMENT_INITIALIZED,
-    payload: { userId, orderId },
-   });
-
    publishEvent({
     event_type: EventType.ORDER_STATUS_UPDATED,
     payload: {
@@ -213,33 +208,27 @@ class WebhookHandler {
  }
 
  async handlePaystackPaymentVerified(
-  event: PaystackChargeEvent,
+  eventData: ChargeEvent,
   orderId: string,
  ): Promise<Result<TPaymentVerificationResult>> {
-  const reference = event.data?.reference;
-
-  if (!reference)
-   return [null, APIError.badRequest("Missing payment reference")];
-
-  const paidAmount = Number(event.data?.amount) / Env.SCALER;
-  const paidAtDate = event.data?.paid_at
-   ? new Date(event.data.paid_at)
-   : new Date();
-
-  return await this.verifyPayment(orderId, reference, paidAmount, paidAtDate);
+  return await this.verifyPayment(
+   orderId,
+   eventData.reference,
+   eventData.amount,
+   eventData.paid_at,
+  );
  }
 
  async handleStripePaymentVerified(
-  session: Stripe.Checkout.Session,
+  eventData: ChargeEvent,
   orderId: string,
  ): Promise<Result<TPaymentVerificationResult>> {
-  const reference = session.id;
-  const paidAmount = Number(session.amount_total) / Env.SCALER;
-  const paidAtDate = session.created
-   ? new Date(session.created * 1000)
-   : new Date();
-
-  return await this.verifyPayment(orderId, reference, paidAmount, paidAtDate);
+  return await this.verifyPayment(
+   orderId,
+   eventData.reference,
+   eventData.amount,
+   eventData.paid_at,
+  );
  }
 }
 

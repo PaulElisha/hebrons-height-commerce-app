@@ -7,13 +7,14 @@ import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
+import WebHookHandler from "@module/webhook/payment/payment.handler.ts";
 import { Result, TOrderItems } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import Env from "@/env.ts";
 import FA from "fasy";
 import z from "zod";
 
-import { CheckoutData, PaymentCheckoutResult } from "./payment.service.ts";
+import { CheckoutData, PaymentResponseData } from "./payment.service.ts";
 import Stripe from "stripe";
 import logger from "@app/logger.ts";
 
@@ -23,14 +24,14 @@ type RailHandler = (
  userId: string,
  orderId: string,
  data: z.infer<typeof CheckoutData>,
-) => Promise<Result<PaymentCheckoutResult>>;
+) => Promise<Result<PaymentResponseData>>;
 
 export const FetchRail: Record<Rail, RailHandler> = {
  initializePaystackCheckout: async (
   userId: string,
   orderId: string,
   data: z.infer<typeof CheckoutData>,
- ): Promise<Result<PaymentCheckoutResult>> => {
+ ): Promise<Result<PaymentResponseData>> => {
   try {
    const [orderWithUser, err] = await OrderService.getOrderWithUser(
     userId,
@@ -72,7 +73,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
 
    const responseData = await response.json();
 
-   const res: PaymentCheckoutResult = {
+   const res: PaymentResponseData = {
     email: data.email,
     mode: data.mode,
     rail: data.rail,
@@ -82,17 +83,19 @@ export const FetchRail: Record<Rail, RailHandler> = {
     checkout_url: responseData.data?.authorization_url,
     reference: responseData.data?.reference,
     access_code: responseData.data?.access_code,
+    paymentProvider: "paystack",
    };
 
-   if (responseData?.data)
+   if (responseData?.data) {
     await publishEvent({
-     event_type: EventType.PAYSTACK_PAYMENT_INITIALIZED,
+     event_type: EventType.PAYMENT_INITIALIZED,
      payload: {
       userId,
-      paystackData: res,
       orderId,
+      paymentResponseData: res,
      },
     });
+   }
 
    return [res, null];
   } catch (err) {
@@ -103,7 +106,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
   userId: string,
   orderId: string,
   data: z.infer<typeof CheckoutData>,
- ): Promise<Result<PaymentCheckoutResult>> => {
+ ): Promise<Result<PaymentResponseData>> => {
   try {
    const [orderData, err] = await OrderService.getOrderDetails(userId, orderId);
 
@@ -142,7 +145,7 @@ export const FetchRail: Record<Rail, RailHandler> = {
       return [null, APIError.badRequest("Stripe Payment failed")];
      }
 
-     const res: PaymentCheckoutResult = {
+     const res: PaymentResponseData = {
       email: data.email,
       mode: data.mode,
       rail: data.rail,
@@ -151,14 +154,15 @@ export const FetchRail: Record<Rail, RailHandler> = {
       callbackUrl: data.callback_url,
       checkout_url: session.url,
       reference: session.id,
+      paymentProvider: "stripe",
      };
 
      await publishEvent({
-      event_type: EventType.STRIPE_PAYMENT_INITIALIZED,
+      event_type: EventType.PAYMENT_INITIALIZED,
       payload: {
        userId,
-       stripeData: res,
        orderId,
+       paymentResponseData: res,
       },
      });
 

@@ -6,30 +6,42 @@ import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Request, Response } from "express";
 import { findPaymentByReference } from "@shared/helper.ts";
+import Env from "@/env.ts";
 
 export const paystackWebhookHandler = async (req: Request, res: Response) => {
- const body = req.body;
- const eventName = body.event;
+ const event = req.body;
+ const eventName = event.event;
  try {
+  const orderId = event.data?.metadata?.orderId;
+  const reference = event.data?.reference;
+
+  if (!reference)
+   return [null, APIError.badRequest("Missing payment reference")];
+
   switch (eventName) {
    case "charge.success": {
-    const orderId = body.data?.metadata?.orderId;
+    const paidAmount = Number(event.data?.amount) / Env.SCALER;
+    const paidAtDate = event.data?.paid_at
+     ? new Date(event.data.paid_at)
+     : new Date();
 
     await publishEvent({
      event_type: EventType.PAYSTACK_PAYMENT_VERIFIED,
      payload: {
       orderId,
-      event: body,
+      eventData: {
+       reference,
+       paidAmount,
+       paidAtDate,
+      },
      },
     });
     return res.status(HttpStatus.OK).json({ received: true });
    }
 
    case "charge.failed": {
-    const reference = body.data?.reference;
-    const orderId = body.data?.metadata?.orderId;
     const reason: string =
-     body.data?.gateway_response ?? "Third-party payment failed";
+     event.data?.gateway_response ?? "Third-party payment failed";
 
     const [paymentRecord, err] = await findPaymentByReference(reference);
 

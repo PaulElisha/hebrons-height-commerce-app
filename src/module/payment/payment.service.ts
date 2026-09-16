@@ -36,10 +36,9 @@ export const PaymentData = CheckoutData.extend({
  reference: z.string().optional(),
 });
 
-export type PaymentCheckoutResult = Omit<
- z.infer<typeof PaymentData>,
- "paymentProvider"
-> & { callbackUrl?: string };
+export type PaymentResponseData = z.infer<typeof PaymentData> & {
+ callbackUrl?: string;
+};
 
 export interface PaystackVerifiedData {
  status: string;
@@ -58,7 +57,7 @@ class PaymentService {
   userId: string,
   orderId: string,
   checkout: z.infer<typeof CheckoutData>,
- ): Promise<Result<PaymentCheckoutResult>> => {
+ ): Promise<Result<PaymentResponseData>> => {
   try {
    const rail = FetchRail[checkout.rail];
 
