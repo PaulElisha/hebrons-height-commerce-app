@@ -1,10 +1,10 @@
 /** @format */
-import type { PaymentCheckoutResult } from "@module/payment/payment.service.ts";
 import type { TOrder, TPayment } from "@shared/types.ts";
 import type { Observable } from "rxjs";
 import type Stripe from "stripe";
 
 import { EventType } from "./config.ts";
+import { PaymentCheckoutResult } from "@module/payment/payment.service.ts";
 
 export interface EventContract {
  event_type: string;
@@ -49,38 +49,23 @@ export interface LowStockAlertPayload {
  quantity: number;
 }
 
-export type PaymentInitializedData = Omit<PaymentCheckoutResult, "metadata">;
-
-export interface PaystackPaymentInitializedPayload {
- paystackData: PaymentInitializedData;
- userId: string;
- orderId: string;
-}
-
-export interface StripePaymentInitializedPayload {
- stripeData: PaymentInitializedData;
- userId: string;
- orderId: string;
-}
-
-export interface PaystackChargeEvent {
+export interface ChargeEvent {
  event: string;
- data?: {
-  reference: string;
-  amount: number;
-  paid_at?: string;
-  gateway_response?: string;
- };
+
+ reference: string;
+ amount: number;
+ paid_at: Date;
+ gateway_response?: string;
 }
 
 export interface PaystackPaymentVerifiedPayload {
  orderId: string;
- event: PaystackChargeEvent;
+ eventData: ChargeEvent;
 }
 
 export interface StripePaymentVerifiedPayload {
  orderId: string;
- event: Stripe.Checkout.Session;
+ eventData: ChargeEvent;
 }
 
 export interface PaymentFulfilledPayload {
@@ -96,6 +81,7 @@ export interface PaymentFailedPayload {
 }
 
 export interface PaymentInitializedPayload {
+ paymentResponseData: PaymentCheckoutResult;
  userId: string;
  orderId: string;
 }

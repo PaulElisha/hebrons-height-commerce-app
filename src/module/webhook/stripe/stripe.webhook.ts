@@ -28,25 +28,36 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
   return res.status(HttpStatus.BAD_REQUEST).send(`Webhook Error: ${message}`);
  }
 
+ const session = event.data.object as Stripe.Checkout.Session;
+
+ if (!session) throw APIError.badRequest("Stripe payment was unsuccessful ");
+
+ const orderId = session?.metadata?.orderId;
+
  try {
   switch (event.type) {
    case "checkout.session.completed": {
-    const session = event.data.object;
-    const orderId = session?.metadata?.orderId;
+    const reference = session?.id;
+    const paidAmount = Number(session.amount_total) / Env.SCALER;
+    const paidAtDate = session.created
+     ? new Date(session.created * 1000)
+     : new Date();
 
     await publishEvent({
      event_type: EventType.STRIPE_PAYMENT_VERIFIED,
      payload: {
       orderId,
-      event: session,
+      eventData: {
+       reference,
+       paidAmount,
+       paidAtDate,
+      },
      },
     });
     return res.status(HttpStatus.OK).json({ received: true });
    }
 
    case "checkout.session.expired": {
-    const session = event.data.object;
-    const orderId = session.metadata?.orderId;
     const reason: string = "Checkout session expired";
 
     const [paymentRecord, err] = await findPaymentByReference(session.id);
