@@ -14,9 +14,6 @@ export interface IEventBroker<EventContract> {
  subscribe(
   event: (typeof EventType)[keyof typeof EventType],
  ): Observable<EventContract>;
- listen(
-  eventTypes?: (typeof EventType)[keyof typeof EventType][],
- ): Observable<EventContract>;
 }
 
 export interface OrderPlacedPayload {
