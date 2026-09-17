@@ -3,15 +3,25 @@ import Env from "@/env.ts";
 import type { MailData, MailerCallback } from "@shared/types.ts";
 import nodemailer, { type Transporter } from "nodemailer";
 
-export const MailHeading = () => ({
+export const MailSubject: Record<MailTemplate, string> = {
  welcomeUser:
   "Welcome to TheOtherWife – Your Comfort Food Journey Starts Here!",
- sendOrderMemo: "Order placed - Hebrons Height & Gardens",
+ orderConfirmation: "Order placed - Hebrons Height & Gardens",
  forgotPassword: "Forgot Password",
  passwordReset: "Password Reset",
-});
+ // orderPlacedMerchant: "New order received - Hebrons Height & Gardens",
+ // lowStockAlert: "Low stock alert - Hebrons Height & Gardens",
+};
 
-export const MailSubject = MailHeading();
+export const MAIL_TEMPLATES = [
+ "orderConfirmation",
+ // "orderPlacedMerchant",
+ // "lowStockAlert",
+ "welcomeUser",
+ "forgotPassword",
+ "passwordReset",
+] as const;
+export type MailTemplate = (typeof MAIL_TEMPLATES)[number];
 
 class EmailService<T> {
  protected transporter: T;

@@ -1,7 +1,7 @@
 /** @format */
 import logger from "@app/logger.ts";
 import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
-import WebHookHandler from "@module/webhook/payment/payment.handler.ts";
+import WebHookHandler from "@module/webhook/handler/payment.handler.ts";
 import {
  EventBroker,
  EventType,

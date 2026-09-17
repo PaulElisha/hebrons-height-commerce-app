@@ -3,7 +3,7 @@ import "@module/cart/consumer.ts";
 import "@module/email/consumer.ts";
 import "@module/inventory/consumer.ts";
 import "@module/notification/consumer.ts";
-import "@module/webhook/payment/consumer.ts";
+import "@module/webhook/handler/consumer.ts";
 
 import cors from "@app/cors.ts";
 import helmet from "@app/helmet.ts";
@@ -124,7 +124,7 @@ class App {
   this.app.use(errorHandler);
  }
 
- startServer = async () => {
+ startServer = () => {
   this.app.listen(Env.PORT, () => {
    logger.info(`Server is running on ${Env.BASE_URL}`);
   });

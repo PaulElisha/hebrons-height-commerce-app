@@ -33,29 +33,4 @@ export class Broker implements IEventBroker<EventContract> {
    }),
   );
  }
-
- listen(
-  eventTypes?: (typeof EventType)[keyof typeof EventType][],
- ): Observable<EventContract> {
-  return this.eventTopic$.asObservable().pipe(
-   filter(
-    (update) =>
-     !eventTypes || eventTypes.includes(update.event_type as EventType),
-   ),
-   map(
-    (update): EventContract => ({
-     event_type: update.event_type,
-     payload: update.payload,
-    }),
-   ),
-   retry(2),
-   catchError((err) => {
-    logger.error({ err }, "SSE Stream Error");
-    return of({
-     event_type: "error",
-     payload: { msg: "Stream disconnected" },
-    } satisfies EventContract);
-   }),
-  );
- }
 }

@@ -1,19 +1,19 @@
 /** @format */
 import Env from "@/env.ts";
-import { MailSubject } from "@module/email/email.service.ts";
+import { MailSubject, MailTemplate } from "@module/email/email.service.ts";
 import type { MailData, MailerCallback, TUser } from "@shared/types.ts";
 import type { Transporter } from "nodemailer";
 
 export const MailAction: Record<
- string,
+ MailTemplate,
  MailerCallback<Transporter, TUser>
 > = {
- sendOrderMemo: (transporter: Transporter, data: MailData<TUser>) => {
+ orderConfirmation: (transporter: Transporter, data: MailData<TUser>) => {
   const { user, message } = data;
   return transporter.sendMail({
    from: `"Temi from Hebrons Height and Gardens" <${Env.EMAIL_USER}>`,
    to: user.email,
-   subject: MailSubject.sendOrderMemo,
+   subject: MailSubject.orderConfirmation,
    html: message,
   });
  },
