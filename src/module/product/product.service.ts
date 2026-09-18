@@ -151,16 +151,10 @@ class ProductService {
      or(
       ilike(product?.name, `%${filter?.search}%`),
       ilike(product?.description, `%${filter?.search}%`),
+      ilike(product?.category, `%${filter?.search}%`),
+      ilike(product?.subCategory, `%${filter?.search}%`),
      )!,
     );
-   }
-
-   if (filter?.category) {
-    filters?.push(eq(product?.category, filter?.category));
-   }
-
-   if (filter?.subCategory) {
-    filters?.push(eq(product?.subCategory, filter?.subCategory));
    }
 
    const result = await db
