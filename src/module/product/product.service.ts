@@ -32,6 +32,7 @@ import {
  isNull,
  or,
  SQL,
+ sql,
 } from "drizzle-orm";
 import FA from "fasy";
 import z from "zod";
@@ -42,6 +43,28 @@ export const ProductFilter = z.object({
  subCategory: z.string().optional(),
 });
 export type TProductFilter = z.infer<typeof ProductFilter>;
+
+const resolveCategoryIdByNameOrId = async (
+ nameOrId: string,
+): Promise<string | undefined> => {
+ const [matched] = await db
+  .select({ id: category.id })
+  .from(category)
+  .where(or(eq(category.id, nameOrId), eq(category.name, nameOrId)))
+  .limit(1);
+ return matched?.id;
+};
+
+const resolveSubcategoryIdByNameOrId = async (
+ nameOrId: string,
+): Promise<string | undefined> => {
+ const [matched] = await db
+  .select({ id: subcategory.id })
+  .from(subcategory)
+  .where(or(eq(subcategory.id, nameOrId), eq(subcategory.name, nameOrId)))
+  .limit(1);
+ return matched?.id;
+};
 
 export const CreateProductDto = z.object({
  name: z.string(),
@@ -150,7 +173,6 @@ class ProductService {
     filters?.push(
      or(
       ilike(product?.name, `%${filter?.search}%`),
-      ilike(product?.description, `%${filter?.search}%`),
       ilike(product?.category, `%${filter?.search}%`),
       ilike(product?.subCategory, `%${filter?.search}%`),
      )!,
@@ -158,11 +180,23 @@ class ProductService {
    }
 
    if (filter?.category) {
-    filters?.push(eq(product?.category, filter?.category));
+    const categoryId = await resolveCategoryIdByNameOrId(filter.category);
+    if (categoryId) {
+     filters?.push(eq(product.categoryId, categoryId));
+    } else {
+     filters?.push(sql`false`);
+    }
    }
 
    if (filter?.subCategory) {
-    filters?.push(eq(product?.subCategory, filter?.subCategory));
+    const subCategoryId = await resolveSubcategoryIdByNameOrId(
+     filter.subCategory,
+    );
+    if (subCategoryId) {
+     filters?.push(eq(product.subCategoryId, subCategoryId));
+    } else {
+     filters?.push(sql`false`);
+    }
    }
 
    const result = await db
