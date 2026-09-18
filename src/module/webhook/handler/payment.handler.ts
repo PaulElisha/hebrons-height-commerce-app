@@ -30,16 +30,16 @@ class WebhookHandler {
   );
   if (err || !paymentRecord) return [null, err];
 
-  await db
-   .update(order)
-   .set({
-    orderStatus: "processing",
-    paymentStatus: "processing",
-    updatedAt: new Date(),
-   })
-   .where(eq(order.id, orderId));
-
   if (paymentRecord.status === "pending") {
+   await db
+    .update(order)
+    .set({
+     orderStatus: "processing",
+     paymentStatus: "processing",
+     updatedAt: new Date(),
+    })
+    .where(eq(order.id, orderId));
+
    await db
     .update(payment)
     .set({
