@@ -162,11 +162,13 @@ class WebhookHandler {
   if (paidAmount !== recordedAmount)
    return [null, APIError.badRequest("Payment amount mismatch")];
 
+  const paidAt = paidAtDate ? new Date(paidAtDate) : new Date();
+
   const [updatedPayment] = await db
    .update(payment)
    .set({
     status: "paid",
-    paidAt: paidAtDate,
+    paidAt,
     updatedAt: new Date(),
    })
    .where(
