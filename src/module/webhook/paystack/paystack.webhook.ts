@@ -16,23 +16,22 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
   const reference = event.data?.reference;
 
   if (!reference)
-   return [null, APIError.badRequest("Missing payment reference")];
+   return res
+    .status(HttpStatus.BAD_REQUEST)
+    .json({ received: false, message: "Missing payment reference" });
 
   switch (eventName) {
    case "charge.success": {
-    const paidAmount = Number(event.data?.amount) / Env.SCALER;
-    const paidAtDate = event.data?.paid_at
-     ? new Date(event.data.paid_at)
-     : new Date();
-
     await publishEvent({
      event_type: EventType.PAYSTACK_PAYMENT_VERIFIED,
      payload: {
       orderId,
       eventData: {
        reference,
-       paidAmount,
-       paidAtDate,
+       amount: Number(event.data?.amount) / Env.SCALER,
+       paid_at: event.data?.paid_at
+        ? new Date(event.data.paid_at)
+        : new Date(),
       },
      },
     });
@@ -60,7 +59,7 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
    }
 
    default:
-    return { handled: false };
+    return res.status(HttpStatus.OK).json({ received: true });
   }
  } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
