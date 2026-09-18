@@ -30,6 +30,15 @@ class WebhookHandler {
   );
   if (err || !paymentRecord) return [null, err];
 
+  await db
+   .update(order)
+   .set({
+    orderStatus: "processing",
+    paymentStatus: "processing",
+    updatedAt: new Date(),
+   })
+   .where(eq(order.id, orderId));
+
   if (paymentRecord.status === "pending") {
    await db
     .update(payment)
@@ -39,6 +48,31 @@ class WebhookHandler {
     })
     .where(eq(payment.id, paymentRecord.id));
   }
+
+  const orderItems = await db
+   .select()
+   .from(orderItem)
+   .where(eq(orderItem.orderId, orderId));
+
+  const merchantIds = orderItems
+   .filter((r) => r.merchantId)
+   .map((r) => r.merchantId);
+
+  const merchantUserIds = (await getUserfromMerchantId(merchantIds))
+   .filter((r) => r.user.id === r.merchant?.userId)
+   .map((r) => r.user.id);
+
+  runOnTransactionCommit(() => {
+   publishEvent({
+    event_type: EventType.ORDER_STATUS_UPDATED,
+    payload: {
+     userId,
+     orderId,
+     status: "processing",
+     merchantUserIds,
+    },
+   });
+  });
 
   return [paymentRecord, null];
  }
@@ -162,7 +196,7 @@ class WebhookHandler {
    publishEvent({
     event_type: EventType.PAYMENT_FULFILLED,
     payload: {
-     userId: updatedOrder.userId,
+     userId: updatedOrder?.userId,
      updatedPayment,
      updatedOrder,
     },
