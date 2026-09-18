@@ -47,32 +47,32 @@ class WebhookHandler {
      updatedAt: new Date(),
     })
     .where(eq(payment.id, paymentRecord.id));
-  }
 
-  const orderItems = await db
-   .select()
-   .from(orderItem)
-   .where(eq(orderItem.orderId, orderId));
+   const orderItems = await db
+    .select()
+    .from(orderItem)
+    .where(eq(orderItem.orderId, orderId));
 
-  const merchantIds = orderItems
-   .filter((r) => r.merchantId)
-   .map((r) => r.merchantId);
+   const merchantIds = orderItems
+    .filter((r) => r.merchantId)
+    .map((r) => r.merchantId);
 
-  const merchantUserIds = (await getUserfromMerchantId(merchantIds))
-   .filter((r) => r.user.id === r.merchant?.userId)
-   .map((r) => r.user.id);
+   const merchantUserIds = (await getUserfromMerchantId(merchantIds))
+    .filter((r) => r.user.id === r.merchant?.userId)
+    .map((r) => r.user.id);
 
-  runOnTransactionCommit(() => {
-   publishEvent({
-    event_type: EventType.ORDER_STATUS_UPDATED,
-    payload: {
-     userId,
-     orderId,
-     status: "processing",
-     merchantUserIds,
-    },
+   runOnTransactionCommit(() => {
+    publishEvent({
+     event_type: EventType.ORDER_STATUS_UPDATED,
+     payload: {
+      userId,
+      orderId,
+      status: "processing",
+      merchantUserIds,
+     },
+    });
    });
-  });
+  }
 
   return [paymentRecord, null];
  }
