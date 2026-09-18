@@ -10,7 +10,7 @@ import * as APIError from "@shared/error/APIError.ts";
 import { EventType, ChargeEvent } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import Env from "@/env.ts";
 import z from "zod";
@@ -33,7 +33,7 @@ class WebhookHandler {
   await db
    .update(order)
    .set({
-    orderStatus: "processing",
+    orderStatus: sql`CASE WHEN ${String(order.orderStatus) === "processing"} THEN  ${order.orderStatus} ELSE 'processing' END`,
     paymentStatus: "processing",
     updatedAt: new Date(),
    })

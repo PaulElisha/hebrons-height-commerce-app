@@ -80,6 +80,13 @@ class PaymentService {
 
   if (err || !data) return [null, err];
 
+  if (
+   data.order.orderStatus === "cancelled" ||
+   data.order.paymentStatus === "cancelled"
+  ) {
+   return [null, APIError.badRequest("Invalid order")];
+  }
+
   await db.select().from(order).where(eq(order.id, orderId)).for("update");
 
   const [existingPayment] = await db
@@ -89,14 +96,7 @@ class PaymentService {
    .limit(1);
 
   if (existingPayment) {
-   if (existingPayment.status === "paid") return [existingPayment, null];
-
-   if (
-    data.order.orderStatus === "cancelled" ||
-    data.order.paymentStatus === "cancelled"
-   ) {
-    return [null, APIError.badRequest("Invalid order")];
-   }
+   if (existingPayment.status !== "initialized") return [existingPayment, null];
 
    const [updatedPayment] = await db
     .update(payment)
@@ -111,9 +111,6 @@ class PaymentService {
      paymentProvider: paymentData.paymentProvider,
      accessCode: paymentData.access_code,
      authorizationUrl: paymentData.checkout_url,
-     status:
-      existingPayment.status !== "failed" ? existingPayment.status : "pending",
-     attempts: (existingPayment.attempts ?? 0) + 1,
      updatedAt: new Date(),
     })
     .where(eq(payment.id, existingPayment.id))
