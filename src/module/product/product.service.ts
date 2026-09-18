@@ -157,6 +157,14 @@ class ProductService {
     );
    }
 
+   if (filter?.category) {
+    filters?.push(eq(product?.category, filter?.category));
+   }
+
+   if (filter?.subCategory) {
+    filters?.push(eq(product?.subCategory, filter?.subCategory));
+   }
+
    const result = await db
     .select()
     .from(product)
