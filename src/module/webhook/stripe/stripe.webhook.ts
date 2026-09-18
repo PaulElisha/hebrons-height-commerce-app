@@ -37,10 +37,6 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
   switch (event.type) {
    case "checkout.session.completed": {
     const reference = session?.id;
-    const paidAmount = Number(session.amount_total) / Env.SCALER;
-    const paidAtDate = session.created
-     ? new Date(session.created * 1000)
-     : new Date();
 
     await publishEvent({
      event_type: EventType.STRIPE_PAYMENT_VERIFIED,
@@ -48,8 +44,10 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
       orderId,
       eventData: {
        reference,
-       paidAmount,
-       paidAtDate,
+       amount: Number(session.amount_total) / Env.SCALER,
+       paid_at: session.created
+        ? new Date(session.created * 1000)
+        : new Date(),
       },
      },
     });
