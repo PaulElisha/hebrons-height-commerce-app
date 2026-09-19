@@ -649,7 +649,7 @@ class AdminService {
   const [existing] = await db
    .select({ id: category.id })
    .from(category)
-   .where(eq(category.name, body.name))
+   .where(ilike(category.name, body.name))
    .limit(1);
 
   if (existing)

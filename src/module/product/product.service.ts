@@ -50,7 +50,7 @@ const resolveCategoryIdByNameOrId = async (
  const [matched] = await db
   .select({ id: category.id })
   .from(category)
-  .where(or(eq(category.id, nameOrId), eq(category.name, nameOrId)))
+  .where(or(eq(category.id, nameOrId), ilike(category.name, nameOrId)))
   .limit(1);
  return matched?.id;
 };
@@ -61,7 +61,7 @@ const resolveSubcategoryIdByNameOrId = async (
  const [matched] = await db
   .select({ id: subcategory.id })
   .from(subcategory)
-  .where(or(eq(subcategory.id, nameOrId), eq(subcategory.name, nameOrId)))
+  .where(or(eq(subcategory.id, nameOrId), ilike(subcategory.name, nameOrId)))
   .limit(1);
  return matched?.id;
 };

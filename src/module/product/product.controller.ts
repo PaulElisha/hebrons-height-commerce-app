@@ -117,12 +117,12 @@ class ProductController {
    res: Response<APIResponse<TProductWithMerchant[]>>,
    next: NextFunction,
   ) => {
-    const { pageSize, pageNumber } = req.query;
+   const { pageSize, pageNumber } = req.query;
 
-    const [data, err] = await ProductService.getLatestProducts({
-     pageSize,
-     pageNumber,
-    });
+   const [data, err] = await ProductService.getLatestProducts({
+    pageSize,
+    pageNumber,
+   });
 
    if (err) return next(err);
 
@@ -140,12 +140,12 @@ class ProductController {
    res: Response<APIResponse<TPaginatedProducts>>,
    next: NextFunction,
   ) => {
-    const { search, category, subCategory, pageSize, pageNumber } = req.query;
+   const { search, category, subCategory, pageSize, pageNumber } = req.query;
 
-    const [data, err] = await ProductService.getProducts(
-     { search, category, subCategory },
-     { pageSize, pageNumber },
-    );
+   const [data, err] = await ProductService.getProducts(
+    { search, category, subCategory },
+    { pageSize, pageNumber },
+   );
 
    if (err) return next(err);
 
