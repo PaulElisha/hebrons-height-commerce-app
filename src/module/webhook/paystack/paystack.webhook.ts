@@ -29,9 +29,7 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
       eventData: {
        reference,
        amount: Number(event.data?.amount) / Env.SCALER,
-       paid_at: event.data?.paid_at
-        ? new Date(event.data.paid_at)
-        : new Date(),
+       paid_at: event.data?.paid_at ? new Date(event.data.paid_at) : new Date(),
       },
      },
     });
