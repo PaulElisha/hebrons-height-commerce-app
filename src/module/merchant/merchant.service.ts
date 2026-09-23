@@ -77,6 +77,14 @@ class MerchantService {
   body: z.infer<typeof UpdateMerchantDto>,
  ): Promise<Result<TMerchant>> => {
   try {
+   const [existingMerchant] = await db
+    .select({ name: merchant.businessName })
+    .from(merchant)
+    .where(and(eq(merchant.id, merchantId), eq(merchant.userId, userId)))
+    .limit(1);
+
+   if (!existingMerchant) return [null, null];
+
    const updateData: Partial<typeof merchant.$inferInsert> = {};
 
    if (body.businessName !== undefined)
