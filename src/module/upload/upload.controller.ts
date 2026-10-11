@@ -1,7 +1,7 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/util/async-handler.ts";
 import { APIResponse } from "@shared/types.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import { NextFunction, Request, Response } from "express";
 
 import UploadService, { UploadData, UploadResult } from "./upload.service.ts";

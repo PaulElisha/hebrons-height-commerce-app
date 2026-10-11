@@ -1,8 +1,9 @@
 /** @format */
+import { PaymentResponseData } from "@module/payment/payment.service.ts";
 import type { TOrder, TPayment } from "@shared/types.ts";
 import type { Observable } from "rxjs";
+
 import { EventType } from "./config.ts";
-import { PaymentResponseData } from "@module/payment/payment.service.ts";
 
 export interface EventContract {
  event_type: string;

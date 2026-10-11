@@ -1,10 +1,10 @@
 /** @format */
-import asError from "@shared/error/as-error.ts";
 import db from "@db/db.ts";
 import { user } from "@db/schema/auth.ts";
 import { merchant } from "@db/schema/merchant.ts";
 import { order, orderItem } from "@db/schema/order.ts";
 import { product } from "@db/schema/product.ts";
+import asError from "@shared/error/as-error.ts";
 import { getMerchantIdFromUser } from "@shared/helper.ts";
 import {
  Result,

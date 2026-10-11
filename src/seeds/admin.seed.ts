@@ -1,10 +1,10 @@
 /** @format */
 
+import Env from "@/env.ts";
 import db from "@db/db.ts";
 import { account, user } from "@db/schema/auth.ts";
 import { hashPassword } from "@shared/util/password.ts";
 import { and, eq } from "drizzle-orm";
-import Env from "@/env.ts";
 
 const ADMIN_NAME = Env.ADMIN_NAME;
 const ADMIN_EMAIL = Env.ADMIN_EMAIL;

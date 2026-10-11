@@ -1,10 +1,10 @@
 /** @format */
 import authenticate from "@middleware/authenticate.ts";
 import roleGuard from "@middleware/role-guard.ts";
+import { ProductParams } from "@module/product/product.controller.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
-import { ProductParams } from "@module/product/product.controller.ts";
 import CartController, { CartParams } from "./cart.controller.ts";
 
 class CartRouter {

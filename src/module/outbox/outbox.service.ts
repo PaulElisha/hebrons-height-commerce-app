@@ -55,13 +55,16 @@ class OutboxService {
   const [updated] = await db
    .update(outbox)
    .set({
-    attempts: sql`${outbox.attempts} + 1`,
+    attempts:
+     Number(sql`${outbox.attempts} + 1`) >= MAX_OUTBOX_ATTEMPTS
+      ? MAX_OUTBOX_ATTEMPTS
+      : Number(sql`${outbox.attempts} + 1`),
     lastError: error,
    })
    .where(and(eq(outbox.id, outboxId), isNull(outbox.processedAt)))
    .returning({ attempts: outbox.attempts });
 
-  if (updated && updated.attempts >= MAX_OUTBOX_ATTEMPTS) {
+  if (updated && Number(updated.attempts) >= MAX_OUTBOX_ATTEMPTS) {
    await db
     .update(outbox)
     .set({ processedAt: new Date() })

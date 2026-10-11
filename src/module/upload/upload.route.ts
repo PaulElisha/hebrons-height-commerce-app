@@ -18,10 +18,10 @@ class UploadRouter {
 
  initializeRoutes() {
   this.router.post(
-  "/upload-image",
-  validate(UploadDataSchema),
-  UploadController.uploadImage,
- );
+   "/upload-image",
+   validate(UploadDataSchema),
+   UploadController.uploadImage,
+  );
  }
 }
 

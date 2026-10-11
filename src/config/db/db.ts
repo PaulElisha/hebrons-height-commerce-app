@@ -1,5 +1,4 @@
 /** @format */
-import logger from "@app/logger.ts";
 import Env, { isProd } from "@/env.ts";
 import { remember } from "@epic-web/remember";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -7,13 +6,13 @@ import { Pool } from "pg";
 
 import * as schema from "./schema.ts";
 
-const createPool = () =>
+const createPool = (): Pool =>
  new Pool({
   connectionString: Env.DB_URL,
   ssl: Env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
  });
 
-let client;
+let client: Pool;
 
 if (isProd()) {
  client = createPool();

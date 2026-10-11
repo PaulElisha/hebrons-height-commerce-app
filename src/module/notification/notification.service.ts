@@ -1,7 +1,7 @@
 /** @format */
-import asError from "@shared/error/as-error.ts";
 import db from "@db/db.ts";
 import { notification, NotificationType } from "@db/schema/notification.ts";
+import asError from "@shared/error/as-error.ts";
 import { Result, TNotification } from "@shared/types.ts";
 import { and, count, desc, eq } from "drizzle-orm";
 

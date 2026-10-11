@@ -1,9 +1,9 @@
 /** @format */
-import asError from "@shared/error/as-error.ts";
 import db from "@db/db.ts";
 import { category, subcategory } from "@db/schema/category.ts";
 import { merchant } from "@db/schema/merchant.ts";
 import { product } from "@db/schema/product.ts";
+import asError from "@shared/error/as-error.ts";
 import {
  fetchMerchantProductsByUserId,
  fetchMerchantProductsFromDb,
@@ -27,7 +27,6 @@ import {
  desc,
  eq,
  ilike,
- inArray,
  isNotNull,
  isNull,
  or,

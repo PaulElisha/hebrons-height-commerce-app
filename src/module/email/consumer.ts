@@ -1,25 +1,18 @@
 /** @format */
-import db from "@db/db.ts";
-import OrderService from "@module/order/order.service.ts";
-import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 import { user } from "@db/schema/auth.ts";
-import { merchant } from "@db/schema/merchant.ts";
+import OrderService from "@module/order/order.service.ts";
 import {
  EventBroker,
  EventType,
- LowStockAlertPayload,
  OrderPlacedPayload,
 } from "@shared/event-bus/index.ts";
-import { and, eq, isNull } from "drizzle-orm";
-import FA from "fasy";
+import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 
 import EmailWorker from "./email.worker.ts";
-import { getMerchantIdFromProductId } from "@shared/helper.ts";
 
 EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderPlacedPayload>(
-   payload.outboxId,
    async ({ userId, orderId }) => {
     const [orderDetails, err] = await OrderService.getOrderWithUser(
      userId,
@@ -32,6 +25,7 @@ EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
      message: `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`,
     });
    },
+   payload.outboxId,
   );
  },
 });
@@ -39,7 +33,6 @@ EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
 // EventBroker.subscribe(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
 //  next: async ({ payload }) => {
 //   await consumeOutboxEvent<LowStockAlertPayload>(
-//    payload.outboxId,
 //    async ({ userId, productName, quantity }) => {
 //     const [userDetails] = await db
 //      .select({ name: user.name, email: user.email })
@@ -52,6 +45,7 @@ EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
 //      message: `"${productName}" is running low (${quantity} left)`,
 //     });
 //    },
+//    payload.outboxId,
 //   );
 //  },
 // });
@@ -59,7 +53,6 @@ EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
 // EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
 //  next: async ({ payload }) => {
 //   await consumeOutboxEvent<OrderPlacedPayload>(
-//    payload.outboxId,
 //    async ({ orderId, productIds }) => {
 //     await FA.concurrent.map(async (productId: string) => {
 //      const [merchantId, err] = await getMerchantIdFromProductId(productId);
@@ -80,6 +73,7 @@ EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
 //      });
 //     }, productIds);
 //    },
+//    payload.outboxId,
 //   );
 //  },
 // });

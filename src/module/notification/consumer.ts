@@ -1,7 +1,6 @@
 /** @format */
 import logger from "@app/logger.ts";
 import OrderService from "@module/order/order.service.ts";
-import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 import {
  EventBroker,
  EventType,
@@ -13,14 +12,14 @@ import {
  PaymentFulfilledPayload,
  PaymentInitializedPayload,
 } from "@shared/event-bus/index.ts";
+import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
+import FA from "fasy";
 
 import NotificationService from "./notification.service.ts";
-import FA from "fasy";
 
 EventBroker.subscribe(EventType.ORDER_STATUS_UPDATED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderStatusUpdatedPayload>(
-   payload.outboxId,
    async ({ userId, orderId, status, message, merchantUserIds }) => {
     const safeMerchantIds = Array.isArray(merchantUserIds)
      ? merchantUserIds
@@ -36,30 +35,27 @@ EventBroker.subscribe(EventType.ORDER_STATUS_UPDATED).subscribe({
      );
     }, allUsers);
    },
+   payload.outboxId,
   );
  },
 });
 
 EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
-  await consumeOutboxEvent<OrderPlacedPayload>(
-   payload.outboxId,
-   async ({ userId, orderId }) => {
-    await NotificationService.createNotification(
-     userId,
-     "Order Placed",
-     `Your order #${orderId.slice(0, 8)} has been placed successfully`,
-     "order_update",
-    );
-   },
-  );
+  await consumeOutboxEvent<OrderPlacedPayload>(async ({ userId, orderId }) => {
+   await NotificationService.createNotification(
+    userId,
+    "Order Placed",
+    `Your order #${orderId.slice(0, 8)} has been placed successfully`,
+    "order_update",
+   );
+  }, payload.outboxId);
  },
 });
 
 EventBroker.subscribe(EventType.MERCHANT_LOW_STOCK_ALERT).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<LowStockAlertPayload>(
-   payload.outboxId,
    async ({ userId, productName, quantity }) => {
     if (!userId) return logger.info("User id not found");
 
@@ -70,6 +66,7 @@ EventBroker.subscribe(EventType.MERCHANT_LOW_STOCK_ALERT).subscribe({
      "stock_alert",
     );
    },
+   payload.outboxId,
   );
  },
 });
@@ -77,7 +74,6 @@ EventBroker.subscribe(EventType.MERCHANT_LOW_STOCK_ALERT).subscribe({
 EventBroker.subscribe(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<LowStockAlertPayload>(
-   payload.outboxId,
    async ({ userId, productName, quantity }) => {
     await NotificationService.createNotification(
      userId,
@@ -86,6 +82,7 @@ EventBroker.subscribe(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
      "stock_alert",
     );
    },
+   payload.outboxId,
   );
  },
 });
@@ -93,7 +90,6 @@ EventBroker.subscribe(EventType.USERCART_LOW_STOCK_ALERT).subscribe({
 EventBroker.subscribe(EventType.ORDER_CANCELLED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderCancelledPayload>(
-   payload.outboxId,
    async ({ userId, orderId }) => {
     const [orderDetails, err] = await OrderService.getOrderWithUser(
      userId,
@@ -109,6 +105,7 @@ EventBroker.subscribe(EventType.ORDER_CANCELLED).subscribe({
      "order_update",
     );
    },
+   payload.outboxId,
   );
  },
 });
@@ -116,7 +113,6 @@ EventBroker.subscribe(EventType.ORDER_CANCELLED).subscribe({
 EventBroker.subscribe(EventType.PAYMENT_FULFILLED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaymentFulfilledPayload>(
-   payload.outboxId,
    async ({ updatedOrder }) => {
     if (!updatedOrder?.userId) return;
 
@@ -127,6 +123,7 @@ EventBroker.subscribe(EventType.PAYMENT_FULFILLED).subscribe({
      "payment_update",
     );
    },
+   payload.outboxId,
   );
  },
 });
@@ -134,7 +131,6 @@ EventBroker.subscribe(EventType.PAYMENT_FULFILLED).subscribe({
 EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaymentInitializedPayload>(
-   payload.outboxId,
    async ({ userId, orderId }) => {
     if (!userId) return;
 
@@ -145,6 +141,7 @@ EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
      "payment_update",
     );
    },
+   payload.outboxId,
   );
  },
 });
@@ -152,7 +149,6 @@ EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
 EventBroker.subscribe(EventType.PAYMENT_FAILED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaymentFailedPayload>(
-   payload.outboxId,
    async ({ userId, orderId, reason }) => {
     if (!userId) return;
 
@@ -163,6 +159,7 @@ EventBroker.subscribe(EventType.PAYMENT_FAILED).subscribe({
      "payment_update",
     );
    },
+   payload.outboxId,
   );
  },
 });

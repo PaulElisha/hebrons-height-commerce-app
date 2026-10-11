@@ -1,18 +1,18 @@
 /** @format */
-import asError from "@shared/error/as-error.ts";
+import Env from "@/env.ts";
+import logger from "@app/logger.ts";
 import db from "@db/db.ts";
-import OrderService from "@module/order/order.service.ts";
 import { order } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
+import OrderService from "@module/order/order.service.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
+import asError from "@shared/error/as-error.ts";
+import { Result, TPayment } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import z from "zod";
 
 import { FetchRail } from "./dispatcher.ts";
-import Env from "@/env.ts";
-import logger from "@app/logger.ts";
 
 export const VerifyPaymentParams = z.object({
  reference: z.string(),

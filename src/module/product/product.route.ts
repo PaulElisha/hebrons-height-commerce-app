@@ -1,13 +1,13 @@
 /** @format */
 import roleGuard from "@middleware/role-guard.ts";
+import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 import authenticate from "@shared/middleware/authenticate.ts";
 import { validate } from "@shared/middleware/validate.ts";
+import { PaginationSchema } from "@shared/types.ts";
 import { Router } from "express";
 
-import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 import ProductController, { ProductParams } from "./product.controller.ts";
 import { CreateProductDto, UpdateProductDto } from "./product.service.ts";
-import { PaginationSchema } from "@shared/types.ts";
 
 class ProductRouter {
  router: Router;

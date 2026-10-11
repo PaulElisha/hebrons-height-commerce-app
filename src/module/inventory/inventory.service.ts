@@ -1,16 +1,16 @@
 /** @format */
-import asError from "@shared/error/as-error.ts";
 import db from "@db/db.ts";
 import { cart, cartItem } from "@db/schema/cart.ts";
 import { merchant } from "@db/schema/merchant.ts";
 import { order, orderItem } from "@db/schema/order.ts";
 import { product } from "@db/schema/product.ts";
 import * as APIError from "@shared/error/APIError.ts";
+import asError from "@shared/error/as-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { STOCK_THRESHOLDS } from "@shared/helper.ts";
 import { Result, TProduct, TProductThreshold } from "@shared/types.ts";
-import { and, eq, inArray, isNotNull, lt, ne, sql, sum } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, ne, sql, sum } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import FA from "fasy";
 

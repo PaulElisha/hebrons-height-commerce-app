@@ -1,12 +1,12 @@
 /** @format */
 import logger from "@app/logger.ts";
-import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 import {
  EventBroker,
  EventType,
  OrderCancelledPayload,
  OrderPlacedPayload,
 } from "@shared/event-bus/index.ts";
+import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 import FA from "fasy";
 
 import InventoryService from "./inventory.service.ts";
@@ -14,7 +14,6 @@ import InventoryService from "./inventory.service.ts";
 EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderPlacedPayload>(
-   payload.outboxId,
    async ({ orderId, productIds }) => {
     logger.info({ productIds }, "[Inventory update for Order placement]");
 
@@ -27,6 +26,7 @@ EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
      if (err) throw err;
     }, productIds);
    },
+   payload.outboxId,
   );
  },
 });
@@ -34,7 +34,6 @@ EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
 EventBroker.subscribe(EventType.ORDER_CANCELLED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderCancelledPayload>(
-   payload.outboxId,
    async ({ orderId, productIds }) => {
     logger.info({ productIds }, "[Inventory update for Order cancelled]");
 
@@ -47,6 +46,7 @@ EventBroker.subscribe(EventType.ORDER_CANCELLED).subscribe({
      if (err) throw err;
     }, productIds);
    },
+   payload.outboxId,
   );
  },
 });

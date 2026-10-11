@@ -1,7 +1,6 @@
 /** @format */
 import { MerchantParams } from "@module/merchant/merchant.controller.ts";
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/util/async-handler.ts";
 import {
  APIResponse,
  Pagination,
@@ -12,6 +11,7 @@ import {
  TProductWithMerchant,
  TSubcategory,
 } from "@shared/types.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
 

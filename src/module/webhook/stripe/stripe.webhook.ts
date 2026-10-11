@@ -1,15 +1,15 @@
 /** @format */
 
+import Env from "@/env.ts";
 import logger from "@app/logger.ts";
 import stripeClient from "@app/stripe.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import Env from "@/env.ts";
+import { findPaymentByReference } from "@shared/helper.ts";
 import { Request, Response } from "express";
 import Stripe from "stripe";
-import { findPaymentByReference } from "@shared/helper.ts";
 
 export const stripeWebhookHandler = async (req: Request, res: Response) => {
  const sig = req.headers["stripe-signature"]!;
@@ -45,9 +45,7 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
       eventData: {
        reference,
        amount: Number(session.amount_total) / Env.SCALER,
-       paid_at: session.created
-        ? new Date(session.created * 1000)
-        : new Date(),
+       paid_at: session.created ? new Date(session.created * 1000) : new Date(),
       },
      },
     });

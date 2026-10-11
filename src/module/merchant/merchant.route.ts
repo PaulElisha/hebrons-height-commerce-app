@@ -4,9 +4,7 @@ import roleGuard from "@middleware/role-guard.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { Router } from "express";
 
-import MerchantController, {
- MerchantParams,
-} from "./merchant.controller.ts";
+import MerchantController, { MerchantParams } from "./merchant.controller.ts";
 import { CreateMerchantDto, UpdateMerchantDto } from "./merchant.service.ts";
 
 class MerchantRouter {

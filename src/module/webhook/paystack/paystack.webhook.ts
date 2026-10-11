@@ -1,12 +1,12 @@
 /** @format */
 
+import Env from "@/env.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import { Request, Response } from "express";
 import { findPaymentByReference } from "@shared/helper.ts";
-import Env from "@/env.ts";
+import { Request, Response } from "express";
 
 export const paystackWebhookHandler = async (req: Request, res: Response) => {
  const event = req.body;

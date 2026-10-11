@@ -1,20 +1,17 @@
 /** @format */
-import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 import {
  EventBroker,
  EventType,
  OrderPlacedPayload,
 } from "@shared/event-bus/index.ts";
+import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 
 import CartBase from "./base.ts";
 
 EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
-  await consumeOutboxEvent<OrderPlacedPayload>(
-   payload.outboxId,
-   async ({ userId, cartId }) => {
-    await CartBase.clearCartItems(cartId, userId);
-   },
-  );
+  await consumeOutboxEvent<OrderPlacedPayload>(async ({ userId, cartId }) => {
+   await CartBase.clearCartItems(cartId, userId);
+  }, payload.outboxId);
  },
 });

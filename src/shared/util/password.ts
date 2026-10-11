@@ -9,13 +9,14 @@ const opts: Options = {
  algorithm: 2, // Argon2id
 };
 
-export async function hashPassword(password: string) {
- const result = await hash(password, opts);
- return result;
-}
 export interface TVerifyPasswordData {
  password: string;
  hash: string;
+}
+
+export async function hashPassword(password: string) {
+ const result = await hash(password, opts);
+ return result;
 }
 
 export async function verifyPassword(data: TVerifyPasswordData) {

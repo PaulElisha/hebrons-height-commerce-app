@@ -1,8 +1,8 @@
 /** @format */
 
+import Env from "@/env.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import crypto from "crypto";
-import Env from "@/env.ts";
 import { NextFunction, Request, Response } from "express";
 
 export function parseRawBody(req: Request, _res: Response, next: NextFunction) {

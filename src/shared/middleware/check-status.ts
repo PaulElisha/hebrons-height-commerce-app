@@ -1,6 +1,5 @@
 /** @format */
 import db from "@db/db.ts";
-import { user } from "@db/schema/auth.ts";
 import { merchant } from "@db/schema/merchant.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { getMerchantIdFromUser } from "@shared/helper.ts";

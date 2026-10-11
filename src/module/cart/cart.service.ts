@@ -1,8 +1,8 @@
 /** @format */
+import { getCartAndItems } from "@shared/helper.ts";
 import { Result, TCartAndItem } from "@shared/types.ts";
 
 import CartBase from "./base.ts";
-import { getCartAndItems } from "@shared/helper.ts";
 
 class CartService {
  addToCart = async (

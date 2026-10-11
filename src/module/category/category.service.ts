@@ -1,7 +1,7 @@
 /** @format */
-import asError from "@shared/error/as-error.ts";
 import db from "@db/db.ts";
 import { category, subcategory } from "@db/schema/category.ts";
+import asError from "@shared/error/as-error.ts";
 import { Result, TCategory, TSubcategory } from "@shared/types.ts";
 import { eq } from "drizzle-orm";
 import FA from "fasy";

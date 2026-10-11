@@ -1,12 +1,12 @@
 /** @format */
 import db from "@db/db.ts";
-import authenticate from "@middleware/authenticate.ts";
 import { user } from "@db/schema/auth.ts";
+import authenticate from "@middleware/authenticate.ts";
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/util/async-handler.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { validate } from "@shared/middleware/validate.ts";
 import { APIResponse, TUser } from "@shared/types.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import { eq } from "drizzle-orm";
 import { Request, Response, Router } from "express";
 import z from "zod";

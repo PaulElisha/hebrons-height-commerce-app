@@ -1,7 +1,7 @@
 /** @format */
 import HttpStatus from "@shared/enum/http.ts";
-import asyncHandler from "@shared/util/async-handler.ts";
 import { APIResponse, TCategory, TSubcategory } from "@shared/types.ts";
+import asyncHandler from "@shared/util/async-handler.ts";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
 
@@ -36,7 +36,11 @@ class CategoryController {
  );
 
  deleteCategory = asyncHandler(
-  async (req: Request<z.infer<typeof CategoryParams>>, res: Response, next: NextFunction) => {
+  async (
+   req: Request<z.infer<typeof CategoryParams>>,
+   res: Response,
+   next: NextFunction,
+  ) => {
    const categoryId = req.params.categoryId;
    const [, err] = await CategoryService.deleteCategory(categoryId);
    if (err) return next(err);

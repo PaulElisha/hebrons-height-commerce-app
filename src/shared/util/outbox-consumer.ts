@@ -6,17 +6,23 @@ import OutboxService from "@module/outbox/outbox.service.ts";
 const MAX_OUTBOX_ATTEMPTS = 5;
 
 export const consumeOutboxEvent = async <T = Record<string, unknown>>(
- outboxId: string | undefined,
  cb: (payload: T) => Promise<void>,
+ outboxId?: string,
 ) => {
- if (!outboxId) return logger.info("Missing outbox id");
+ if (!outboxId) return;
 
- const [outboxEvent, e] = await OutboxService.fetchById(outboxId);
+ const [outboxEvent, err] = await OutboxService.fetchById(outboxId);
 
- if (e || !outboxEvent) return logger.info("Event already processed");
+ if (err || !outboxEvent) {
+  logger.info({ outboxId, err }, "Outbox event not found or already processed");
+  return;
+ }
 
  if (outboxEvent.attempts >= MAX_OUTBOX_ATTEMPTS)
-  return logger.info("Event dead-lettered (max attempts reached)");
+  return logger.info(
+   { outboxId },
+   "Outbox event dead-lettered (max attempts reached)",
+  );
 
  try {
   await cb(outboxEvent.payload as T);

@@ -1,15 +1,21 @@
 /** @format */
-import asError from "@shared/error/as-error.ts";
-
 import db from "@db/db.ts";
-import CartService from "@module/cart/cart.service.ts";
-import InventoryService from "@module/inventory/inventory.service.ts";
 import { user } from "@db/schema/auth.ts";
 import { order, orderItem } from "@db/schema/order.ts";
 import { product } from "@db/schema/product.ts";
+import CartService from "@module/cart/cart.service.ts";
+import InventoryService from "@module/inventory/inventory.service.ts";
 import * as APIError from "@shared/error/APIError.ts";
+import asError from "@shared/error/as-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
+import {
+ getMerchantIdFromProductId,
+ getMerchantIdFromUser,
+ isLowStock,
+ parsePagination,
+ validateOrderForCart,
+} from "@shared/helper.ts";
 import {
  ORDER_STATUSES,
  Pagination,
@@ -19,7 +25,6 @@ import {
  TMerchantPaginatedOrders,
  TOrder,
  TOrderAndItems,
- TOrderItemsWithProduct,
  TOrderWithUser,
  TUserOrderWithItems,
 } from "@shared/types.ts";
@@ -28,13 +33,6 @@ import { and, count, desc, eq, inArray, lt, ne, SQL, sql } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import FA from "fasy";
 import z from "zod";
-import {
- getMerchantIdFromProductId,
- getMerchantIdFromUser,
- isLowStock,
- parsePagination,
- validateOrderForCart,
-} from "@shared/helper.ts";
 
 const mutex = new Mutex();
 
