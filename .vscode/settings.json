@@ -14,7 +14,6 @@
     "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
     "editor.guides.bracketPairs": "active",
     // Sleek Fira Code Ligature upgrades (like connecting arrows and comparisons)
-    "editor.fontLigatures": "'ss01', 'ss02', 'ss03', 'ss05', 'zero'",
     "editor.tokenColorCustomizations": {
         "textMateRules": [
             {
@@ -84,7 +83,6 @@
     "workbench.iconTheme": "vs-minimal",
     "workbench.preferredDarkColorTheme": "Dark- Modern",
     "workbench.preferredHighContrastColorTheme": "Cursor Dark Midnight",
-    "workbench.tree.indent": 4,
     "workbench.tree.renderIndentGuides": "always",
     "workbench.editor.alwaysShowEditorActions": true,
     "workbench.preferredHighContrastLightColorTheme": "Cursor Dark Midnight"
