@@ -12,21 +12,18 @@ import EmailWorker from "./email.worker.ts";
 
 EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
-  await consumeOutboxEvent<OrderPlacedPayload>(
-   async ({ userId, orderId }) => {
-    const [orderDetails, err] = await OrderService.getOrderWithUser(
-     userId,
-     orderId,
-    );
-    if (err || !orderDetails) throw err;
+  await consumeOutboxEvent<OrderPlacedPayload>(async ({ userId, orderId }) => {
+   const [orderDetails, err] = await OrderService.getOrderWithUser(
+    userId,
+    orderId,
+   );
+   if (err || !orderDetails) throw err;
 
-    await EmailWorker("orderConfirmation", {
-     user: orderDetails.user,
-     message: `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`,
-    });
-   },
-   payload.outboxId,
-  );
+   await EmailWorker("orderConfirmation", {
+    user: orderDetails.user,
+    message: `Hi ${orderDetails.user.name}, your order #${orderId} is confirmed!`,
+   });
+  }, payload.outboxId);
  },
 });
 

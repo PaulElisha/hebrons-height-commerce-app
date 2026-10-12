@@ -48,7 +48,7 @@
     "files.autoSave": "onFocusChange", // optional but recommended
     "vs-code-prettier-eslint.prettierLast": "true",
     "prettier.tabWidth": 1,
-    "editor.tabSize": 1,
+    "editor.tabSize": 2,
     "[javascript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },

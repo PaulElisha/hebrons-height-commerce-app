@@ -11,15 +11,16 @@ import { Request, Response } from "express";
 export const paystackWebhookHandler = async (req: Request, res: Response) => {
  const event = req.body;
  const eventName = event.event;
+
+ const orderId = event.data?.metadata?.orderId;
+ const reference = event.data?.reference;
+
+ if (!reference)
+  return res
+   .status(HttpStatus.BAD_REQUEST)
+   .json({ received: false, message: "Missing payment reference" });
+
  try {
-  const orderId = event.data?.metadata?.orderId;
-  const reference = event.data?.reference;
-
-  if (!reference)
-   return res
-    .status(HttpStatus.BAD_REQUEST)
-    .json({ received: false, message: "Missing payment reference" });
-
   switch (eventName) {
    case "charge.success": {
     await publishEvent({

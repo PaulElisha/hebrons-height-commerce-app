@@ -9,6 +9,9 @@
       "@*": [
         "./.*"
       ],
+      "@webhook/*": [
+        "./src/webhook/*"
+      ],
       "@shared/*": [
         "./src/shared/*"
       ],
@@ -70,7 +73,6 @@
     "drizzle.config.ts",
     "fasy.d.ts",
     "custom-env.d.ts",
-    "parse-rawbody.ts",
   ],
   "exclude": [
     "node_modules",

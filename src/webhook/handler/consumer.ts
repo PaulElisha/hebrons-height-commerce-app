@@ -1,6 +1,6 @@
 /** @format */
 import logger from "@app/logger.ts";
-import WebHookHandler from "@module/webhook/handler/payment.handler.ts";
+import WebHookHandler from "@webhook/handler/payment.handler.ts";
 import {
  EventBroker,
  EventType,
