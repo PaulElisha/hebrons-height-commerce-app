@@ -1,50 +1,34 @@
 /** @format */
-import stripeClient from "@app/stripe.ts";
 import { OrderParams } from "@module/order/order.controller.ts";
 import authenticate from "@shared/middleware/authenticate.ts";
 import roleGuard from "@shared/middleware/role-guard.ts";
 import { validate } from "@shared/middleware/validate.ts";
-import asyncHandler from "@shared/util/async-handler.ts";
-import { Request, Response, Router } from "express";
-import z from "zod";
+import { Router } from "express";
 
 import PaymentController from "./payment.controller.ts";
 import { CheckoutData, VerifyPaymentParams } from "./payment.service.ts";
-
-const StripeSessionQuery = z.object({
- session_id: z.string(),
-});
 
 class PaymentRoutes {
  router: Router;
  constructor() {
   this.router = Router();
+  this.initializeCallbackRoutes();
   this.router.use(authenticate);
   this.router.use(roleGuard("user"));
   this.initializeRoutes();
  }
 
- initializeRoutes() {
-  this.router.get(
-   "/success",
-   validate(StripeSessionQuery, "query"),
-   asyncHandler(
-    async (
-     req: Request<{}, {}, {}, z.infer<typeof StripeSessionQuery>>,
-     res: Response,
-    ) => {
-     const session = await stripeClient.checkout.sessions.retrieve(
-      req.query.session_id,
-     );
-     res.send(`${session.customer_details?.name}`);
-    },
-   ),
-  );
+ initializeCallbackRoutes() {
+  this.router.get("/success", (_req, res) => {
+   res.send("Payment successful");
+  });
 
   this.router.get("/cancel", (_req, res) => {
    res.send("Payment failed");
   });
+ }
 
+ initializeRoutes() {
   this.router.get(
    "/verify/:reference",
    validate(VerifyPaymentParams, "params"),

@@ -2,7 +2,8 @@
 
 import Env from "@/env.ts";
 import * as APIError from "@shared/error/APIError.ts";
-import crypto from "crypto";
+import { webhooks } from "@bachs/sdk";
+// import crypto from "crypto"; // Paystack only
 import { NextFunction, Request, Response } from "express";
 
 export function parseRawBody(req: Request, _res: Response, next: NextFunction) {
@@ -21,6 +22,7 @@ export function parseRawBody(req: Request, _res: Response, next: NextFunction) {
  }
 }
 
+/*
 export const verifyPaystackSignature = async (
  req: Request,
  res: Response,
@@ -47,5 +49,24 @@ export const verifyPaystackSignature = async (
   return next();
  } catch (err) {
   return next(err);
+ }
+};
+*/
+
+export const verifyBachsSignature = async (
+ req: Request,
+ _res: Response,
+ next: NextFunction,
+) => {
+ try {
+  if (!req.body || !Buffer.isBuffer(req.body)) {
+   return next(APIError.badRequest("Invalid webhook body"));
+  }
+
+  webhooks.constructEvent(req.body, req.headers, Env.BACHS_WEBHOOK_SECRET);
+
+  return next();
+ } catch {
+  return next(APIError.badRequest("Invalid Bachs signature"));
  }
 };

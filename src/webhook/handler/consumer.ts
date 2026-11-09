@@ -2,12 +2,13 @@
 import logger from "@app/logger.ts";
 import WebHookHandler from "@webhook/handler/payment.handler.ts";
 import {
+ BachsPaymentVerifiedPayload,
  EventBroker,
  EventType,
  PaymentFailedPayload,
  PaymentInitializedPayload,
- PaystackPaymentVerifiedPayload,
- StripePaymentVerifiedPayload,
+ // PaystackPaymentVerifiedPayload,
+ // StripePaymentVerifiedPayload,
 } from "@shared/event-bus/index.ts";
 import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 
@@ -21,7 +22,7 @@ EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
      paymentResponseData,
     );
     if (err) throw err;
-    logger.info({ userId, orderId }, "[...Paystack initialised]");
+    logger.info({ userId, orderId }, "[...Payment initialised]");
    },
    payload.outboxId,
   );
@@ -31,13 +32,14 @@ EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
 
   logger.error(
    { err: msg },
-   "Error consuming Paystack payment initialized event",
+   "Error consuming payment initialized event",
   );
 
   throw err;
  },
 });
 
+/*
 EventBroker.subscribe(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaystackPaymentVerifiedPayload>(
@@ -79,6 +81,30 @@ EventBroker.subscribe(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
   const msg = err instanceof Error ? err?.message : String(err);
 
   logger.error({ err: msg }, "Error consuming Stripe payment verified event");
+
+  throw err;
+ },
+});
+*/
+
+EventBroker.subscribe(EventType.BACHS_PAYMENT_VERIFIED).subscribe({
+ next: async ({ payload }) => {
+  await consumeOutboxEvent<BachsPaymentVerifiedPayload>(
+   async ({ eventData, orderId }) => {
+    const [, err] = await WebHookHandler.handleBachsPaymentVerified(
+     eventData,
+     orderId,
+    );
+    if (err) throw err;
+    logger.info({}, "[...Bachs verification completed]");
+   },
+   payload.outboxId,
+  );
+ },
+ error: (err: unknown) => {
+  const msg = err instanceof Error ? err?.message : String(err);
+
+  logger.error({ err: msg }, "Error consuming Bachs payment verified event");
 
   throw err;
  },

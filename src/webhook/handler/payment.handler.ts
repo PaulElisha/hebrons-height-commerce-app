@@ -1,6 +1,7 @@
 /** @format */
 
 import Env from "@/env.ts";
+import bachsClient from "@app/bachs.ts";
 import db from "@db/db.ts";
 import { order, orderItem } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
@@ -208,6 +209,7 @@ class WebhookHandler {
   return [{ payment: updatedPayment, order: updatedOrder }, null];
  }
 
+ /*
  async handlePaystackPaymentVerified(
   eventData: ChargeEvent,
   orderId: string,
@@ -229,6 +231,29 @@ class WebhookHandler {
    eventData.reference,
    eventData.amount,
    eventData.paid_at,
+  );
+ }
+
+ */
+ async handleBachsPaymentVerified(
+  eventData: ChargeEvent,
+  orderId: string,
+ ): Promise<Result<TPaymentVerificationResult>> {
+  const checkout = await bachsClient.checkoutSessions.get(eventData.reference);
+
+  if (checkout.status !== "completed") {
+   return [null, APIError.badRequest("Bachs checkout not completed")];
+  }
+
+  const paidAt = checkout.completed_at
+   ? new Date(checkout.completed_at)
+   : eventData.paid_at;
+
+  return await this.verifyPayment(
+   orderId,
+   eventData.reference,
+   Number(checkout.amount),
+   paidAt,
   );
  }
 }

@@ -10,9 +10,9 @@ export default rateLimit({
  validate: { xForwardedForHeader: false },
  skip: (req) =>
   [
-   "/api/stripe/webhook",
-   "/api/paystack/webhook",
-   "/api/cloudinary/webhook",
+    // "/api/stripe/webhook",
+    // "/api/paystack/webhook",
+    "/api/cloudinary/webhook",
    "/api/notification/stream",
   ].includes(req.path),
 });

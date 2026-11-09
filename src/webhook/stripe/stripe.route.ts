@@ -1,4 +1,6 @@
 /** @format */
+
+/*
 import asyncHandler from "@shared/util/async-handler.ts";
 import express, { Request, Response, Router } from "express";
 
@@ -13,3 +15,4 @@ const stripeWebhookRouter = Router().post(
 );
 
 export default stripeWebhookRouter;
+*/

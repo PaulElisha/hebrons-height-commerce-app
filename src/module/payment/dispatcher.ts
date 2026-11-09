@@ -1,18 +1,21 @@
 /** @format */
 import Env from "@/env.ts";
-import logger from "@app/logger.ts";
-import stripeClient from "@app/stripe.ts";
-import db from "@db/db.ts";
-import { product } from "@db/schema/product.ts";
+// import logger from "@app/logger.ts"; // Paystack only
+// import stripeClient from "@app/stripe.ts"; // Stripe only
+import bachsClient from "@app/bachs.ts";
+import type { PaymentMethodCorridor } from "@bachs/sdk";
+// import db from "@db/db.ts"; // Stripe only
+// import { product } from "@db/schema/product.ts"; // Stripe only
 import OrderService from "@module/order/order.service.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import asError from "@shared/error/as-error.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import { Result, TOrderItems } from "@shared/types.ts";
-import { eq } from "drizzle-orm";
-import FA from "fasy";
-import Stripe from "stripe";
+import { Result } from "@shared/types.ts";
+// import { TOrderItems } from "@shared/types.ts"; // Stripe only
+// import { eq } from "drizzle-orm"; // Stripe only
+// import FA from "fasy"; // Stripe only
+// import Stripe from "stripe"; // Stripe only
 import z from "zod";
 
 import { CheckoutData, PaymentResponseData } from "./payment.service.ts";
@@ -25,7 +28,102 @@ type RailHandler = (
  data: z.infer<typeof CheckoutData>,
 ) => Promise<Result<PaymentResponseData>>;
 
+const BACHS_MOBILE_MONEY_CORRIDORS: PaymentMethodCorridor[] = [
+ "MOMO_GHS",
+ "MOMO_KES",
+ "MOMO_TZS",
+ "MOMO_UGX",
+ "MOMO_XAF",
+ "MOMO_XOF",
+ "MOMO_RWF",
+ "MOMO_MWK",
+ "MOMO_ZMW",
+];
+
+const bachsPaymentMethods = (
+ rail: Rail,
+): PaymentMethodCorridor[] | undefined => {
+ switch (rail) {
+  case "initializeBachsCardCheckout":
+   return ["USD_CARD", "NGN_CARD"];
+  case "initializeBachsBankTransferCheckout":
+   return ["NGN_BANK_TRANSFER"];
+  case "initializeBachsMobileMoneyCheckout":
+   return BACHS_MOBILE_MONEY_CORRIDORS;
+  case "initializeBachsCryptoCheckout":
+   return ["CRYPTO"];
+  default:
+   return undefined;
+ }
+};
+
+const initializeBachsCheckout: RailHandler = async (userId, orderId, data) => {
+ try {
+  const [orderData, err] = await OrderService.getOrderWithUser(userId, orderId);
+
+  if (err || !orderData) return [null, err];
+
+  const amount = Number(orderData.subtotal);
+  const currency = data.currency.toUpperCase();
+  const paymentMethods = bachsPaymentMethods(data.rail);
+
+  const metadata = Object.fromEntries(
+   Object.entries({ orderId, ...data.metadata }).map(([key, value]) => [
+    key,
+    String(value),
+   ]),
+  );
+
+  const session = await bachsClient.checkoutSessions.create(
+   {
+    pricing: {
+     currency,
+     amount: String(Math.round(amount * Env.SCALER)),
+    },
+    ...(paymentMethods !== undefined && {
+     payment_method_types: paymentMethods,
+    }),
+    customer: { email: data.email, name: orderData.user.name },
+    metadata,
+    success_url: `${Env.BASE_URL}/api/payment/success`,
+    cancel_url: `${Env.BASE_URL}/api/payment/cancel`,
+   },
+   { idempotencyKey: `bachs-${orderId}` },
+  );
+
+  if (!session.checkout_url) {
+   return [null, APIError.badRequest("Bachs Payment failed")];
+  }
+
+  const res: PaymentResponseData = {
+   email: data.email,
+   mode: data.mode,
+   rail: data.rail,
+   amount: Math.round(amount * Env.SCALER),
+   currency,
+   callbackUrl: data.callback_url,
+   checkout_url: session.checkout_url,
+   reference: session.checkout_id,
+   paymentProvider: "bachs",
+  };
+
+  await publishEvent({
+   event_type: EventType.PAYMENT_INITIALIZED,
+   payload: {
+    userId,
+    orderId,
+    paymentResponseData: res,
+   },
+  });
+
+  return [res, null];
+ } catch (err) {
+  return [null, asError(err)];
+ }
+};
+
 export const FetchRail: Record<Rail, RailHandler> = {
+ /*
  initializePaystackCheckout: async (
   userId: string,
   orderId: string,
@@ -171,4 +269,10 @@ export const FetchRail: Record<Rail, RailHandler> = {
    return [null, asError(err)];
   }
  },
+ */
+ initializeBachsCheckout,
+ initializeBachsCardCheckout: initializeBachsCheckout,
+ initializeBachsBankTransferCheckout: initializeBachsCheckout,
+ initializeBachsMobileMoneyCheckout: initializeBachsCheckout,
+ initializeBachsCryptoCheckout: initializeBachsCheckout,
 };
