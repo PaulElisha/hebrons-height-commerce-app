@@ -1,5 +1,6 @@
 /** @format */
 
+/*
 import Env from "@/env.ts";
 import HttpStatus from "@shared/enum/http.ts";
 import * as APIError from "@shared/error/APIError.ts";
@@ -68,3 +69,4 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
    .send(`Webhook Error ${message}`);
  }
 };
+*/

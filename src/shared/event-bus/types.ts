@@ -54,12 +54,19 @@ export interface ChargeEvent {
  gateway_response?: string;
 }
 
+/*
 export interface PaystackPaymentVerifiedPayload {
  orderId: string;
  eventData: ChargeEvent;
 }
 
 export interface StripePaymentVerifiedPayload {
+ orderId: string;
+ eventData: ChargeEvent;
+}
+*/
+
+export interface BachsPaymentVerifiedPayload {
  orderId: string;
  eventData: ChargeEvent;
 }

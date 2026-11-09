@@ -1,6 +1,7 @@
 /** @format */
 import Env from "@/env.ts";
-import logger from "@app/logger.ts";
+import bachsClient from "@app/bachs.ts";
+// import logger from "@app/logger.ts"; // Paystack only
 import db from "@db/db.ts";
 import { order } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
@@ -21,7 +22,15 @@ export const VerifyPaymentParams = z.object({
 export const CheckoutData = z.object({
  email: z.email(),
  currency: z.string(),
- rail: z.enum(["initializePaystackCheckout", "initializeStripeCheckout"]),
+ rail: z.enum([
+  // "initializePaystackCheckout",
+  // "initializeStripeCheckout",
+  "initializeBachsCheckout",
+  "initializeBachsCardCheckout",
+  "initializeBachsBankTransferCheckout",
+  "initializeBachsMobileMoneyCheckout",
+  "initializeBachsCryptoCheckout",
+ ]),
  metadata: z.record(z.string(), z.unknown()).optional(),
  callback_url: z.url().optional(),
  mode: z.enum(["payment", "setup", "subscription"]).optional(),
@@ -152,6 +161,13 @@ class PaymentService {
   reference: string,
  ): Promise<Result<PaystackVerifiedData>> => {
   try {
+   if (reference.startsWith("chk_")) {
+    const checkout = await bachsClient.checkoutSessions.get(reference);
+
+    return [checkout as unknown as PaystackVerifiedData, null];
+   }
+
+   /*
    const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/${reference}`, {
     method: "GET",
     headers: {
@@ -178,6 +194,9 @@ class PaymentService {
     return [null, APIError.badRequest("Payment not verified")];
 
    return [responseData.data, null];
+   */
+
+   return [null, APIError.badRequest("Unsupported payment reference")];
   } catch (err) {
    return [null, asError(err)];
   }

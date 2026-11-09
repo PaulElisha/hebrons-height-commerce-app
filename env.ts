@@ -48,12 +48,15 @@ const EnvSchema = z.object({
  EMAIL_USER: z.email("Invalid email"),
  EMAIL_PASS: z.string(),
 
- PAYSTACK_INIT_URL: z.string(),
- PAYSTACK_VERIFY_URL: z.string(),
- PAYSTACK_SECRET_KEY: z.string(),
+ // PAYSTACK_INIT_URL: z.string(),
+ // PAYSTACK_VERIFY_URL: z.string(),
+ // PAYSTACK_SECRET_KEY: z.string(),
 
- STRIPE_SECRET_KEY: z.string(),
- STRIPE_WEBHOOK_SECRET: z.string(),
+ // STRIPE_SECRET_KEY: z.string(),
+ // STRIPE_WEBHOOK_SECRET: z.string(),
+
+ BACHS_SECRET_KEY: z.string(),
+ BACHS_WEBHOOK_SECRET: z.string(),
 
  SCALER: z.coerce.number().default(100),
 

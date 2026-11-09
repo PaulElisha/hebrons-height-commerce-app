@@ -25,8 +25,9 @@ import productRouter from "@module/product/product.route.ts";
 import uploadRouter from "@module/upload/upload.route.ts";
 import userRouter from "@module/user/user.routes.ts";
 import cloudinaryWebhookRouter from "@/src/webhook/cloudinary/cloudinary.route.ts";
-import paystackWebhookRouter from "@webhook/paystack/paystack.routes.ts";
-import stripeWebhookRouter from "@webhook/stripe/stripe.route.ts";
+import bachsWebhookRouter from "@webhook/bachs/bachs.route.ts";
+// import paystackWebhookRouter from "@webhook/paystack/paystack.routes.ts";
+// import stripeWebhookRouter from "@webhook/stripe/stripe.route.ts";
 import { toNodeHandler } from "better-auth/node";
 import cookieParser from "cookie-parser";
 import { sql } from "drizzle-orm";
@@ -70,8 +71,9 @@ class App {
  }
 
  initializeWebhooks() {
-  this.app.use("/api/stripe", stripeWebhookRouter);
-  this.app.use("/api/paystack", paystackWebhookRouter);
+  // this.app.use("/api/stripe", stripeWebhookRouter);
+  // this.app.use("/api/paystack", paystackWebhookRouter);
+  this.app.use("/api/bachs", bachsWebhookRouter);
   this.app.use("/api/cloudinary", cloudinaryWebhookRouter);
  }
 

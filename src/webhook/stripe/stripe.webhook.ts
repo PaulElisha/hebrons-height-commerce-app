@@ -1,5 +1,6 @@
 /** @format */
 
+/*
 import Env from "@/env.ts";
 import logger from "@app/logger.ts";
 import stripeClient from "@app/stripe.ts";
@@ -83,3 +84,4 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
    .send(`Webhook Error ${message}`);
  }
 };
+*/
