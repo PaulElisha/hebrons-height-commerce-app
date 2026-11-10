@@ -1,5 +1,5 @@
 $kind: http-request
-url: https://hebrons-height-commerce-app.onrender.com/api/payment/initialize/5953bc8c-32db-4cf0-9254-ee6ba8dab4c9
+url: https://hebrons-height-commerce-app.onrender.com/api/payment/initialize/05d1698c-3088-4608-abf9-5e834246b1a0
 method: POST
 body:
   type: json
