@@ -1,7 +1,10 @@
 $kind: http-request
-url: https://hebrons-height-commerce-app.onrender.com/api/order/status?status=pending
+url: https://hebrons-height-commerce-app.onrender.com/api/order/status?status=processing
 method: GET
 queryParams:
-  status: pending
+  - key: status
+    value: processing
+    disabled: false
+    description: ""
 settings: {}
 order: 29000

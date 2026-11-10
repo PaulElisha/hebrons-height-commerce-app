@@ -55,8 +55,8 @@ const EnvSchema = z.object({
  // STRIPE_SECRET_KEY: z.string(),
  // STRIPE_WEBHOOK_SECRET: z.string(),
 
- BACHS_SECRET_KEY: z.string(),
- BACHS_WEBHOOK_SECRET: z.string(),
+ BACHS_SECRET_KEY: z.string().trim().min(1),
+ BACHS_WEBHOOK_SECRET: z.string().trim().min(1),
 
  SCALER: z.coerce.number().default(100),
 
