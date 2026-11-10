@@ -129,9 +129,12 @@ class App {
  }
 
  startServer = async () => {
-  await OutboxService.replayUnprocessed();
   this.app.listen(Env.PORT, () => {
    logger.info(`Server is running on port ${Env.PORT}`);
+
+   void OutboxService.replayUnprocessed().catch((err) => {
+    logger.error({ err }, "[...Outbox replay failed]");
+   });
   });
  };
 }

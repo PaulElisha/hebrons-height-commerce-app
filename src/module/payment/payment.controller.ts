@@ -5,13 +5,13 @@ import HttpStatus from "@shared/enum/http.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { APIResponse } from "@shared/types.ts";
 import asyncHandler from "@shared/util/async-handler.ts";
+import { CheckoutSessionResponse } from "@bachs/sdk";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
 
 import PaymentService, {
  CheckoutData,
  PaymentResponseData,
- PaystackVerifiedData,
  VerifyPaymentParams,
 } from "./payment.service.ts";
 
@@ -50,7 +50,7 @@ class PaymentController {
  verify = asyncHandler(
   async (
    req: Request<z.infer<typeof VerifyPaymentParams>, {}, {}>,
-   res: Response<APIResponse<PaystackVerifiedData>>,
+   res: Response<APIResponse<CheckoutSessionResponse>>,
    next: NextFunction,
   ) => {
    const reference = req.params.reference;

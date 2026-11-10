@@ -18,6 +18,9 @@ export const consumeOutboxEvent = async <T = Record<string, unknown>>(
   return;
  }
 
+ if (outboxEvent.processedAt)
+  return logger.info({ outboxId }, "Outbox event already processed");
+
  if (outboxEvent.attempts >= MAX_OUTBOX_ATTEMPTS)
   return logger.info(
    { outboxId },

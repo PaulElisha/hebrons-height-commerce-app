@@ -10,7 +10,10 @@ import PaymentService, {
 import * as APIError from "@shared/error/APIError.ts";
 import { ChargeEvent, EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
-import { getUserfromMerchantId } from "@shared/helper.ts";
+import {
+ findPaymentByReference,
+ getUserfromMerchantId,
+} from "@shared/helper.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
 import { and, eq } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
@@ -238,6 +241,15 @@ class WebhookHandler {
   eventData: ChargeEvent,
   orderId: string,
  ): Promise<Result<TPaymentVerificationResult>> {
+  const [existingPayment] = await findPaymentByReference(eventData.reference);
+
+  if (
+   existingPayment?.status === "paid" ||
+   existingPayment?.status === "failed"
+  ) {
+   return [{ payment: existingPayment }, null];
+  }
+
   const checkout = await bachsClient.checkoutSessions.get(eventData.reference);
 
   if (checkout.status !== "completed") {

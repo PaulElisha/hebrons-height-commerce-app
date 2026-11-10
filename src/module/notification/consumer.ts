@@ -21,6 +21,8 @@ EventBroker.subscribe(EventType.ORDER_STATUS_UPDATED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderStatusUpdatedPayload>(
    async ({ userId, orderId, status, message, merchantUserIds }) => {
+    if (!orderId || !status) return;
+
     const safeMerchantIds = Array.isArray(merchantUserIds)
      ? merchantUserIds
      : [];
@@ -43,6 +45,8 @@ EventBroker.subscribe(EventType.ORDER_STATUS_UPDATED).subscribe({
 EventBroker.subscribe(EventType.ORDER_PLACED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderPlacedPayload>(async ({ userId, orderId }) => {
+   if (!orderId) return;
+
    await NotificationService.createNotification(
     userId,
     "Order Placed",
@@ -91,6 +95,8 @@ EventBroker.subscribe(EventType.ORDER_CANCELLED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<OrderCancelledPayload>(
    async ({ userId, orderId }) => {
+    if (!orderId) return;
+
     const [orderDetails, err] = await OrderService.getOrderWithUser(
      userId,
      orderId,
@@ -114,7 +120,7 @@ EventBroker.subscribe(EventType.PAYMENT_FULFILLED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaymentFulfilledPayload>(
    async ({ updatedOrder }) => {
-    if (!updatedOrder?.userId) return;
+    if (!updatedOrder?.userId || !updatedOrder?.id) return;
 
     await NotificationService.createNotification(
      updatedOrder.userId,
@@ -132,7 +138,7 @@ EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaymentInitializedPayload>(
    async ({ userId, orderId }) => {
-    if (!userId) return;
+    if (!userId || !orderId) return;
 
     await NotificationService.createNotification(
      userId,
@@ -150,7 +156,7 @@ EventBroker.subscribe(EventType.PAYMENT_FAILED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaymentFailedPayload>(
    async ({ userId, orderId, reason }) => {
-    if (!userId) return;
+    if (!userId || !orderId) return;
 
     await NotificationService.createNotification(
      userId,

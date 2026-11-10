@@ -7,7 +7,6 @@ import { EventBroker } from "@shared/event-bus/index.ts";
 import type { EventContract } from "@shared/event-bus/types.ts";
 import { Result } from "@shared/types.ts";
 import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
-import FA from "fasy";
 
 const MAX_OUTBOX_ATTEMPTS = 5;
 
@@ -79,11 +78,11 @@ class OutboxService {
    .select()
    .from(outbox)
    .where(
-    or(isNull(outbox.processedAt), lt(outbox.attempts, MAX_OUTBOX_ATTEMPTS)),
+    and(isNull(outbox.processedAt), lt(outbox.attempts, MAX_OUTBOX_ATTEMPTS)),
    )
    .orderBy(outbox.createdAt);
 
-  await FA.concurrent.map(async (e: typeof outbox.$inferSelect) => {
+  for (const e of events) {
    try {
     EventBroker.publish({
      event_type: e.eventType as EventContract["event_type"],
@@ -92,7 +91,9 @@ class OutboxService {
    } catch (err) {
     logger.error({ err, outboxId: e.id }, "Failed to re-publish outbox event");
    }
-  }, events);
+
+   await new Promise((resolve) => setTimeout(resolve, 200));
+  }
 
   return events.length;
  }
