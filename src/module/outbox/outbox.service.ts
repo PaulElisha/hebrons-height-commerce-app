@@ -55,10 +55,7 @@ class OutboxService {
   const [updated] = await db
    .update(outbox)
    .set({
-    attempts:
-     Number(sql`${outbox.attempts} + 1`) >= MAX_OUTBOX_ATTEMPTS
-      ? MAX_OUTBOX_ATTEMPTS
-      : Number(sql`${outbox.attempts} + 1`),
+   attempts: sql`LEAST(${outbox.attempts} + 1, ${MAX_OUTBOX_ATTEMPTS})`,
     lastError: error,
    })
    .where(and(eq(outbox.id, outboxId), isNull(outbox.processedAt)))

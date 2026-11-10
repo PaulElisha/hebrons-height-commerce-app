@@ -14,6 +14,7 @@ import { Transactional } from "drizzle-transactional";
 import z from "zod";
 
 import { FetchRail } from "./dispatcher.ts";
+import { CheckoutSessionResponse } from "@bachs/sdk";
 
 export const VerifyPaymentParams = z.object({
  reference: z.string(),
@@ -159,12 +160,12 @@ class PaymentService {
 
  verifyPayment = async (
   reference: string,
- ): Promise<Result<PaystackVerifiedData>> => {
+ ): Promise<Result<CheckoutSessionResponse>> => {
   try {
    if (reference.startsWith("chk_")) {
     const checkout = await bachsClient.checkoutSessions.get(reference);
 
-    return [checkout as unknown as PaystackVerifiedData, null];
+    return [checkout as CheckoutSessionResponse, null];
    }
 
    /*

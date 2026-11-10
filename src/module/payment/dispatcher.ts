@@ -78,7 +78,7 @@ const initializeBachsCheckout: RailHandler = async (userId, orderId, data) => {
    {
     pricing: {
      currency,
-     amount: String(amount),
+     amount: amount.toFixed(2),
     },
     ...(paymentMethods !== undefined && {
      payment_method_types: paymentMethods,

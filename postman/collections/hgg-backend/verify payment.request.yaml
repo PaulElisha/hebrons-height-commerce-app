@@ -1,0 +1,5 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/payment/verify/chk_W3u3owtsqtYGKxD7
+method: GET
+settings: {}
+order: 31005

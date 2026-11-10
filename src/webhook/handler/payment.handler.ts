@@ -1,6 +1,5 @@
 /** @format */
 
-import Env from "@/env.ts";
 import bachsClient from "@app/bachs.ts";
 import db from "@db/db.ts";
 import { order, orderItem } from "@db/schema/order.ts";
@@ -158,7 +157,7 @@ class WebhookHandler {
    return [{ payment: paymentRecord }, null];
   }
 
-  const recordedAmount = Number(paymentRecord.amount) / Env.SCALER;
+  const recordedAmount = Number(paymentRecord.amount);
 
   if (paidAmount !== recordedAmount)
    return [null, APIError.badRequest("Payment amount mismatch")];
