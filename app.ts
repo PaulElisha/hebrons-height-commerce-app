@@ -40,6 +40,8 @@ import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
+import { outbox } from "@db/schema/outbox.ts";
+import OutboxService from "@module/outbox/outbox.service.ts";
 
 initializeDrizzleTransactionalContext();
 addTransactionalDrizzleDatabase(db as any);
@@ -126,7 +128,8 @@ class App {
   this.app.use(errorHandler);
  }
 
- startServer = () => {
+ startServer = async () => {
+  await OutboxService.replayUnprocessed();
   this.app.listen(Env.PORT, () => {
    logger.info(`Server is running on port ${Env.PORT}`);
   });

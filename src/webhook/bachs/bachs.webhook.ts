@@ -12,9 +12,7 @@ import { findPaymentByReference } from "@shared/helper.ts";
 import { Request, Response } from "express";
 
 export const bachsWebhookHandler = async (req: Request, res: Response) => {
- const rawBody = Buffer.isBuffer(req.body)
-  ? req.body
-  : Buffer.from(JSON.stringify(req.body));
+ const rawBody = req.body;
 
  let event: WebhookEvent;
 
