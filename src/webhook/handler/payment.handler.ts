@@ -2,6 +2,7 @@
 
 import bachsClient from "@app/bachs.ts";
 import db from "@db/db.ts";
+import { merchant } from "@db/schema/merchant.ts";
 import { order, orderItem } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import PaymentService, {
@@ -20,7 +21,6 @@ import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import z from "zod";
 
 class WebhookHandler {
- @Transactional()
  async handlePaymentInitialized(
   userId: string,
   orderId: string,
@@ -54,11 +54,10 @@ class WebhookHandler {
    const orderItems = await db
     .select()
     .from(orderItem)
+    .innerJoin(merchant, eq(merchant.id, orderItem.merchantId))
     .where(eq(orderItem.orderId, orderId));
 
-   const merchantIds = orderItems
-    .filter((r) => r.merchantId)
-    .map((r) => r.merchantId);
+   const merchantIds = orderItems.map((i) => i.merchant.id);
 
    const merchantUserIds = (await getUserfromMerchantId(merchantIds))
     .filter((r) => r.user.id === r.merchant?.userId)

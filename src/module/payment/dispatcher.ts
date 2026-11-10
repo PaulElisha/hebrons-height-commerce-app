@@ -4,7 +4,9 @@ import Env from "@/env.ts";
 // import stripeClient from "@app/stripe.ts"; // Stripe only
 import bachsClient from "@app/bachs.ts";
 import type { PaymentMethodCorridor } from "@bachs/sdk";
-// import db from "@db/db.ts"; // Stripe only
+import db from "@db/db.ts";
+import { order } from "@db/schema/order.ts";
+import { payment } from "@db/schema/payment.ts";
 // import { product } from "@db/schema/product.ts"; // Stripe only
 import OrderService from "@module/order/order.service.ts";
 import * as APIError from "@shared/error/APIError.ts";
@@ -13,7 +15,8 @@ import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result } from "@shared/types.ts";
 // import { TOrderItems } from "@shared/types.ts"; // Stripe only
-// import { eq } from "drizzle-orm"; // Stripe only
+import { eq } from "drizzle-orm";
+import { Transactional } from "drizzle-transactional";
 // import FA from "fasy"; // Stripe only
 // import Stripe from "stripe"; // Stripe only
 import z from "zod";

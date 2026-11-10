@@ -13,8 +13,8 @@ import {
 import { consumeOutboxEvent } from "@shared/util/outbox-consumer.ts";
 
 EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
- next: async ({ payload }) => {
-  await consumeOutboxEvent<PaymentInitializedPayload>(
+ next: ({ payload }) => {
+  consumeOutboxEvent<PaymentInitializedPayload>(
    async ({ paymentResponseData, userId, orderId }) => {
     const [, err] = await WebHookHandler.handlePaymentInitialized(
      userId,
@@ -25,15 +25,12 @@ EventBroker.subscribe(EventType.PAYMENT_INITIALIZED).subscribe({
     logger.info({ userId, orderId }, "[...Payment initialised]");
    },
    payload.outboxId,
-  );
+  ).catch((e) => logger.error({ e }, "[Payment Initialization Consumer Error"));
  },
  error: (err: unknown) => {
   const msg = err instanceof Error ? err?.message : String(err);
 
-  logger.error(
-   { err: msg },
-   "Error consuming payment initialized event",
-  );
+  logger.error({ err: msg }, "Error consuming payment initialized event");
 
   throw err;
  },

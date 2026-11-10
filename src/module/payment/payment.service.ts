@@ -102,7 +102,7 @@ class PaymentService {
    if (existingPayment.status !== "initialized") return [existingPayment, null];
 
    if (
-    data.order.orderStatus !== "processing" &&
+    data.order.orderStatus !== "processing" ||
     data.order.paymentStatus !== "processing"
    ) {
     return [null, APIError.badRequest("Invalid order")];
@@ -130,7 +130,7 @@ class PaymentService {
   }
 
   if (
-   data.order.orderStatus !== "pending" &&
+   data.order.orderStatus !== "pending" ||
    data.order.paymentStatus !== "pending"
   ) {
    return [null, APIError.badRequest("Invalid order")];
