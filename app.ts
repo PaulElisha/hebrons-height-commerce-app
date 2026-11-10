@@ -127,8 +127,9 @@ class App {
  }
 
  startServer = () => {
-  this.app.listen(Env.PORT, () => {
-   logger.info(`Server is running on ${Env.BASE_URL}`);
+  const port = Number(process.env.PORT) || Env.PORT;
+  this.app.listen(port, "0.0.0.0", () => {
+   logger.info(`Server is running on port ${port}`);
   });
  };
 }
