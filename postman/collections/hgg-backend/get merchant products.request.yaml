@@ -1,0 +1,5 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/product/merchant
+method: GET
+settings: {}
+order: 11161

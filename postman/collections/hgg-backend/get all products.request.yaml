@@ -1,0 +1,29 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/product
+method: GET
+queryParams:
+  - key: search
+    value: Jewel
+    disabled: true
+    $type: |-
+      {
+        "type": "",
+        "format": "",
+        "required": false,
+        "deprecated": false,
+        "default": "",
+        "enum": [],
+        "pattern": "",
+        "minLength": "",
+        "maxLength": "",
+        "minItems": "",
+        "maxItems": "",
+        "minimum": "",
+        "maximum": "",
+        "uniqueItems": false
+      }
+  - key: category
+    value: autos
+    disabled: true
+settings: {}
+order: 18000

@@ -1,0 +1,11 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/auth/sign-out
+method: POST
+headers:
+  Origin: https://hebrons-height-commerce-app.onrender.com
+auth:
+  type: bearer
+  credentials:
+    token: "{{auth_secret_010m}}"
+settings: {}
+order: 5000

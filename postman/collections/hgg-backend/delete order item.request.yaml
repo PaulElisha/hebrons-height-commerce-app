@@ -1,0 +1,5 @@
+$kind: http-request
+url: http://localhost:8000/api/order/e59d62e5-28fa-4728-94e1-9c281af4a503
+method: DELETE
+settings: {}
+order: 30000

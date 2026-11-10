@@ -1,0 +1,36 @@
+$kind: http-request
+url: http://localhost:8000/api/product
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: lexus 350
+    - type: text
+      key: description
+      value: neatly used Uk car
+    - type: text
+      key: price
+      value: "200000"
+    - type: text
+      key: quantity
+      value: "5"
+    - type: text
+      key: category
+      value: cars
+    - type: text
+      key: subCategory
+      value: foreign used
+    - type: text
+      key: additionalData
+      value: "[object Object]"
+    - type: file
+      key: file
+      src: /Users/paulelisha/Downloads/1731570377238.jpeg
+auth:
+  type: bearer
+  credentials:
+    token: "{{vault:auth_secret_010m}}"
+settings: {}
+order: 12000

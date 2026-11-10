@@ -1,0 +1,14 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/product/additional-images/a0df0f63-043c-48dd-ade1-3fedab86c531
+method: PUT
+body:
+  type: formdata
+  content:
+    - type: file
+      key: files
+      src:
+        - postman-cloud:///1f177f69-1961-4bb0-bea5-356aede20b49
+        - postman-cloud:///1f177f68-ac78-4df0-a1eb-adfc91fc70e0
+        - postman-cloud:///1f177f68-3beb-4650-bb86-98af27939cac
+settings: {}
+order: 13000

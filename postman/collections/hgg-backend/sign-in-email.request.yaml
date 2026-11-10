@@ -1,0 +1,44 @@
+$kind: http-request
+name: sign-in/email
+description: |
+  Generated from cURL: curl -X POST http://localhost:4000/auth/sign-in/email \
+    -H "Content-Type: application/json" \
+    -d '{
+      "email": "user@example.com",
+      "password": "SecurePass123!"
+    }'
+url: https://hebrons-height-commerce-app.onrender.com/api/auth/sign-in/email
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+    $type: |-
+      {
+        "type": "",
+        "format": "",
+        "required": false,
+        "deprecated": false,
+        "default": "",
+        "enum": [],
+        "pattern": "",
+        "minLength": "",
+        "maxLength": "",
+        "minItems": "",
+        "maxItems": "",
+        "minimum": "",
+        "maximum": "",
+        "uniqueItems": false
+      }
+body:
+  type: json
+  content: |-
+    {
+        "email": "user@gmail.com",
+        "password": "SecurePass123!"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{auth_secret_010m}}"
+settings: {}
+order: 4000

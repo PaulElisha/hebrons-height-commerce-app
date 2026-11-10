@@ -1,0 +1,11 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/product/related?category=cars
+method: GET
+queryParams:
+  - key: merchantId
+    value: 8dbd6682-8f08-4967-9d7f-4932d6c65b90
+    disabled: true
+  - key: category
+    value: cars
+settings: {}
+order: 19377

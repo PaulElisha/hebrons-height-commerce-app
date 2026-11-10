@@ -1,0 +1,12 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/product/latest
+method: GET
+queryParams:
+  - key: pageNumber
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "3"
+    disabled: true
+settings: {}
+order: 19000

@@ -1,0 +1,14 @@
+$kind: http-request
+url: http://localhost:4000/api/merchant/15
+method: PUT
+body:
+  type: json
+  content: |-
+    {
+        "businessName": "Kiki concepts and realty",
+        "businessLogo": "",
+        "businessDescription": "dealer in all kinds of residential, commerical and industrial properties, land sales, and rental services",
+        "address": ""
+    }
+settings: {}
+order: 10000

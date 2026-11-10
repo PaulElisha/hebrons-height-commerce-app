@@ -1,0 +1,19 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/user/update
+method: PUT
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: demi samuel
+      disabled: true
+    - type: text
+      key: email
+      value: demi@gmail.com
+      disabled: true
+    - type: file
+      key: file
+      src: postman-cloud:///1f17bcdc-4571-46f0-91a3-ef1fc8b70db6
+settings: {}
+order: 7000
