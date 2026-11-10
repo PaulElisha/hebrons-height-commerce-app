@@ -1,0 +1,5 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/cart/dccdc948-f5f0-4f8d-9d1a-9803776a1428
+method: DELETE
+settings: {}
+order: 24000

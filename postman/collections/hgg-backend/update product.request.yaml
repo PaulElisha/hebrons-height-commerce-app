@@ -1,0 +1,17 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/product/124be656-0c3d-4d29-9768-e55c7b587823
+method: PUT
+body:
+  type: json
+  content: |-
+    {
+        "name": "lexus 350",
+        "description": "neatly used Uk car",
+        "image": "https://res.cloudinary.com/suzoikgg/image/upload/v1784301871/product_images/product_images-1784301870915-4ebsyxp4guu.webp",
+        "price": 200000,
+        "quantity": 5,
+        "category": "cars",
+        "subCategory": "foreign used"
+    }
+settings: {}
+order: 14000

@@ -1,0 +1,17 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/order/c0530f83-7eb8-43b4-a41d-9e4b9897050f
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "deliveryAddress": {
+            "address": "Block 94, Oke-Ibadan, Sawo, Akobo",
+            "city": "Ibadan",
+            "state": "oyo",
+            "country": "Nigeria",
+            "line1": "jenriyin"
+        }
+    }
+settings: {}
+order: 26000

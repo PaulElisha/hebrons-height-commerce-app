@@ -1,0 +1,5 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/cart/d89c2b9b-7441-4f0e-b8cf-5583724dfc65/decrement
+method: PUT
+settings: {}
+order: 23000

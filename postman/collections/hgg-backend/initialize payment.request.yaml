@@ -1,0 +1,13 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/payment/initialize/63bffec5-b267-463d-a556-d52b7f2af18a
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "email": "ajaoireoluwa@gmail.com",
+        "currency": "NGN",
+        "rail": "initializeBachsBankTransferCheckout"
+    }
+settings: {}
+order: 31000

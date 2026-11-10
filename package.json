@@ -36,6 +36,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@bachs/cli": "^0.2.5",
     "@bachs/sdk": "^2.0.0",
     "@better-auth/drizzle-adapter": "^1.6.22",
     "@epic-web/remember": "^1.1.0",

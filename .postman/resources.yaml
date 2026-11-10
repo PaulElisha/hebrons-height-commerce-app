@@ -1,0 +1,5 @@
+workspace:
+  id: 0d8788ce-6e4e-4909-8a4f-9488e4835640
+cloudResources:
+  collections:
+    ../postman/collections/hgg-backend: 44843885-e3f4f5be-4626-42aa-a96d-68869a5b410b

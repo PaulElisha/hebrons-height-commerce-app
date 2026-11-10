@@ -1,0 +1,11 @@
+$kind: http-request
+url: https://hebrons-height-commerce-app.onrender.com/api/upload/cloudinary-signature
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "folder": "product_images"
+    }
+settings: {}
+order: 32000
