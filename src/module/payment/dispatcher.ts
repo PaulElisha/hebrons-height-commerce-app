@@ -78,7 +78,7 @@ const initializeBachsCheckout: RailHandler = async (userId, orderId, data) => {
    {
     pricing: {
      currency,
-     amount: String(Math.round(amount * Env.SCALER)),
+     amount: String(amount),
     },
     ...(paymentMethods !== undefined && {
      payment_method_types: paymentMethods,
@@ -99,7 +99,7 @@ const initializeBachsCheckout: RailHandler = async (userId, orderId, data) => {
    email: data.email,
    mode: data.mode,
    rail: data.rail,
-   amount: Math.round(amount * Env.SCALER),
+   amount: Number(amount),
    currency,
    callbackUrl: data.callback_url,
    checkout_url: session.checkout_url,
