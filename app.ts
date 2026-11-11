@@ -46,6 +46,8 @@ import OutboxService from "@module/outbox/outbox.service.ts";
 initializeDrizzleTransactionalContext();
 addTransactionalDrizzleDatabase(db as any);
 
+const OUTBOX_REPLAY_INTERVAL_MS = 30_000;
+
 class App {
  app: Express;
  constructor() {
@@ -132,9 +134,29 @@ class App {
   this.app.listen(Env.PORT, () => {
    logger.info(`Server is running on port ${Env.PORT}`);
 
-   void OutboxService.replayUnprocessed().catch((err) => {
-    logger.error({ err }, "[...Outbox replay failed]");
-   });
+   let replaying = false;
+
+   const replayOutbox = async () => {
+    if (replaying) return;
+
+    replaying = true;
+    try {
+     const count = await OutboxService.replayUnprocessed();
+     if (count > 0) logger.info({ count }, "[...Outbox replay]");
+    } catch (err) {
+     logger.error({ err }, "[...Outbox replay failed]");
+    } finally {
+     replaying = false;
+    }
+   };
+
+   void replayOutbox();
+
+   const replayTimer = setInterval(
+    () => void replayOutbox(),
+    OUTBOX_REPLAY_INTERVAL_MS,
+   );
+   replayTimer.unref();
   });
  };
 }

@@ -60,6 +60,55 @@ const bachsPaymentMethods = (
  }
 };
 
+const reusableBachsPayment = async (
+ orderId: string,
+ fallback: { amount: number; currency: string },
+): Promise<PaymentResponseData | null> => {
+ const [existing] = await db
+  .select()
+  .from(payment)
+  .where(eq(payment.orderId, orderId))
+  .limit(1);
+
+ if (
+  !existing ||
+  existing.status !== "initialized" ||
+  !existing.paymentReference ||
+  !existing.authorizationUrl
+ )
+  return null;
+
+ try {
+  const session = await bachsClient.checkoutSessions.get(
+   existing.paymentReference,
+  );
+
+  const isTerminal = ["completed", "expired", "cancelled"].includes(
+   session.status,
+  );
+
+  const isExpired =
+   !!session.expires_at &&
+   new Date(session.expires_at).getTime() <= Date.now();
+
+  if (isTerminal || isExpired) return null;
+
+  return {
+   email: existing.email,
+   mode: (existing.mode ?? undefined) as PaymentResponseData["mode"],
+   rail: existing.rail as Rail,
+   amount: Number(existing.amount ?? fallback.amount),
+   currency: existing.currency ?? fallback.currency,
+   callbackUrl: existing.callbackUrl ?? undefined,
+   checkout_url: existing.authorizationUrl,
+   reference: existing.paymentReference,
+   paymentProvider: existing.paymentProvider ?? "bachs",
+  };
+ } catch {
+  return null;
+ }
+};
+
 const initializeBachsCheckout: RailHandler = async (userId, orderId, data) => {
  try {
   const [orderData, err] = await OrderService.getOrderWithUser(userId, orderId);
@@ -68,6 +117,11 @@ const initializeBachsCheckout: RailHandler = async (userId, orderId, data) => {
 
   const amount = Number(orderData.subtotal);
   const currency = data.currency.toUpperCase();
+
+  const reusable = await reusableBachsPayment(orderId, { amount, currency });
+
+  if (reusable) return [reusable, null];
+
   const paymentMethods = bachsPaymentMethods(data.rail);
 
   const metadata = Object.fromEntries(

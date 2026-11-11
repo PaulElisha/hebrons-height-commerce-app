@@ -61,6 +61,37 @@ export interface PaystackVerifiedData {
  [key: string]: unknown;
 }
 
+const withOrderDbLock = async <T>(
+ orderId: string,
+ fn: () => Promise<T>,
+): Promise<T> => {
+ const client = await db.$client.connect();
+ let destroyed = false;
+
+ try {
+  await client.query("SELECT pg_advisory_lock(hashtextextended($1, 0))", [
+   orderId,
+  ]);
+
+  try {
+   return await fn();
+  } finally {
+   try {
+    await client.query(
+     "SELECT pg_advisory_unlock(hashtextextended($1, 0))",
+     [orderId],
+    );
+   } catch (err) {
+    destroyed = true;
+    client.release(true);
+    throw err;
+   }
+  }
+ } finally {
+  if (!destroyed) client.release();
+ }
+};
+
 class PaymentService {
  fetchPaymentForOrderByRail = async (
   userId: string,
@@ -72,7 +103,9 @@ class PaymentService {
 
    if (!rail) return [null, APIError.badRequest("Unsupported payment rail")];
 
-   const [paymentResponse, err] = await rail(userId, orderId, checkout);
+   const [paymentResponse, err] = await withOrderDbLock(orderId, () =>
+    rail(userId, orderId, checkout),
+   );
 
    return [paymentResponse, err];
   } catch (err) {
@@ -92,116 +125,112 @@ class PaymentService {
 
   await db.select().from(order).where(eq(order.id, orderId)).for("update");
 
+  if (data.order.orderStatus === "cancelled")
+   return [null, APIError.badRequest("Invalid order")];
+
   const [existingPayment] = await db
    .select()
    .from(payment)
    .where(eq(payment.orderId, orderId))
    .limit(1);
 
-  if (existingPayment) {
-   if (existingPayment.status !== "initialized") return [existingPayment, null];
-
-   if (
-    data.order.orderStatus !== "processing" ||
-    data.order.paymentStatus !== "processing"
-   ) {
-    return [null, APIError.badRequest("Invalid order")];
-   }
-
-   const [updatedPayment] = await db
-    .update(payment)
-    .set({
-     email: paymentData.email,
-     amount: paymentData.amount,
-     currency: paymentData.currency,
-     mode: paymentData.mode,
-     rail: paymentData.rail,
-     callbackUrl: paymentData.callback_url,
-     paymentReference: paymentData.reference,
-     paymentProvider: paymentData.paymentProvider,
-     accessCode: paymentData.access_code,
-     authorizationUrl: paymentData.checkout_url,
-     updatedAt: new Date(),
-    })
-    .where(eq(payment.id, existingPayment.id))
-    .returning();
-
-   return [updatedPayment ?? existingPayment, null];
-  }
+  if (existingPayment?.status === "paid") return [existingPayment, null];
 
   if (
-   data.order.orderStatus !== "pending" ||
-   data.order.paymentStatus !== "pending"
+   existingPayment?.status === "failed" ||
+   existingPayment?.status === "cancelled"
   ) {
-   return [null, APIError.badRequest("Invalid order")];
+   await db
+    .update(payment)
+    .set({ status: "pending", updatedAt: new Date() })
+    .where(eq(payment.id, existingPayment.id));
   }
 
-  const [paymentCreated] = await db
+  const values = {
+   orderId,
+   email: paymentData.email,
+   userId,
+   mode: paymentData.mode,
+   rail: paymentData.rail,
+   amount: paymentData.amount,
+   callbackUrl: paymentData.callback_url,
+   authorizationUrl: paymentData.checkout_url,
+   accessCode: paymentData.access_code,
+   paymentReference: paymentData.reference,
+   currency: paymentData.currency,
+   paymentProvider: paymentData.paymentProvider,
+  };
+
+  const [paymentRecord] = await db
    .insert(payment)
-   .values({
-    orderId: orderId,
-    email: paymentData.email,
-    userId: userId,
-    mode: paymentData.mode,
-    rail: paymentData.rail,
-    amount: paymentData.amount,
-    callbackUrl: paymentData.callback_url,
-    authorizationUrl: paymentData.checkout_url,
-    accessCode: paymentData.access_code,
-    paymentReference: paymentData.reference,
-    currency: paymentData.currency,
-    paymentProvider: paymentData.paymentProvider,
-    attempts: 0,
+   .values({ ...values, attempts: 0 })
+   .onConflictDoUpdate({
+    target: payment.orderId,
+    set: {
+     email: values.email,
+     mode: values.mode,
+     rail: values.rail,
+     amount: values.amount,
+     callbackUrl: values.callbackUrl,
+     authorizationUrl: values.authorizationUrl,
+     accessCode: values.accessCode,
+     paymentReference: values.paymentReference,
+     currency: values.currency,
+     paymentProvider: values.paymentProvider,
+     updatedAt: new Date(),
+    },
    })
    .returning();
 
-  return [paymentCreated, null];
+  return [paymentRecord, null];
  }
 
  verifyPayment = async (
   reference: string,
  ): Promise<Result<CheckoutSessionResponse>> => {
   try {
-   if (reference.startsWith("chk_")) {
-    const checkout = await bachsClient.checkoutSessions.get(reference);
+   const checkout = await bachsClient.checkoutSessions.get(reference);
 
-    return [checkout as CheckoutSessionResponse, null];
-   }
-
-   /*
-   const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/${reference}`, {
-    method: "GET",
-    headers: {
-     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
-     "Content-Type": "application/json",
-    },
-   });
-
-   if (!response.ok) {
-    const errBody = await response.json().catch((e: Error) => {
-     logger.error(
-      { err: String(e.message), reference },
-      "[...Paystack error body]",
-     );
-     return { message: String(e.message ?? "Paystack Payment failed") };
-    });
-
-    return [null, APIError.badRequest(errBody.message)];
-   }
-
-   const responseData = await response.json();
-
-   if (!responseData.status || responseData.data?.status !== "success")
-    return [null, APIError.badRequest("Payment not verified")];
-
-   return [responseData.data, null];
-   */
-
-   return [null, APIError.badRequest("Unsupported payment reference")];
+   return [checkout, null];
   } catch (err) {
    return [null, asError(err)];
   }
  };
+
+ // verifyPayment = async (
+ //  reference: string,
+ // ): Promise<Result<PaystackVerifiedData>> => {
+ //  try {
+ //   const response = await fetch(`${Env.PAYSTACK_VERIFY_URL}/${reference}`, {
+ //    method: "GET",
+ //    headers: {
+ //     Authorization: `Bearer ${Env.PAYSTACK_SECRET_KEY}`,
+ //     "Content-Type": "application/json",
+ //    },
+ //   });
+ //
+ //   if (!response.ok) {
+ //    const errBody = await response.json().catch((e: Error) => {
+ //     logger.error(
+ //      { err: String(e.message), reference },
+ //      "[...Paystack error body]",
+ //     );
+ //     return { message: String(e.message ?? "Paystack Payment failed") };
+ //    });
+ //
+ //    return [null, APIError.badRequest(errBody.message)];
+ //   }
+ //
+ //   const responseData = await response.json();
+ //
+ //   if (!responseData.status || responseData.data?.status !== "success")
+ //    return [null, APIError.badRequest("Payment not verified")];
+ //
+ //   return [responseData.data, null];
+ //  } catch (err) {
+ //   return [null, asError(err)];
+ //  }
+ // };
 }
 
 export default new PaymentService();

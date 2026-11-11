@@ -6,7 +6,7 @@ import { outbox } from "@db/schema/outbox.ts";
 import { EventBroker } from "@shared/event-bus/index.ts";
 import type { EventContract } from "@shared/event-bus/types.ts";
 import { Result } from "@shared/types.ts";
-import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, sql } from "drizzle-orm";
 
 const MAX_OUTBOX_ATTEMPTS = 5;
 
@@ -35,26 +35,41 @@ class OutboxService {
   return [row, null];
  }
 
- static async update(outboxId: string): Promise<void> {
-  await db
+ static async claim(
+  outboxId: string,
+ ): Promise<Result<typeof outbox.$inferSelect>> {
+  const [row] = await db
    .update(outbox)
    .set({
-    processedAt: new Date(),
     attempts: sql`${outbox.attempts} + 1`,
    })
    .where(
     and(
      eq(outbox.id, outboxId),
-     or(isNull(outbox.processedAt), lt(outbox.attempts, MAX_OUTBOX_ATTEMPTS)),
+     isNull(outbox.processedAt),
+     lt(outbox.attempts, MAX_OUTBOX_ATTEMPTS),
     ),
-   );
+   )
+   .returning();
+
+  if (!row) return [null, null];
+
+  return [row, null];
+ }
+
+ static async update(outboxId: string): Promise<void> {
+  await db
+   .update(outbox)
+   .set({
+    processedAt: new Date(),
+   })
+   .where(and(eq(outbox.id, outboxId), isNull(outbox.processedAt)));
  }
 
  static async markFailed(outboxId: string, error: string): Promise<void> {
   const [updated] = await db
    .update(outbox)
    .set({
-   attempts: sql`LEAST(${outbox.attempts} + 1, ${MAX_OUTBOX_ATTEMPTS})`,
     lastError: error,
    })
    .where(and(eq(outbox.id, outboxId), isNull(outbox.processedAt)))

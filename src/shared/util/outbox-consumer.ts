@@ -3,28 +3,32 @@
 import logger from "@app/logger.ts";
 import OutboxService from "@module/outbox/outbox.service.ts";
 
-const MAX_OUTBOX_ATTEMPTS = 5;
-
 export const consumeOutboxEvent = async <T = Record<string, unknown>>(
  cb: (payload: T) => Promise<void>,
  outboxId?: string,
 ) => {
  if (!outboxId) return;
 
- const [outboxEvent, err] = await OutboxService.fetchById(outboxId);
+ let outboxEvent: Awaited<ReturnType<typeof OutboxService.claim>>[0];
 
- if (err || !outboxEvent) {
-  logger.info({ outboxId, err }, "Outbox event not found or already processed");
+ try {
+  const [claimed, err] = await OutboxService.claim(outboxId);
+
+  if (err) {
+   logger.error({ outboxId, err }, "Outbox event claim failed");
+   return;
+  }
+
+  outboxEvent = claimed;
+ } catch (err) {
+  logger.error({ err, outboxId }, "Outbox event claim failed");
   return;
  }
 
- if (outboxEvent.processedAt)
-  return logger.info({ outboxId }, "Outbox event already processed");
-
- if (outboxEvent.attempts >= MAX_OUTBOX_ATTEMPTS)
+ if (!outboxEvent)
   return logger.info(
    { outboxId },
-   "Outbox event dead-lettered (max attempts reached)",
+   "Outbox event not found, already processed, or max attempts reached",
   );
 
  try {

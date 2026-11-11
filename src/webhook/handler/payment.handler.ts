@@ -16,11 +16,12 @@ import {
  getUserfromMerchantId,
 } from "@shared/helper.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import z from "zod";
 
 class WebhookHandler {
+ @Transactional()
  async handlePaymentInitialized(
   userId: string,
   orderId: string,
@@ -33,24 +34,33 @@ class WebhookHandler {
   );
   if (err || !paymentRecord) return [null, err];
 
-  if (paymentRecord.status === "pending") {
-   await db
-    .update(order)
-    .set({
-     orderStatus: "processing",
-     paymentStatus: "processing",
-     updatedAt: new Date(),
-    })
-    .where(eq(order.id, orderId));
+  const [updatedOrder] = await db
+   .update(order)
+   .set({
+    orderStatus: "processing",
+    paymentStatus: "processing",
+    updatedAt: new Date(),
+   })
+   .where(
+    and(
+     eq(order.id, orderId),
+     inArray(order.orderStatus, ["pending", "processing", "failed"]),
+    ),
+   )
+   .returning();
 
-   await db
-    .update(payment)
-    .set({
-     status: "initialized",
-     updatedAt: new Date(),
-    })
-    .where(eq(payment.id, paymentRecord.id));
+  const [updatedPayment] = await db
+   .update(payment)
+   .set({
+    status: "initialized",
+    updatedAt: new Date(),
+   })
+   .where(
+    and(eq(payment.id, paymentRecord.id), inArray(payment.status, ["pending"])),
+   )
+   .returning();
 
+  if (updatedOrder) {
    const orderItems = await db
     .select()
     .from(orderItem)
@@ -76,7 +86,7 @@ class WebhookHandler {
    });
   }
 
-  return [paymentRecord, null];
+  return [updatedPayment ?? paymentRecord, null];
  }
 
  @Transactional()
@@ -176,7 +186,7 @@ class WebhookHandler {
    .where(
     and(
      eq(payment.orderId, paymentRecord.orderId),
-     eq(payment.status, "initialized"),
+     inArray(payment.status, ["pending", "initialized"]),
     ),
    )
    .returning();
@@ -191,23 +201,28 @@ class WebhookHandler {
    .where(
     and(
      eq(order.id, paymentRecord.orderId),
-     eq(order.orderStatus, "processing"),
+     inArray(order.orderStatus, ["pending", "processing"]),
     ),
    )
    .returning();
 
-  runOnTransactionCommit(() => {
-   publishEvent({
-    event_type: EventType.PAYMENT_FULFILLED,
-    payload: {
-     userId: updatedOrder?.userId,
-     updatedPayment,
-     updatedOrder,
-    },
+  if (updatedPayment && updatedOrder) {
+   runOnTransactionCommit(() => {
+    publishEvent({
+     event_type: EventType.PAYMENT_FULFILLED,
+     payload: {
+      userId: updatedOrder?.userId,
+      updatedPayment,
+      updatedOrder,
+     },
+    });
    });
-  });
+  }
 
-  return [{ payment: updatedPayment, order: updatedOrder }, null];
+  return [
+   { payment: updatedPayment ?? paymentRecord, order: updatedOrder },
+   null,
+  ];
  }
 
  /*
@@ -242,12 +257,10 @@ class WebhookHandler {
  ): Promise<Result<TPaymentVerificationResult>> {
   const [existingPayment] = await findPaymentByReference(eventData.reference);
 
-  if (
-   existingPayment?.status === "paid" ||
-   existingPayment?.status === "failed"
-  ) {
-   return [{ payment: existingPayment }, null];
-  }
+  const resolvedOrderId = existingPayment?.orderId ?? orderId;
+
+  if (!resolvedOrderId)
+   return [null, APIError.badRequest("Order not found for payment")];
 
   const checkout = await bachsClient.checkoutSessions.get(eventData.reference);
 
@@ -260,7 +273,7 @@ class WebhookHandler {
    : eventData.paid_at;
 
   return await this.verifyPayment(
-   orderId,
+   resolvedOrderId,
    eventData.reference,
    Number(checkout.amount),
    paidAt,
