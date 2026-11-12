@@ -15,7 +15,7 @@ import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result } from "@shared/types.ts";
 // import { TOrderItems } from "@shared/types.ts"; // Stripe only
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 // import FA from "fasy"; // Stripe only
 // import Stripe from "stripe"; // Stripe only
@@ -105,7 +105,20 @@ const reusableBachsPayment = async (
   return [null, asError(err)];
  }
 
+ const markOrderProcessing = async () => {
+  await db
+   .update(order)
+   .set({
+    orderStatus: "processing",
+    paymentStatus: "processing",
+    updatedAt: new Date(),
+   })
+   .where(and(eq(order.id, orderId), eq(order.orderStatus, "pending")));
+ };
+
  if (session.status === "completed") {
+  await markOrderProcessing();
+
   await publishEvent({
    event_type: EventType.BACHS_PAYMENT_VERIFIED,
    payload: {
@@ -133,6 +146,8 @@ const reusableBachsPayment = async (
   isExpired
  )
   return [null, null];
+
+ await markOrderProcessing();
 
  return [stored, null];
 };

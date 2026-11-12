@@ -14,7 +14,7 @@ import {
  getUserfromMerchantId,
 } from "@shared/helper.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import z from "zod";
 
@@ -192,7 +192,7 @@ class WebhookHandler {
    .where(
     and(
      eq(order.id, paymentRecord.orderId),
-     eq(order.orderStatus, "processing"),
+     inArray(order.orderStatus, ["pending", "processing"]),
     ),
    )
    .returning();
