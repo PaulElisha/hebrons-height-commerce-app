@@ -3,13 +3,37 @@
 import Env from "@/env.ts";
 import logger from "@app/logger.ts";
 import { BachsWebhookError, webhooks } from "@bachs/sdk";
-import type { CheckoutSessionResponse, WebhookEvent } from "@bachs/sdk";
+import type {
+ CheckoutSessionResponse,
+ PaymentResponse,
+ WebhookEvent,
+} from "@bachs/sdk";
 import HttpStatus from "@shared/enum/http.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { findPaymentByReference } from "@shared/helper.ts";
 import { Request, Response } from "express";
+
+type BachsWebhookData = Partial<CheckoutSessionResponse> &
+ Partial<PaymentResponse>;
+
+const normalizeBachsWebhookData = (event: WebhookEvent) => {
+ const data = event.data as BachsWebhookData;
+ const charge = data.charge ?? undefined;
+
+ const reference = data.checkout_id ?? data.reference ?? undefined;
+ const orderId =
+  (data.meta?.orderId as string | undefined) ??
+  (data.metadata?.orderId as string | undefined) ??
+  (charge?.meta?.orderId as string | undefined);
+ const amount = Number(data.amount ?? charge?.amount ?? 0);
+ const paidAt = data.completed_at
+  ? new Date(data.completed_at)
+  : new Date(event.created_at);
+
+ return { reference, orderId, amount, paidAt };
+};
 
 export const bachsWebhookHandler = async (req: Request, res: Response) => {
  //  const rawBody = JSON.parse(req.body);
@@ -32,24 +56,24 @@ export const bachsWebhookHandler = async (req: Request, res: Response) => {
   throw error;
  }
 
- const session = event.data as CheckoutSessionResponse;
-
  try {
   switch (event.type) {
    case "checkout.completed":
    case "collection.succeeded": {
-    const reference = session.checkout_id;
-    const orderId = session.metadata?.orderId;
+    const { reference, orderId, amount, paidAt } =
+     normalizeBachsWebhookData(event);
+
+    if (!reference) throw APIError.badRequest("Missing checkout reference");
 
     await publishEvent({
      event_type: EventType.BACHS_PAYMENT_VERIFIED,
      payload: {
-      orderId,
+      orderId: orderId ?? "",
       eventData: {
        event: event.type,
        reference,
-       amount: Number(session.amount ?? 0),
-       paid_at: new Date(event.created_at),
+       amount,
+       paid_at: paidAt,
       },
      },
     });
@@ -58,7 +82,9 @@ export const bachsWebhookHandler = async (req: Request, res: Response) => {
    }
 
    case "checkout.expired": {
-    const reference = session.checkout_id as string;
+    const { reference } = normalizeBachsWebhookData(event);
+
+    if (!reference) throw APIError.badRequest("Missing checkout reference");
 
     const [paymentRecord, err] = await findPaymentByReference(reference);
 

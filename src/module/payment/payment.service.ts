@@ -77,10 +77,9 @@ const withOrderDbLock = async <T>(
    return await fn();
   } finally {
    try {
-    await client.query(
-     "SELECT pg_advisory_unlock(hashtextextended($1, 0))",
-     [orderId],
-    );
+    await client.query("SELECT pg_advisory_unlock(hashtextextended($1, 0))", [
+     orderId,
+    ]);
    } catch (err) {
     destroyed = true;
     client.release(true);
@@ -134,55 +133,68 @@ class PaymentService {
    .where(eq(payment.orderId, orderId))
    .limit(1);
 
-  if (existingPayment?.status === "paid") return [existingPayment, null];
+  if (existingPayment) {
+   if (existingPayment.status === "paid") return [existingPayment, null];
 
-  if (
-   existingPayment?.status === "failed" ||
-   existingPayment?.status === "cancelled"
-  ) {
-   await db
+   if (existingPayment.status === "initialized") {
+    if (
+     data.order.orderStatus !== "processing" &&
+     data.order.paymentStatus !== "processing"
+    ) {
+     return [null, APIError.badRequest("Invalid order")];
+    }
+   }
+
+   const [updatedPayment] = await db
     .update(payment)
-    .set({ status: "pending", updatedAt: new Date() })
-    .where(eq(payment.id, existingPayment.id));
+    .set({
+     email: paymentData.email,
+     amount: paymentData.amount,
+     currency: paymentData.currency,
+     mode: paymentData.mode,
+     rail: paymentData.rail,
+     callbackUrl: paymentData.callback_url,
+     paymentReference: paymentData.reference,
+     paymentProvider: paymentData.paymentProvider,
+     accessCode: paymentData.access_code,
+     authorizationUrl: paymentData.checkout_url,
+     status:
+      existingPayment.status === "initialized" ? "initialized" : "pending",
+     updatedAt: new Date(),
+    })
+    .where(eq(payment.id, existingPayment.id))
+    .returning();
+
+   return [updatedPayment ?? existingPayment, null];
   }
 
-  const values = {
-   orderId,
-   email: paymentData.email,
-   userId,
-   mode: paymentData.mode,
-   rail: paymentData.rail,
-   amount: paymentData.amount,
-   callbackUrl: paymentData.callback_url,
-   authorizationUrl: paymentData.checkout_url,
-   accessCode: paymentData.access_code,
-   paymentReference: paymentData.reference,
-   currency: paymentData.currency,
-   paymentProvider: paymentData.paymentProvider,
-  };
+  if (
+   data.order.orderStatus !== "pending" &&
+   data.order.paymentStatus !== "pending"
+  ) {
+   return [null, APIError.badRequest("Invalid order")];
+  }
 
-  const [paymentRecord] = await db
+  const [paymentCreated] = await db
    .insert(payment)
-   .values({ ...values, attempts: 0 })
-   .onConflictDoUpdate({
-    target: payment.orderId,
-    set: {
-     email: values.email,
-     mode: values.mode,
-     rail: values.rail,
-     amount: values.amount,
-     callbackUrl: values.callbackUrl,
-     authorizationUrl: values.authorizationUrl,
-     accessCode: values.accessCode,
-     paymentReference: values.paymentReference,
-     currency: values.currency,
-     paymentProvider: values.paymentProvider,
-     updatedAt: new Date(),
-    },
+   .values({
+    orderId: orderId,
+    email: paymentData.email,
+    userId: userId,
+    mode: paymentData.mode,
+    rail: paymentData.rail,
+    amount: paymentData.amount,
+    callbackUrl: paymentData.callback_url,
+    authorizationUrl: paymentData.checkout_url,
+    accessCode: paymentData.access_code,
+    paymentReference: paymentData.reference,
+    currency: paymentData.currency,
+    paymentProvider: paymentData.paymentProvider,
+    attempts: 0,
    })
    .returning();
 
-  return [paymentRecord, null];
+  return [paymentCreated, null];
  }
 
  verifyPayment = async (

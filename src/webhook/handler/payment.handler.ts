@@ -1,8 +1,6 @@
 /** @format */
 
-import bachsClient from "@app/bachs.ts";
 import db from "@db/db.ts";
-import { merchant } from "@db/schema/merchant.ts";
 import { order, orderItem } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import PaymentService, {
@@ -16,7 +14,7 @@ import {
  getUserfromMerchantId,
 } from "@shared/helper.ts";
 import { Result, TPayment, TPaymentVerificationResult } from "@shared/types.ts";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import z from "zod";
 
@@ -34,40 +32,32 @@ class WebhookHandler {
   );
   if (err || !paymentRecord) return [null, err];
 
-  const [updatedOrder] = await db
-   .update(order)
-   .set({
-    orderStatus: "processing",
-    paymentStatus: "processing",
-    updatedAt: new Date(),
-   })
-   .where(
-    and(
-     eq(order.id, orderId),
-     inArray(order.orderStatus, ["pending", "processing", "failed"]),
-    ),
-   )
-   .returning();
+  if (paymentRecord.status === "pending") {
+   await db
+    .update(order)
+    .set({
+     orderStatus: "processing",
+     paymentStatus: "processing",
+     updatedAt: new Date(),
+    })
+    .where(eq(order.id, orderId));
 
-  const [updatedPayment] = await db
-   .update(payment)
-   .set({
-    status: "initialized",
-    updatedAt: new Date(),
-   })
-   .where(
-    and(eq(payment.id, paymentRecord.id), inArray(payment.status, ["pending"])),
-   )
-   .returning();
+   await db
+    .update(payment)
+    .set({
+     status: "initialized",
+     updatedAt: new Date(),
+    })
+    .where(eq(payment.id, paymentRecord.id));
 
-  if (updatedOrder) {
    const orderItems = await db
     .select()
     .from(orderItem)
-    .innerJoin(merchant, eq(merchant.id, orderItem.merchantId))
     .where(eq(orderItem.orderId, orderId));
 
-   const merchantIds = orderItems.map((i) => i.merchant.id);
+   const merchantIds = orderItems
+    .filter((r) => r.merchantId)
+    .map((r) => r.merchantId);
 
    const merchantUserIds = (await getUserfromMerchantId(merchantIds))
     .filter((r) => r.user.id === r.merchant?.userId)
@@ -86,7 +76,7 @@ class WebhookHandler {
    });
   }
 
-  return [updatedPayment ?? paymentRecord, null];
+  return [paymentRecord, null];
  }
 
  @Transactional()
@@ -111,7 +101,8 @@ class WebhookHandler {
 
   if (
    orderRecord.orderStatus === "failed" ||
-   paymentRecord.status === "failed"
+   paymentRecord.status === "failed" ||
+   paymentRecord.status === "paid"
   ) {
    return [{ payment: paymentRecord, order: orderRecord }, null];
   }
@@ -186,7 +177,7 @@ class WebhookHandler {
    .where(
     and(
      eq(payment.orderId, paymentRecord.orderId),
-     inArray(payment.status, ["pending", "initialized"]),
+     eq(payment.status, "initialized"),
     ),
    )
    .returning();
@@ -201,28 +192,23 @@ class WebhookHandler {
    .where(
     and(
      eq(order.id, paymentRecord.orderId),
-     inArray(order.orderStatus, ["pending", "processing"]),
+     eq(order.orderStatus, "processing"),
     ),
    )
    .returning();
 
-  if (updatedPayment && updatedOrder) {
-   runOnTransactionCommit(() => {
-    publishEvent({
-     event_type: EventType.PAYMENT_FULFILLED,
-     payload: {
-      userId: updatedOrder?.userId,
-      updatedPayment,
-      updatedOrder,
-     },
-    });
+  runOnTransactionCommit(() => {
+   publishEvent({
+    event_type: EventType.PAYMENT_FULFILLED,
+    payload: {
+     userId: updatedOrder?.userId,
+     updatedPayment,
+     updatedOrder,
+    },
    });
-  }
+  });
 
-  return [
-   { payment: updatedPayment ?? paymentRecord, order: updatedOrder },
-   null,
-  ];
+  return [{ payment: updatedPayment, order: updatedOrder }, null];
  }
 
  /*
@@ -257,26 +243,16 @@ class WebhookHandler {
  ): Promise<Result<TPaymentVerificationResult>> {
   const [existingPayment] = await findPaymentByReference(eventData.reference);
 
-  const resolvedOrderId = existingPayment?.orderId ?? orderId;
-
-  if (!resolvedOrderId)
-   return [null, APIError.badRequest("Order not found for payment")];
-
-  const checkout = await bachsClient.checkoutSessions.get(eventData.reference);
-
-  if (checkout.status !== "completed") {
-   return [null, APIError.badRequest("Bachs checkout not completed")];
-  }
-
-  const paidAt = checkout.completed_at
-   ? new Date(checkout.completed_at)
-   : eventData.paid_at;
+  const paidAmount =
+   Number.isFinite(eventData.amount) && eventData.amount > 0
+    ? eventData.amount
+    : Number(existingPayment?.amount ?? 0);
 
   return await this.verifyPayment(
-   resolvedOrderId,
+   existingPayment?.orderId ?? orderId,
    eventData.reference,
-   Number(checkout.amount),
-   paidAt,
+   paidAmount,
+   eventData.paid_at,
   );
  }
 }

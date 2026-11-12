@@ -63,50 +63,78 @@ const bachsPaymentMethods = (
 const reusableBachsPayment = async (
  orderId: string,
  fallback: { amount: number; currency: string },
-): Promise<PaymentResponseData | null> => {
+): Promise<Result<PaymentResponseData | null>> => {
  const [existing] = await db
   .select()
   .from(payment)
   .where(eq(payment.orderId, orderId))
   .limit(1);
 
+ if (!existing) return [null, null];
+
+ if (existing.status === "paid")
+  return [
+   null,
+   APIError.badRequest("Payment already completed for this order"),
+  ];
+
  if (
-  !existing ||
   existing.status !== "initialized" ||
   !existing.paymentReference ||
   !existing.authorizationUrl
  )
-  return null;
+  return [null, null];
+
+ const stored: PaymentResponseData = {
+  email: existing.email,
+  mode: (existing.mode ?? undefined) as PaymentResponseData["mode"],
+  rail: existing.rail as Rail,
+  amount: Number(existing.amount ?? fallback.amount),
+  currency: existing.currency ?? fallback.currency,
+  callbackUrl: existing.callbackUrl ?? undefined,
+  checkout_url: existing.authorizationUrl,
+  reference: existing.paymentReference,
+  paymentProvider: existing.paymentProvider ?? "bachs",
+ };
+
+ let session: Awaited<ReturnType<typeof bachsClient.checkoutSessions.get>>;
 
  try {
-  const session = await bachsClient.checkoutSessions.get(
-   existing.paymentReference,
-  );
-
-  const isTerminal = ["completed", "expired", "cancelled"].includes(
-   session.status,
-  );
-
-  const isExpired =
-   !!session.expires_at &&
-   new Date(session.expires_at).getTime() <= Date.now();
-
-  if (isTerminal || isExpired) return null;
-
-  return {
-   email: existing.email,
-   mode: (existing.mode ?? undefined) as PaymentResponseData["mode"],
-   rail: existing.rail as Rail,
-   amount: Number(existing.amount ?? fallback.amount),
-   currency: existing.currency ?? fallback.currency,
-   callbackUrl: existing.callbackUrl ?? undefined,
-   checkout_url: existing.authorizationUrl,
-   reference: existing.paymentReference,
-   paymentProvider: existing.paymentProvider ?? "bachs",
-  };
- } catch {
-  return null;
+  session = await bachsClient.checkoutSessions.get(existing.paymentReference);
+ } catch (err) {
+  return [null, asError(err)];
  }
+
+ if (session.status === "completed") {
+  await publishEvent({
+   event_type: EventType.BACHS_PAYMENT_VERIFIED,
+   payload: {
+    orderId,
+    eventData: {
+     event: "checkout.completed",
+     reference: existing.paymentReference,
+     amount: Number(session.amount ?? existing.amount ?? 0),
+     paid_at: session.completed_at
+      ? new Date(session.completed_at)
+      : new Date(),
+    },
+   },
+  });
+
+  return [stored, null];
+ }
+
+ const isExpired =
+  !!session.expires_at && new Date(session.expires_at).getTime() <= Date.now();
+
+ if (
+  session.status === "expired" ||
+  session.status === "cancelled" ||
+  isExpired
+ )
+  return [null, null];
+
+ return [stored, null];
 };
 
 const initializeBachsCheckout: RailHandler = async (userId, orderId, data) => {
@@ -118,8 +146,12 @@ const initializeBachsCheckout: RailHandler = async (userId, orderId, data) => {
   const amount = Number(orderData.subtotal);
   const currency = data.currency.toUpperCase();
 
-  const reusable = await reusableBachsPayment(orderId, { amount, currency });
+  const [reusable, reuseErr] = await reusableBachsPayment(orderId, {
+   amount,
+   currency,
+  });
 
+  if (reuseErr) return [null, reuseErr];
   if (reusable) return [reusable, null];
 
   const paymentMethods = bachsPaymentMethods(data.rail);
