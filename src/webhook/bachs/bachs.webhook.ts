@@ -13,7 +13,7 @@ import * as APIError from "@shared/error/APIError.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { findPaymentByReference } from "@shared/helper.ts";
-import WebHookHandler from "@webhook/handler/payment.handler.ts";
+import Handler from "@webhook/handler/payment.handler.ts";
 import { Request, Response } from "express";
 
 type BachsWebhookData = Partial<CheckoutSessionResponse> &
@@ -66,7 +66,7 @@ export const bachsWebhookHandler = async (req: Request, res: Response) => {
 
     if (!reference) throw APIError.badRequest("Missing checkout reference");
 
-    const [, err] = await WebHookHandler.handleBachsPaymentVerified(
+    const [, err] = await Handler.handleBachsPaymentVerified(
      {
       event: event.type,
       reference,
@@ -90,7 +90,7 @@ export const bachsWebhookHandler = async (req: Request, res: Response) => {
 
     if (err || !paymentRecord) throw APIError.notFound("Payment not found");
 
-    const [failed, failErr] = await WebHookHandler.handlePaymentFailure(
+    const [failed, failErr] = await Handler.handlePaymentFailure(
      paymentRecord.id,
     );
 

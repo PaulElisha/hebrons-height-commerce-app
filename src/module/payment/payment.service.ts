@@ -1,14 +1,17 @@
 /** @format */
-import Env from "@/env.ts";
+// import Env from "@/env.ts"; // Paystack only
 import bachsClient from "@app/bachs.ts";
-// import logger from "@app/logger.ts"; // Paystack only
+import logger from "@app/logger.ts";
 import db from "@db/db.ts";
 import { order } from "@db/schema/order.ts";
 import { payment } from "@db/schema/payment.ts";
 import OrderService from "@module/order/order.service.ts";
 import * as APIError from "@shared/error/APIError.ts";
 import asError from "@shared/error/as-error.ts";
+import { EventType } from "@shared/event-bus/index.ts";
+import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result, TPayment } from "@shared/types.ts";
+import Handler from "@webhook/handler/payment.handler.ts";
 import { eq } from "drizzle-orm";
 import { Transactional } from "drizzle-transactional";
 import z from "zod";
@@ -49,6 +52,8 @@ export type PaymentResponseData = z.infer<typeof PaymentData> & {
  callbackUrl?: string;
 };
 
+// Paystack only
+/*
 export interface PaystackVerifiedData {
  status: string;
  reference: string;
@@ -60,6 +65,7 @@ export interface PaystackVerifiedData {
  authorization?: Record<string, unknown>;
  [key: string]: unknown;
 }
+*/
 
 const withOrderDbLock = async <T>(
  orderId: string,
@@ -106,7 +112,29 @@ class PaymentService {
     rail(userId, orderId, checkout),
    );
 
-   return [paymentResponse, err];
+   if (err || !paymentResponse) return [paymentResponse, err];
+
+   const [, initErr] = await Handler.handlePaymentInitialized(
+    userId,
+    orderId,
+    paymentResponse,
+   );
+
+   if (initErr) return [null, initErr];
+
+   try {
+    await publishEvent({
+     event_type: EventType.PAYMENT_INITIALIZED,
+     payload: { userId, orderId, paymentResponseData: paymentResponse },
+    });
+   } catch (notifyErr) {
+    logger.error(
+     { err: notifyErr, orderId },
+     "[...Payment initialized notification failed]",
+    );
+   }
+
+   return [paymentResponse, null];
   } catch (err) {
    return [null, asError(err)];
   }

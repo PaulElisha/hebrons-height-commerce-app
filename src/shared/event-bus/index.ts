@@ -9,7 +9,6 @@ export type {
  OrderCancelledPayload,
  OrderPlacedPayload,
  OrderStatusUpdatedPayload,
- BachsPaymentVerifiedPayload,
  ChargeEvent,
  // PaystackPaymentVerifiedPayload,
  PaymentFailedPayload,

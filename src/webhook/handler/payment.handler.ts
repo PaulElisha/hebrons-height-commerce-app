@@ -18,7 +18,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { runOnTransactionCommit, Transactional } from "drizzle-transactional";
 import z from "zod";
 
-class WebhookHandler {
+class Handler {
  @Transactional()
  async handlePaymentInitialized(
   userId: string,
@@ -257,4 +257,4 @@ class WebhookHandler {
  }
 }
 
-export default new WebhookHandler();
+export default new Handler();

@@ -39,7 +39,6 @@ import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
 
 import Env from "./env.ts";
-import { outbox } from "@db/schema/outbox.ts";
 import OutboxService from "@module/outbox/outbox.service.ts";
 
 initializeDrizzleTransactionalContext();

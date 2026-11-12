@@ -66,11 +66,6 @@ export interface StripePaymentVerifiedPayload {
 }
 */
 
-export interface BachsPaymentVerifiedPayload {
- orderId: string;
- eventData: ChargeEvent;
-}
-
 export interface PaymentFulfilledPayload {
  updatedPayment: TPayment;
  updatedOrder: TOrder;

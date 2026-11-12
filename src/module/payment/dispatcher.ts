@@ -16,7 +16,6 @@ import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { Result } from "@shared/types.ts";
 // import { TOrderItems } from "@shared/types.ts"; // Stripe only
 import { and, eq, inArray } from "drizzle-orm";
-import { Transactional } from "drizzle-transactional";
 // import FA from "fasy"; // Stripe only
 // import Stripe from "stripe"; // Stripe only
 import z from "zod";

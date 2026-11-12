@@ -8,7 +8,6 @@ export enum EventType {
  MERCHANT_LOW_STOCK_ALERT = "inventory.low_stock.alert",
  // PAYSTACK_PAYMENT_VERIFIED = "payment.paystack.checkout.verified",
  // STRIPE_PAYMENT_VERIFIED = "payment.stripe.checkout.verified",
- BACHS_PAYMENT_VERIFIED = "payment.bachs.checkout.verified",
  USERCART_LOW_STOCK_ALERT = "cart.low_stock.alert",
  PAYMENT_FULFILLED = "payment.fulfilled",
  PAYMENT_FAILED = "payment.failed",

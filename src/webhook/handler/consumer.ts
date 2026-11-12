@@ -1,8 +1,8 @@
 /** @format */
 
 // Payment state transitions are handled synchronously:
-// - PaymentController.initialize -> WebHookHandler.handlePaymentInitialized
-// - bachs.webhook.ts -> WebHookHandler.handleBachsPaymentVerified / handlePaymentFailure
+// - PaymentService.fetchPaymentForOrderByRail -> Handler.handlePaymentInitialized
+// - bachs.webhook.ts -> Handler.handleBachsPaymentVerified / handlePaymentFailure
 //
 // Notifications (PAYMENT_INITIALIZED, PAYMENT_FAILED, PAYMENT_FULFILLED)
 // remain event-driven in @module/notification/consumer.ts.
@@ -12,7 +12,7 @@ EventBroker.subscribe(EventType.PAYSTACK_PAYMENT_VERIFIED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<PaystackPaymentVerifiedPayload>(
    async ({ eventData, orderId }) => {
-    const [, err] = await WebHookHandler.handlePaystackPaymentVerified(
+    const [, err] = await Handler.handlePaystackPaymentVerified(
      eventData,
      orderId,
     );
@@ -35,7 +35,7 @@ EventBroker.subscribe(EventType.STRIPE_PAYMENT_VERIFIED).subscribe({
  next: async ({ payload }) => {
   await consumeOutboxEvent<StripePaymentVerifiedPayload>(
    async ({ eventData, orderId }) => {
-    const [, err] = await WebHookHandler.handleStripePaymentVerified(
+    const [, err] = await Handler.handleStripePaymentVerified(
      eventData,
      orderId,
     );
