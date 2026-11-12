@@ -3,7 +3,6 @@ import "@module/cart/consumer.ts";
 import "@module/email/consumer.ts";
 import "@module/inventory/consumer.ts";
 import "@module/notification/consumer.ts";
-import "@webhook/handler/consumer.ts";
 
 import cors from "@app/cors.ts";
 import helmet from "@app/helmet.ts";

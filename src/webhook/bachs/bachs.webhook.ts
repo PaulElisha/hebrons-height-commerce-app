@@ -13,6 +13,7 @@ import * as APIError from "@shared/error/APIError.ts";
 import { EventType } from "@shared/event-bus/index.ts";
 import { publishEvent } from "@shared/event-bus/publish-event.ts";
 import { findPaymentByReference } from "@shared/helper.ts";
+import WebHookHandler from "@webhook/handler/payment.handler.ts";
 import { Request, Response } from "express";
 
 type BachsWebhookData = Partial<CheckoutSessionResponse> &
@@ -65,18 +66,17 @@ export const bachsWebhookHandler = async (req: Request, res: Response) => {
 
     if (!reference) throw APIError.badRequest("Missing checkout reference");
 
-    await publishEvent({
-     event_type: EventType.BACHS_PAYMENT_VERIFIED,
-     payload: {
-      orderId: orderId ?? "",
-      eventData: {
-       event: event.type,
-       reference,
-       amount,
-       paid_at: paidAt,
-      },
+    const [, err] = await WebHookHandler.handleBachsPaymentVerified(
+     {
+      event: event.type,
+      reference,
+      amount,
+      paid_at: paidAt,
      },
-    });
+     orderId ?? "",
+    );
+
+    if (err) throw err;
 
     return res.status(HttpStatus.OK).json({ received: true });
    }
@@ -90,15 +90,23 @@ export const bachsWebhookHandler = async (req: Request, res: Response) => {
 
     if (err || !paymentRecord) throw APIError.notFound("Payment not found");
 
-    await publishEvent({
-     event_type: EventType.PAYMENT_FAILED,
-     payload: {
-      userId: paymentRecord.userId,
-      orderId: paymentRecord.orderId,
-      reason: "Checkout session expired",
-      paymentId: paymentRecord.id,
-     },
-    });
+    const [failed, failErr] = await WebHookHandler.handlePaymentFailure(
+     paymentRecord.id,
+    );
+
+    if (failErr) throw failErr;
+
+    if (failed?.payment.status === "failed") {
+     await publishEvent({
+      event_type: EventType.PAYMENT_FAILED,
+      payload: {
+       userId: paymentRecord.userId,
+       orderId: paymentRecord.orderId,
+       reason: "Checkout session expired",
+       paymentId: paymentRecord.id,
+      },
+     });
+    }
 
     return res.status(HttpStatus.OK).json({ received: true });
    }

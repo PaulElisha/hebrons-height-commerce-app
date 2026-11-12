@@ -72,11 +72,26 @@ const reusableBachsPayment = async (
 
  if (!existing) return [null, null];
 
- if (existing.status === "paid")
+ if (existing.status === "paid") {
+  await db
+   .update(order)
+   .set({
+    orderStatus: "fulfilled",
+    paymentStatus: "paid",
+    updatedAt: new Date(),
+   })
+   .where(
+    and(
+     eq(order.id, orderId),
+     inArray(order.orderStatus, ["pending", "processing"]),
+    ),
+   );
+
   return [
    null,
    APIError.badRequest("Payment already completed for this order"),
   ];
+ }
 
  if (
   existing.status !== "initialized" ||
@@ -117,22 +132,43 @@ const reusableBachsPayment = async (
  };
 
  if (session.status === "completed") {
-  await markOrderProcessing();
+  const paidAt = session.completed_at
+   ? new Date(session.completed_at)
+   : new Date();
 
-  await publishEvent({
-   event_type: EventType.BACHS_PAYMENT_VERIFIED,
-   payload: {
-    orderId,
-    eventData: {
-     event: "checkout.completed",
-     reference: existing.paymentReference,
-     amount: Number(session.amount ?? existing.amount ?? 0),
-     paid_at: session.completed_at
-      ? new Date(session.completed_at)
-      : new Date(),
+  const [updatedPayment] = await db
+   .update(payment)
+   .set({ status: "paid", paidAt, updatedAt: new Date() })
+   .where(
+    and(eq(payment.orderId, orderId), eq(payment.status, "initialized")),
+   )
+   .returning();
+
+  const [updatedOrder] = await db
+   .update(order)
+   .set({
+    orderStatus: "fulfilled",
+    paymentStatus: "paid",
+    updatedAt: new Date(),
+   })
+   .where(
+    and(
+     eq(order.id, orderId),
+     inArray(order.orderStatus, ["pending", "processing"]),
+    ),
+   )
+   .returning();
+
+  if (updatedPayment && updatedOrder) {
+   await publishEvent({
+    event_type: EventType.PAYMENT_FULFILLED,
+    payload: {
+     userId: updatedOrder.userId,
+     updatedPayment,
+     updatedOrder,
     },
-   },
-  });
+   });
+  }
 
   return [stored, null];
  }
@@ -210,15 +246,6 @@ const initializeBachsCheckout: RailHandler = async (userId, orderId, data) => {
    reference: session.checkout_id,
    paymentProvider: "bachs",
   };
-
-  await publishEvent({
-   event_type: EventType.PAYMENT_INITIALIZED,
-   payload: {
-    userId,
-    orderId,
-    paymentResponseData: res,
-   },
-  });
 
   return [res, null];
  } catch (err) {
